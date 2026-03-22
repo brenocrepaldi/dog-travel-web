@@ -33,8 +33,40 @@ interface ChatSlice {
   clearMessages: () => void;
 }
 
+// ─── Payment Slice ────────────────────────────────────────────────────────────
+interface PendingPayment {
+  /** Price estimate shown to the client before confirming the walk */
+  estimatedPrice: number;
+  /** ID of the selected saved payment method */
+  selectedMethodId: string | null;
+}
+
+interface PaymentSlice {
+  pendingPayment: PendingPayment | null;
+  setPendingPayment: (payment: PendingPayment) => void;
+  clearPendingPayment: () => void;
+}
+
+// ─── UI Slice ─────────────────────────────────────────────────────────────────
+export interface AppNotification {
+  id: string;
+  title: string;
+  message: string;
+  type: "info" | "success" | "warning" | "error";
+  createdAt: string;
+  read: boolean;
+}
+
+interface UISlice {
+  isSidebarOpen: boolean;
+  setIsSidebarOpen: (open: boolean) => void;
+  notifications: AppNotification[];
+  addNotification: (notification: Omit<AppNotification, "id" | "createdAt" | "read">) => void;
+  dismissNotification: (id: string) => void;
+}
+
 // ─── Combined Store ───────────────────────────────────────────────────────────
-type AppStore = AuthSlice & PetsSlice & WalkSlice & ChatSlice;
+type AppStore = AuthSlice & PetsSlice & WalkSlice & ChatSlice & PaymentSlice & UISlice;
 
 export const useAppStore = create<AppStore>()(
   persist(
@@ -63,10 +95,36 @@ export const useAppStore = create<AppStore>()(
       addMessage: (message) =>
         set((state) => ({ messages: [...state.messages, message] })),
       clearMessages: () => set({ messages: [] }),
+
+      // Payment — ephemeral, cleared after walk is confirmed
+      pendingPayment: null,
+      setPendingPayment: (payment) => set({ pendingPayment: payment }),
+      clearPendingPayment: () => set({ pendingPayment: null }),
+
+      // UI
+      isSidebarOpen: true,
+      setIsSidebarOpen: (open) => set({ isSidebarOpen: open }),
+      notifications: [],
+      addNotification: (notification) =>
+        set((state) => ({
+          notifications: [
+            ...state.notifications,
+            {
+              ...notification,
+              id: crypto.randomUUID(),
+              createdAt: new Date().toISOString(),
+              read: false,
+            },
+          ],
+        })),
+      dismissNotification: (id) =>
+        set((state) => ({
+          notifications: state.notifications.filter((n) => n.id !== id),
+        })),
     }),
     {
       name: "dogtravel-storage",
-      // Only persist user and pets to localStorage; walk/chat should not be persisted
+      // Only persist user and pets; all real-time + ephemeral state starts fresh
       partialize: (state) => ({ user: state.user, pets: state.pets }),
     }
   )
