@@ -16,7 +16,7 @@ export default async function WalkTrackingPage({
   const { id } = await params;
 
   return (
-    <div className="flex flex-col h-[calc(100vh-theme(spacing.16))] lg:h-full relative overflow-hidden rounded-2xl border border-border bg-background shadow-sm">
+    <div className="flex flex-col flex-1 relative overflow-hidden rounded-2xl border border-border bg-background shadow-sm min-h-[500px]">
       {/* Map filling the area */}
       <ClientMap walkId={id} />
     </div>

@@ -17,7 +17,7 @@ export default async function WalkChatPage({
   const currentUserId = session.user?.id as string;
 
   return (
-    <div className="flex flex-col h-[calc(100vh-theme(spacing.16))] lg:h-full overflow-hidden rounded-2xl border border-border bg-background shadow-sm">
+    <div className="flex flex-col flex-1 overflow-hidden rounded-2xl border border-border bg-background shadow-sm min-h-[500px]">
       <ChatInterface walkId={id} currentUserId={currentUserId} />
     </div>
   );

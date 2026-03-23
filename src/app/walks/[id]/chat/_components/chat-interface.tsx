@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Send, Image as ImageIcon, ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -64,9 +64,12 @@ export function ChatInterface({ walkId, currentUserId }: { walkId: string; curre
     <div className="flex flex-col h-full w-full bg-background relative">
       {/* ─── Header ─── */}
       <div className="flex items-center p-4 border-b border-border bg-background z-10">
-        <Button variant="ghost" size="icon" render={<Link href={`/walks/${walkId}/tracking`} />} className="mr-2">
+        <Link
+          href={`/walks/${walkId}/tracking`}
+          className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "mr-2 shrink-0")}
+        >
           <ArrowLeft className="h-5 w-5" />
-        </Button>
+        </Link>
         <div className="flex-1 flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
             {currentUserId === "1" ? "C" : "A"} {/* Carlos (walker) or Ana (client) */}

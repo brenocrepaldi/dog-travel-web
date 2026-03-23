@@ -1,39 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, Polyline } from "react-leaflet";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import Map, { Marker, Layer, Source } from "react-map-gl/mapbox";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Phone, MessageSquare, Compass } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-// Fix missing marker icons in leaflet with Next.js
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
-  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
-  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-});
-
-// Custom icon for the dog walker
-const walkerIcon = L.divIcon({
-  html: `<div class="w-10 h-10 bg-primary text-primary-foreground rounded-full border-2 border-white flex items-center justify-center shadow-lg text-lg">🏃</div>`,
-  className: "bg-transparent",
-  iconSize: [40, 40],
-  iconAnchor: [20, 20],
-});
-
 // ─── Mock Data ─────────────────────────────────────────────────────────────
 const MOCK_ROUTE: [number, number][] = [
-  [-23.550520, -46.633308], // Start
-  [-23.551000, -46.634000],
-  [-23.551500, -46.634500],
-  [-23.552000, -46.635000], // Current pos (index 3)
+  [-46.633308, -23.550520], // Start (longitude, latitude)
+  [-46.634000, -23.551000],
+  [-46.634500, -23.551500],
+  [-46.635000, -23.552000], // Current pos (index 3)
 ];
 
 export default function MapTracker({ walkId }: { walkId: string }) {
@@ -47,25 +29,53 @@ export default function MapTracker({ walkId }: { walkId: string }) {
     return () => clearInterval(interval);
   }, []);
 
-  const currentPos = MOCK_ROUTE[currentPosIdx];
+  const [lng, lat] = MOCK_ROUTE[currentPosIdx];
   const walkedPath = MOCK_ROUTE.slice(0, currentPosIdx + 1);
 
+  // GeoJSON for the route line
+  const routeFeatures = {
+    type: "FeatureCollection" as const,
+    features: [
+      {
+        type: "Feature" as const,
+        geometry: { type: "LineString" as const, coordinates: walkedPath },
+        properties: {},
+      },
+    ],
+  };
+
   return (
-    <div className="relative w-full h-full">
-      {/* ─── Leaflet Map ─── */}
-      <MapContainer
-        center={currentPos}
-        zoom={16}
-        className="w-full h-full absolute inset-0 z-0"
-        zoomControl={false}
+    <div className="relative w-full h-full flex-1">
+      {/* ─── Mapbox Map ─── */}
+      <Map
+        mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
+        initialViewState={{
+          longitude: lng,
+          latitude: lat,
+          zoom: 15,
+        }}
+        mapStyle="mapbox://styles/mapbox/streets-v12"
+        style={{ width: "100%", height: "100%", position: "absolute", top: 0, bottom: 0, left: 0, right: 0 }}
+        attributionControl={false}
       >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/">OSM</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        <Polyline positions={walkedPath} color="hsl(var(--primary))" weight={5} opacity={0.8} />
-        <Marker position={currentPos} icon={walkerIcon} />
-      </MapContainer>
+        <Source id="route" type="geojson" data={routeFeatures}>
+          <Layer
+            id="route-line"
+            type="line"
+            paint={{
+              "line-color": "#3b82f6",
+              "line-width": 5,
+              "line-opacity": 0.8,
+            }}
+          />
+        </Source>
+
+        <Marker longitude={lng} latitude={lat} anchor="center">
+          <div className="w-10 h-10 bg-primary text-primary-foreground rounded-full border-2 border-white flex items-center justify-center shadow-lg text-lg">
+            🏃
+          </div>
+        </Marker>
+      </Map>
 
       {/* ─── Overlay UI ─── */}
       {/* Status Bar (Top) */}
@@ -107,14 +117,20 @@ export default function MapTracker({ walkId }: { walkId: string }) {
             </div>
             
             <div className="flex gap-2">
-              <Button variant="outline" className="flex-1 bg-background" render={<Link href="tel:+5511999999999" />}>
+              <Link
+                href="tel:+5511999999999"
+                className={cn(buttonVariants({ variant: "outline" }), "flex-1 bg-background")}
+              >
                 <Phone className="h-4 w-4 mr-2" />
                 Ligar
-              </Button>
-              <Button className="flex-1" render={<Link href={`/walks/${walkId}/chat`} />}>
+              </Link>
+              <Link
+                href={`/walks/${walkId}/chat`}
+                className={cn(buttonVariants({ variant: "default" }), "flex-1")}
+              >
                 <MessageSquare className="h-4 w-4 mr-2" />
                 Chat
-              </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>
