@@ -25,15 +25,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // const user = await authenticateUser(parsed.data.email, parsed.data.password);
 
         // Placeholder: accept any valid credentials for development
-        if (
-          parsed.data.email === "user@dogtravel.com" &&
-          parsed.data.password === "password"
-        ) {
+        if (parsed.data.password === "password") {
+          const role = parsed.data.email === "walker@dogtravel.com" ? "walker" : "client";
           return {
-            id: "1",
-            name: "Usuário Teste",
+            id: role === "walker" ? "2" : "1",
+            name: role === "walker" ? "Carlos Passeador" : "Usuário Teste",
             email: parsed.data.email,
-            role: "client",
+            role: role,
           };
         }
 
