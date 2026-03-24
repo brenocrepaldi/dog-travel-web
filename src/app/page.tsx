@@ -50,16 +50,16 @@ export default function HomePage() {
             DogTravel
           </Link>
           <nav className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
-            <Link href="#como-funciona" className="hover:text-foreground transition-colors">
+            <Link href="#how-it-works" className="hover:text-foreground transition-colors">
               Como funciona
             </Link>
-            <Link href="#recursos" className="hover:text-foreground transition-colors">
+            <Link href="#features" className="hover:text-foreground transition-colors">
               Recursos
             </Link>
           </nav>
           <div className="flex items-center gap-3">
             <Link href="/login">
-              <Button variant="ghost" size="sm">
+              <Button size="sm" variant="outline">
                 Entrar
               </Button>
             </Link>
@@ -73,18 +73,20 @@ export default function HomePage() {
       </header>
 
       {/* ─── Hero Section ─────────────────────────────────────────────────── */}
-      <section className="relative flex-1 flex items-center overflow-hidden bg-gradient-to-br from-primary/5 via-background to-secondary/30">
-        {/* Background decoration */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <section className="relative flex-1 flex items-center overflow-hidden min-h-[85vh] md:min-h-[700px]">
+        {/* Repeating background pattern */}
+        <div className="absolute inset-0 z-0 bg-[url('/dog-paw.svg')] bg-repeat bg-[length:8px_8px] opacity-[0.03]" />
+
+        {/* Ambient background decoration */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
           <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
           <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-secondary/40 blur-3xl" />
         </div>
 
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-24 md:py-32">
+        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-24 md:py-32 w-full">
           <div className="max-w-3xl">
-            <Badge variant="secondary" className="mb-6 gap-1.5 px-3 py-1 text-sm font-medium">
-              <PawPrint className="h-3.5 w-3.5" />
-              Novo jeito de cuidar do seu cão
+            <Badge variant="secondary" className="mb-6 gap-1.5 p-3 py-4 text-sm font-medium">
+              Um novo jeito de cuidar do seu cão
             </Badge>
 
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-foreground leading-tight mb-6">
@@ -100,7 +102,7 @@ export default function HomePage() {
 
             <div className="flex flex-col sm:flex-row gap-4">
               <Link href="/register">
-                <Button size="lg" className="gap-2 px-8 h-12 text-base shadow-lg shadow-primary/20">
+                <Button size="lg" className="gap-2 px-8 h-12 text-base shadow-lg shadow-primary/20 hover:bg-primary/80 hover:text-primary-foreground transition-colors">
                   Solicitar um passeio
                   <ChevronRight className="h-4 w-4" />
                 </Button>
@@ -116,13 +118,13 @@ export default function HomePage() {
       </section>
 
       {/* ─── Stats Bar ────────────────────────────────────────────────────── */}
-      <section className="border-y border-border bg-muted/30">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
+      <section className="bg-primary">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 md:py-16">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {stats.map((stat) => (
               <div key={stat.label} className="text-center">
-                <p className="text-3xl font-bold text-primary">{stat.value}</p>
-                <p className="text-sm text-muted-foreground mt-1">{stat.label}</p>
+                <p className="text-4xl font-bold text-primary-foreground">{stat.value}</p>
+                <p className="text-sm font-medium text-primary-foreground/80 mt-2 tracking-wide uppercase">{stat.label}</p>
               </div>
             ))}
           </div>
@@ -130,7 +132,7 @@ export default function HomePage() {
       </section>
 
       {/* ─── How it Works ─────────────────────────────────────────────────── */}
-      <section id="como-funciona" className="py-24 bg-background">
+      <section id="how-it-works" className="py-24 bg-muted/40 border-y border-border/40">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
@@ -172,8 +174,11 @@ export default function HomePage() {
       </section>
 
       {/* ─── Features Section ─────────────────────────────────────────────── */}
-      <section id="recursos" className="py-24 bg-muted/20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <section id="features" className="relative py-24 bg-background overflow-hidden border-b border-border/40">
+        {/* Repeating background pattern */}
+        <div className="absolute inset-0 z-0 bg-[url('/dog-paw.svg')] bg-repeat bg-[length:8px_8px] opacity-[0.03]" />
+        
+        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
               Tudo que você precisa
