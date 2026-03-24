@@ -25,16 +25,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // const user = await authenticateUser(parsed.data.email, parsed.data.password);
 
         // Placeholder: accept any valid credentials for development
-        if (parsed.data.password === "password") {
-          const role = parsed.data.email === "walker@dogtravel.com" ? "walker" : "client";
+        if (parsed.data.email.includes("client")) {
           return {
-            id: role === "walker" ? "2" : "1",
-            name: role === "walker" ? "Carlos Passeador" : "Usuário Teste",
+            id: "1",
+            name: "Usuário Teste",
             email: parsed.data.email,
-            role: role,
+            role: "client",
           };
         }
 
+        if (parsed.data.email.includes("walker")) {
+          return {
+            id: "2",
+            name: "Carlos Passeador",
+            email: parsed.data.email,
+            role: "walker",
+          };
+        }
         return null;
       },
     }),
