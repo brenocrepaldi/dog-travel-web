@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DogTravel Web
 
-## Getting Started
+## Description
+DogTravel is a modern web application designed to connect dog owners with professional dog walkers. The platform enables users to securely register, request walks, coordinate via chat, and track active walks in real-time, providing tailored interfaces for both client and walker workflows.
 
-First, run the development server:
+## Tech Stack
+- **Framework:** Next.js (App Router, Turbopack)
+- **Language:** TypeScript
+- **Styling:** Tailwind CSS v4, shadcn/ui UI components
+- **Forms & Validation:** React Hook Form, Zod
+- **Authentication:** NextAuth.js (v5 Beta)
+- **Maps & Tracking:** Mapbox GL, react-map-gl
+- **Icons & UI Utilities:** Lucide React, class-variance-authority, clsx, tailwind-merge
 
+## Project Structure
+- `public/`: Static assets and bespoke UI decorations (e.g., custom SVG patterns).
+- `src/`
+  - `app/`: Primary Next.js App Router definitions.
+    - `(auth)/`: Contains the login and multi-step registration flows.
+    - `dashboard/`: Contextual dashboards split by roles (`_client` and `_walker`).
+    - `walkers/`: Walker discovery, listings, and profile layout definitions.
+    - `walks/`: Active walk tracking, request forms, and walk management.
+  - `components/`
+    - `ui/`: Generic, reusable shadcn/ui components (Buttons, Inputs, Dialogs, etc.).
+    - `common/`: Shared structural components like `sidebar.tsx` and `empty-state.tsx`.
+  - `lib/`: Business logic, utility functions, and centralized configurations.
+    - `validations/`: Zod schemas enforcing strict data validation.
+    - `auth.ts`: NextAuth credentials and session handling logic.
+    - `cpf.ts`: Pure algorithmic CPF validation, cleaning, and input masking.
+
+## Features
+- **Role-Based Architecture:** Distinct registration processes, dashboards, and navigation paths for Dog Owners and Walkers.
+- **Strict Data Validation:** Robust form control using Zod, featuring mathematical CPF verification algorithms and formatted E164 phone inputs.
+- **Live Walk Tracking:** Interactive, real-time mapping functionality migrated to Mapbox GL for precise location tracking.
+- **Walk Requests:** Multi-step request interface featuring dynamic price estimation and payment configurations.
+- **Real-Time Communication:** Live chat interface connecting owners directly to their walkers during active sessions.
+- **Profile Management:** Dedicated pages for comprehensive profile setups, pet registrations, and payment method handling.
+
+## Installation
+1. Clone the repository.
+2. Install the required Node dependencies:
+   ```bash
+   npm install
+   ```
+
+## Usage
+Start the development server (powered by Turbopack):
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
+Open [http://localhost:3000](http://localhost:3000) in your browser to interact with the application.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Environment Variables
+Create a `.env.local` file in the root directory. Required variables inferred by the integrations include:
+- `NEXT_PUBLIC_MAPBOX_TOKEN`: Required for rendering the interactive tracking maps.
+- `AUTH_SECRET`: Used to securely encrypt NextAuth session tokens (generate using `npx auth secret`).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts / Commands
+- `npm run dev`: Starts the Next.js development server.
+- `npm run build`: Compiles the application into an optimized production bundle.
+- `npm run start`: Boots the Next.js production server.
+- `npm run lint`: Executes ESLint to verify code quality and formatting.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Important Notes
+- **Development Authentication:** The `src/lib/auth.ts` NextAuth provider is currently configured for a development environment state. It forcefully authenticates users and assigns roles dynamically depending on whether the email string contains `"client"` or `"walker"`.
+- **Form Masking Paradigm:** Instead of relying on heavy third-party masking dependencies, form masks (like the CPF field) are implemented as mathematically pure string-replacers securely bound to `react-hook-form` controllers to prevent React state desynchronization.
