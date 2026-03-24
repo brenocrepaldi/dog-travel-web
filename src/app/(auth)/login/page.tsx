@@ -10,9 +10,10 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 // ─── Validation schema ────────────────────────────────────────────────────────
 const loginSchema = z.object({
@@ -132,10 +133,12 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Register link */}
-      <Button variant="outline" className="w-full" render={<Link href="/register" />}>
-        Criar conta grátis
-      </Button>
+      <Link
+        href="/register"
+        className={cn(buttonVariants({ variant: "outline" }), "w-full text-center")}
+      >
+        Criar uma conta gratuita
+      </Link>
     </div>
   );
 }

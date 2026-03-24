@@ -67,7 +67,7 @@ export function Sidebar() {
           const isActive =
             item.href === "/dashboard"
               ? pathname === "/dashboard"
-              : pathname.startsWith(item.href);
+              : pathname === item.href;
           return (
             <Link
               key={item.href}
@@ -111,8 +111,8 @@ export function Sidebar() {
 
         <Button
           variant="ghost"
-          size="sm"
-          className="w-full justify-start gap-3 px-3 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
+          // size="sm"
+          className="w-full justify-start gap-3 px-3 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all cursor-pointer"
           onClick={() => signOut({ callbackUrl: "/login" })}
         >
           <LogOut className="h-4 w-4" />
