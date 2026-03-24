@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { Plus, MapPin, ClipboardList, Dog } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/common/page-header";
 import { EmptyState } from "@/components/common/empty-state";
 
@@ -65,10 +65,13 @@ export default async function ClientDashboardPage() {
         title={`Olá, ${firstName}! 👋`}
         description="Bem-vindo ao DogTravel. Confira seus passeios e pets."
         action={
-          <Button render={<Link href="/walks/new" />}>
-            <Plus className="h-4 w-4 mr-2" />
-            Solicitar passeio
-          </Button>
+        <Link 
+          href="/walks/new"
+          className={cn(buttonVariants({ variant: "default" }))}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Solicitar passeio
+        </Link>
         }
       />
 
@@ -85,10 +88,13 @@ export default async function ClientDashboardPage() {
                 </p>
               </div>
             </div>
-            <Button size="sm" render={<Link href="/walks/1/tracking" />}>
+            <Link 
+              href="/walks/1/tracking"
+              className={cn(buttonVariants({ variant: "default", size: "sm" }))}
+            >
                 <MapPin className="h-3.5 w-3.5 mr-1.5" />
                 Acompanhar
-            </Button>
+            </Link>
           </CardContent>
         </Card>
       ) : null}
@@ -114,9 +120,12 @@ export default async function ClientDashboardPage() {
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-foreground">Últimos passeios</h2>
-          <Button variant="ghost" size="sm" render={<Link href="/walks" />}>
+          <Link 
+            href="/walks"
+            className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
+          >
             Ver todos →
-          </Button>
+          </Link>
         </div>
 
         {mockWalks.length === 0 ? (
@@ -160,9 +169,12 @@ export default async function ClientDashboardPage() {
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-foreground">Meus cães</h2>
-          <Button variant="ghost" size="sm" render={<Link href="/profile/pets" />}>
+          <Link 
+            href="/profile/pets"
+            className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
+          >
             Gerenciar →
-          </Button>
+          </Link>
         </div>
 
         {mockPets.length === 0 ? (

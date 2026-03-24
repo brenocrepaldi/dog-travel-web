@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { Plus, ClipboardList, DollarSign, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -186,9 +187,12 @@ export default function WalkerDashboardPage() {
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-foreground">Últimos passeios</h2>
-          <Button variant="ghost" size="sm" render={<Link href="/walks" />}>
+          <Link 
+            href="/walks"
+            className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
+          >
             Ver todos →
-          </Button>
+          </Link>
         </div>
 
         <div className="grid gap-2">

@@ -1,17 +1,11 @@
-import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import WalkerDashboardPage from "./_walker/page";
+import ClientDashboardPage from "./_client/page";
 
-/**
- * /dashboard — role-aware redirect.
- * Sends clients to /dashboard/client and walkers to /dashboard/walker.
- */
 export default async function DashboardPage() {
   const session = await auth();
   const role = (session?.user as { role?: string })?.role ?? "client";
 
-  if (role === "walker") {
-    redirect("/dashboard/walker");
-  }
-
-  redirect("/dashboard/client");
+  if (role === "walker") return <WalkerDashboardPage />
+  return <ClientDashboardPage />
 }
