@@ -3,35 +3,20 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { toast } from "sonner";
-import { Loader2, Dog, UserCheck, ArrowLeft } from "lucide-react";
+import { Loader2, Dog, ArrowLeft, UserStar } from "lucide-react";
+
 import { cn } from "@/lib/utils";
+import { maskCPF } from "@/lib/cpf";
+import { registerSchema, type RegisterFormValues } from "@/lib/validations/auth";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PhoneInput } from "@/components/ui/phone-input";
 
-// ─── Validation schema ────────────────────────────────────────────────────────
-const registerSchema = z
-  .object({
-    name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
-    email: z.string().email("E-mail inválido"),
-    phone: z
-      .string()
-      .min(10, "Telefone inválido")
-      .max(15, "Telefone inválido"),
-    password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "As senhas não coincidem",
-    path: ["confirmPassword"],
-  });
-
-type RegisterFormValues = z.infer<typeof registerSchema>;
 type UserRole = "client" | "walker";
 
 // ─── Role Cards ───────────────────────────────────────────────────────────────
@@ -49,7 +34,7 @@ const roleOptions: {
   },
   {
     value: "walker",
-    icon: UserCheck,
+    icon: UserStar,
     title: "Sou passeador",
     description: "Quero oferecer passeios e ganhar dinheiro",
   },
@@ -77,7 +62,7 @@ function RoleStep({
             className={cn(
               "flex items-start gap-4 p-5 rounded-xl border border-border text-left",
               "hover:border-primary/60 hover:bg-primary/5 transition-all duration-200",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
             )}
           >
             <div className="mt-0.5 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
@@ -115,6 +100,7 @@ function DataStep({
 
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormValues>({
@@ -144,7 +130,7 @@ function DataStep({
         <button
           type="button"
           onClick={onBack}
-          className="flex items-center gap-1 text-muted-foreground hover:text-foreground text-sm mb-2 transition-colors"
+          className="flex items-center gap-1 text-muted-foreground hover:text-foreground text-sm mb-5 transition-colors cursor-pointer"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           Voltar
@@ -172,6 +158,39 @@ function DataStep({
             <p className="text-destructive text-xs">{errors.name.message}</p>
           )}
         </div>
+        {/* CPF */}
+        <div className="space-y-1.5">
+          <Label htmlFor="cpf">CPF</Label>
+          <Controller
+            control={control}
+            name="cpf"
+            render={({ field: { value, onChange, ...field } }) => (
+              <Input
+                id="cpf"
+                placeholder="000.000.000-00"
+                autoComplete="off"
+                inputMode="numeric"
+                maxLength={14}
+                value={value || ""}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  onChange(maskCPF(val));
+                }}
+                onKeyDown={(e) => {
+                  // Prevent typing letters and special chars directly (except navigation/control keys)
+                  if (!/[\d.-]/.test(e.key) && e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+                    e.preventDefault();
+                  }
+                }}
+                {...field}
+                aria-invalid={!!errors.cpf}
+              />
+            )}
+          />
+          {errors.cpf && (
+            <p className="text-destructive text-xs">{errors.cpf.message}</p>
+          )}
+        </div>
 
         {/* Email */}
         <div className="space-y-1.5">
@@ -192,13 +211,19 @@ function DataStep({
         {/* Phone */}
         <div className="space-y-1.5">
           <Label htmlFor="phone">Telefone</Label>
-          <Input
-            id="phone"
-            type="tel"
-            placeholder="(11) 99999-9999"
-            autoComplete="tel"
-            {...register("phone")}
-            aria-invalid={!!errors.phone}
+          <Controller
+            control={control}
+            name="phone"
+            render={({ field }) => (
+              <PhoneInput
+                id="phone"
+                defaultCountry="BR"
+                international
+                value={field.value as any}
+                onChange={field.onChange}
+                className={cn(errors.phone && "ring-1 ring-destructive rounded-lg")}
+              />
+            )}
           />
           {errors.phone && (
             <p className="text-destructive text-xs">{errors.phone.message}</p>

@@ -25,10 +25,12 @@ export default function AuthLayout({
         <div className="absolute bottom-0 right-0 w-96 h-96 rounded-full bg-white/5 blur-3xl" />
 
         {/* Logo */}
-        <div className="relative flex items-center gap-2 text-primary-foreground font-bold text-xl z-10">
-          <PawPrint className="h-6 w-6" />
-          DogTravel
-        </div>
+        <Link href="/">
+          <div className="relative flex items-center gap-2 text-primary-foreground font-bold text-xl z-10 cursor-pointer">
+            <PawPrint className="h-6 w-6" />
+            DogTravel
+          </div>
+        </Link>
 
         {/* Headline */}
         <div className="relative z-10">
