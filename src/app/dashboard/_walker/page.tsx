@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Plus, ClipboardList, DollarSign, CheckCircle2, XCircle } from "lucide-react";
+import { ClipboardList, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -46,9 +46,8 @@ export default function WalkerDashboardPage() {
 
   function handleToggle(checked: boolean) {
     setAvailable(checked);
-    toast(checked ? "Você está disponível para passeios" : "Você ficou indisponível", {
-      icon: checked ? "🟢" : "⚪",
-    });
+    if(checked) toast.success("Você está disponível para passeios", {icon: "🟢"})
+    else toast.warning("Você ficou indisponível", {icon: "⚪"})
   }
 
   function handleAccept(id: string) {
@@ -62,7 +61,7 @@ export default function WalkerDashboardPage() {
   return (
     <div className="space-y-8">
       <PageHeader
-        title="Olá, Carlos! 👋"
+        title="Olá, Passeador! 👋"
         description="Gerencie sua disponibilidade e acompanhe seus ganhos."
       />
 

@@ -54,7 +54,7 @@ const statusMap: Record<string, { label: string; variant: "default" | "secondary
 
 export default async function ClientDashboardPage() {
   const session = await auth();
-  const firstName = session?.user?.name?.split(" ")[0] ?? "Olá";
+  const firstName = session?.user?.name?.split(" ")[0] ?? "Cliente";
 
   // TODO: fetch activeWalk, recentWalks, pets from API
   const activeWalk = null; // replace with API call
@@ -62,7 +62,7 @@ export default async function ClientDashboardPage() {
   return (
     <div className="space-y-8">
       <PageHeader
-        title={`Olá, ${firstName}! 👋`}
+        title={firstName ? `Olá, ${firstName}! 👋` : "Olá! 👋"}
         description="Bem-vindo ao DogTravel. Confira seus passeios e pets."
         action={
         <Link 
