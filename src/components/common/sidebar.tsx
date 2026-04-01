@@ -62,25 +62,28 @@ export function Sidebar() {
       <Separator />
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const isActive =
             item.href === "/dashboard"
               ? pathname === "/dashboard"
-              : pathname === item.href;
+              : pathname?.startsWith(item.href);
           return (
             <Link
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150",
+                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 min-h-[44px]",
                 isActive
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                  ? "bg-primary text-primary-foreground shadow-md ring-1 ring-primary/20"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent/50 active:bg-accent"
               )}
             >
-              <item.icon className="h-4 w-4 shrink-0" />
-              {item.label}
+              <item.icon className={cn(
+                "h-5 w-5 shrink-0 transition-transform duration-200",
+                isActive && "scale-110"
+              )} />
+              <span className="truncate">{item.label}</span>
             </Link>
           );
         })}
@@ -89,12 +92,17 @@ export function Sidebar() {
       <Separator />
 
       {/* User / Logout */}
-      <div className="px-3 py-4 space-y-1">
+      <div className="px-3 py-4 space-y-2">
         <Link
           href="/profile"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-accent transition-all duration-150 group"
+          className={cn(
+            "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 min-h-[44px]",
+            pathname === "/profile" 
+              ? "bg-accent/80 ring-1 ring-accent" 
+              : "hover:bg-accent/50 active:bg-accent"
+          )}
         >
-          <Avatar className="h-7 w-7">
+          <Avatar className="h-8 w-8 ring-2 ring-background shadow-sm">
             <AvatarFallback className="text-xs bg-primary/10 text-primary font-semibold">
               {userInitials}
             </AvatarFallback>
@@ -111,12 +119,11 @@ export function Sidebar() {
 
         <Button
           variant="ghost"
-          // size="sm"
-          className="w-full justify-start gap-3 px-3 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all cursor-pointer"
+          className="w-full justify-start gap-3 px-3 py-2.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 active:bg-destructive/15 transition-all duration-200 cursor-pointer min-h-[44px]"
           onClick={() => signOut({ callbackUrl: "/login" })}
         >
-          <LogOut className="h-4 w-4" />
-          Sair da conta
+          <LogOut className="h-5 w-5" />
+          <span>Sair da conta</span>
         </Button>
       </div>
     </aside>

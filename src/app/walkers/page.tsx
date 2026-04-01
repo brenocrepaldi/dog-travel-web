@@ -76,9 +76,9 @@ export default function WalkersPage() {
       </div>
 
       {/* ─── Walkers Grid ─── */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {mockWalkers.map((walker) => (
-          <Card key={walker.id} className="hover:shadow-lg transition-all duration-300 flex flex-col overflow-hidden group">
+          <Card key={walker.id} interactive className="flex flex-col overflow-hidden group"  >
             <CardHeader className="pb-4 relative">
               {/* Optional header background pattern */}
               <div className="absolute top-0 left-0 right-0 h-16 bg-primary/5 border-b border-border/50 group-hover:bg-primary/10 transition-colors" />

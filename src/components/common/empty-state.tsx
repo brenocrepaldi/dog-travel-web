@@ -26,19 +26,21 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center text-center py-16 px-6 rounded-xl border border-dashed border-border bg-background",
+        "flex flex-col items-center justify-center text-center py-16 px-6 rounded-xl border-2 border-dashed border-border/60 bg-muted/20 transition-colors duration-300",
         className
       )}
     >
-      <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-        <Icon className="h-7 w-7 text-primary" />
+      <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-5 shadow-sm ring-1 ring-primary/10 transition-transform duration-300 hover:scale-105">
+        <Icon className="h-8 w-8 text-primary" strokeWidth={1.5} />
       </div>
-      <h3 className="font-semibold text-foreground mb-1">{title}</h3>
-      <p className="text-sm text-muted-foreground max-w-xs">{description}</p>
+      <h3 className="font-semibold text-lg text-foreground mb-2">{title}</h3>
+      <p className="text-sm text-muted-foreground max-w-sm leading-relaxed mb-6">
+        {description}
+      </p>
       {actionLabel && actionHref && (
         <Link 
           href={actionHref}
-          className={cn(buttonVariants({ variant: "default" }), "mt-5")}
+          className={cn(buttonVariants({ variant: "default", size: "default" }))}
         >
           {actionLabel}
         </Link>

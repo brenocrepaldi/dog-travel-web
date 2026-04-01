@@ -9,7 +9,6 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/common/page-header";
 import { EmptyState } from "@/components/common/empty-state";
 
@@ -50,11 +49,11 @@ export default function WalkerDashboardPage() {
     else toast.warning("Você ficou indisponível", {icon: "⚪"})
   }
 
-  function handleAccept(id: string) {
+  function handleAccept(_id: string) {
     toast.success("Passeio aceito!", { description: "O cliente foi notificado." });
   }
 
-  function handleDecline(id: string) {
+  function handleDecline(_id: string) {
     toast("Passeio recusado", { description: "O pedido foi devolvido à fila." });
   }
 
@@ -66,52 +65,72 @@ export default function WalkerDashboardPage() {
       />
 
       {/* ─── Availability toggle ─── */}
-      <Card className={available ? "border-green-400/40 bg-green-50/50" : ""}>
-        <CardContent className="flex items-center justify-between p-5">
-          <div>
-            <p className="font-semibold text-sm">Disponibilidade</p>
-            <p className="text-muted-foreground text-xs mt-0.5">
-              {available
-                ? "Você está visível para clientes"
-                : "Ative para receber pedidos de passeio"}
-            </p>
+      <Card className={cn(
+        "transition-all duration-300",
+        available ? "border-success/40 bg-success/5 shadow-md" : "border-border"
+      )}>
+        <CardContent className="flex items-center justify-between p-6">
+          <div className="flex items-center gap-4">
+            <div className={cn(
+              "w-3 h-3 rounded-full transition-all duration-300",
+              available ? "bg-success animate-pulse" : "bg-muted-foreground/30"
+            )} />
+            <div>
+              <p className="font-semibold text-base text-foreground">Disponibilidade</p>
+              <p className="text-muted-foreground text-sm mt-1">
+                {available
+                  ? "Você está visível para clientes"
+                  : "Ative para receber pedidos de passeio"}
+              </p>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <span className={`text-xs font-medium ${available ? "text-green-600" : "text-muted-foreground"}`}>
+          <div className="flex items-center gap-4">
+            <span className={cn(
+              "text-sm font-semibold transition-colors",
+              available ? "text-success" : "text-muted-foreground"
+            )}>
               {available ? "Ativo" : "Inativo"}
             </span>
             <Switch
               id="availability"
               checked={available}
               onCheckedChange={handleToggle}
-              className="data-[state=checked]:bg-green-500"
+              className="data-[state=checked]:bg-success"
             />
           </div>
         </CardContent>
       </Card>
 
       {/* ─── Stats row ─── */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
-          { label: "Ganhos hoje",      value: "R$ 74" },
-          { label: "Ganhos este mês",  value: "R$ 840" },
-          { label: "Passeios totais",  value: "47" },
+          { label: "Ganhos hoje",      value: "R$ 74", highlight: true },
+          { label: "Ganhos este mês",  value: "R$ 840", highlight: true },
+          { label: "Passeios totais",  value: "47", highlight: false },
         ].map((stat) => (
-          <Card key={stat.label} className="hover:shadow-md transition-shadow">
-            <CardContent className="p-5">
-              <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-              <p className="text-xs text-muted-foreground mt-1">{stat.label}</p>
+          <Card key={stat.label} interactive className={cn(
+            "group",
+            stat.highlight && "border-success/20"
+          )}>
+            <CardContent className="p-6 space-y-2">
+              <p className={cn(
+                "text-3xl font-bold tracking-tight transition-colors",
+                stat.highlight ? "text-success" : "text-foreground"
+              )}>
+                {stat.value}
+              </p>
+              <p className="text-sm text-muted-foreground">{stat.label}</p>
             </CardContent>
           </Card>
         ))}
       </div>
 
       {/* ─── Incoming requests ─── */}
-      <section className="space-y-4">
-        <h2 className="font-semibold text-foreground">
+      <section className="space-y-5">
+        <h2 className="font-semibold text-lg text-foreground flex items-center gap-2">
           Pedidos recebidos
           {mockRequests.length > 0 && (
-            <Badge className="ml-2 text-xs" variant="secondary">
+            <Badge variant="info" size="sm">
               {mockRequests.length}
             </Badge>
           )}
@@ -124,52 +143,53 @@ export default function WalkerDashboardPage() {
             description="Ative sua disponibilidade para começar a receber pedidos."
           />
         ) : (
-          <div className="grid gap-3">
+          <div className="grid gap-4">
             {mockRequests.map((req) => (
-              <Card key={req.id} className="hover:shadow-md hover:border-primary/30 transition-all">
-                <CardContent className="p-5">
-                  <div className="flex items-start justify-between gap-4">
+              <Card key={req.id} interactive className="group">
+                <CardContent className="p-6">
+                  <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
                     {/* Info */}
-                    <div className="space-y-1.5">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
+                    <div className="space-y-3 flex-1">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold shrink-0 ring-2 ring-background shadow-sm">
                           {req.clientName[0]}
                         </div>
                         <div>
-                          <p className="font-medium text-sm">{req.clientName}</p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="font-semibold text-base text-foreground">{req.clientName}</p>
+                          <p className="text-sm text-muted-foreground">
                             🐕 {req.petNames.join(", ")}
                           </p>
                         </div>
                       </div>
-                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                        <span>⏰ {req.scheduledAt}</span>
-                        <span>🕐 {req.durationMinutes} min</span>
-                        <span>📍 {req.location}</span>
+                      <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground pl-13">
+                        <span className="flex items-center gap-1.5">⏰ {req.scheduledAt}</span>
+                        <span className="flex items-center gap-1.5">🕐 {req.durationMinutes} min</span>
+                        <span className="flex items-center gap-1.5">📍 {req.location}</span>
                       </div>
                     </div>
 
                     {/* Price + Actions */}
-                    <div className="flex flex-col items-end gap-2 shrink-0">
-                      <span className="font-bold text-foreground">
+                    <div className="flex flex-col items-end gap-3 shrink-0">
+                      <span className="text-2xl font-bold text-success">
                         R$ {req.price.toFixed(2).replace(".", ",")}
                       </span>
                       <div className="flex gap-2">
                         <Button
-                          size="sm"
+                          size="default"
                           variant="outline"
-                          className="text-destructive border-destructive/30 hover:bg-destructive/10 gap-1.5"
+                          className="text-destructive border-destructive/30 hover:bg-destructive/10 hover:border-destructive gap-2"
                           onClick={() => handleDecline(req.id)}
                         >
-                          <XCircle className="h-3.5 w-3.5" />
+                          <XCircle className="h-4 w-4" />
                           Recusar
                         </Button>
                         <Button
-                          size="sm"
-                          className="gap-1.5"
+                          size="default"
+                          variant="success"
+                          className="gap-2"
                           onClick={() => handleAccept(req.id)}
                         >
-                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          <CheckCircle2 className="h-4 w-4" />
                           Aceitar
                         </Button>
                       </div>
@@ -183,9 +203,9 @@ export default function WalkerDashboardPage() {
       </section>
 
       {/* ─── Recent completed walks ─── */}
-      <section className="space-y-4">
+      <section className="space-y-5">
         <div className="flex items-center justify-between">
-          <h2 className="font-semibold text-foreground">Últimos passeios</h2>
+          <h2 className="font-semibold text-lg text-foreground">Últimos passeios</h2>
           <Link 
             href="/walks"
             className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
@@ -194,24 +214,26 @@ export default function WalkerDashboardPage() {
           </Link>
         </div>
 
-        <div className="grid gap-2">
+        <div className="grid gap-3">
           {mockCompletedWalks.map((walk) => (
-            <Card key={walk.id} className="hover:shadow-sm hover:border-primary/20 transition-all">
-              <CardContent className="flex items-center justify-between p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
+            <Card key={walk.id} interactive className="group">
+              <CardContent className="flex items-center justify-between p-5">
+                <div className="flex items-center gap-4 flex-1 min-w-0">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold shrink-0 ring-2 ring-background shadow-sm transition-transform group-hover:scale-110">
                     {walk.clientName[0]}
                   </div>
-                  <div>
-                    <p className="font-medium text-sm">{walk.clientName}</p>
-                    <p className="text-xs text-muted-foreground">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-base text-foreground truncate">{walk.clientName}</p>
+                    <p className="text-sm text-muted-foreground truncate">
                       {walk.petNames.join(", ")} · {walk.date}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline">Concluído</Badge>
-                  <span className="text-sm font-semibold text-green-600">
+                <div className="flex items-center gap-4 shrink-0">
+                  <Badge variant="success" size="default">
+                    Concluído
+                  </Badge>
+                  <span className="text-base font-bold text-success min-w-[80px] text-right">
                     +R$ {walk.earnings.toFixed(2).replace(".", ",")}
                   </span>
                 </div>

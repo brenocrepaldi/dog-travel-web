@@ -64,11 +64,11 @@ const mockWalks: MockWalk[] = [
   },
 ];
 
-const statusMap: Record<WalkStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-  pending:     { label: "Aguardando",   variant: "secondary" },
-  accepted:    { label: "Agendado",     variant: "default" },
+const statusMap: Record<WalkStatus, { label: string; variant: "default" | "secondary" | "destructive" | "success" | "warning" | "info" | "outline" }> = {
+  pending:     { label: "Aguardando",   variant: "warning" },
+  accepted:    { label: "Agendado",     variant: "info" },
   in_progress: { label: "Em andamento", variant: "default" },
-  completed:   { label: "Concluído",    variant: "outline" },
+  completed:   { label: "Concluído",    variant: "success" },
   cancelled:   { label: "Cancelado",    variant: "destructive" },
 };
 
@@ -91,11 +91,11 @@ export default function WalksPage() {
 
       <Tabs defaultValue="todos" className="w-full">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-          <TabsList className="bg-background border border-border">
-            <TabsTrigger value="todos">Todos</TabsTrigger>
-            <TabsTrigger value="agendados">Agendados</TabsTrigger>
-            <TabsTrigger value="em_andamento">Em andamento</TabsTrigger>
-            <TabsTrigger value="concluidos">Concluídos</TabsTrigger>
+          <TabsList className="bg-muted/50 border border-border p-1 h-auto">
+            <TabsTrigger value="todos" className="min-h-[44px] px-4">Todos</TabsTrigger>
+            <TabsTrigger value="agendados" className="min-h-[44px] px-4">Agendados</TabsTrigger>
+            <TabsTrigger value="em_andamento" className="min-h-[44px] px-4">Em andamento</TabsTrigger>
+            <TabsTrigger value="concluidos" className="min-h-[44px] px-4">Concluídos</TabsTrigger>
           </TabsList>
 
           <div className="relative w-full sm:w-64">
