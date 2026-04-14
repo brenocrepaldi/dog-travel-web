@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { ArrowRight, Loader2 } from "lucide-react";
+import { FlowActions } from "@/components/common/flow-actions";
 import type { WalkFormData } from "../walk-request-form";
 
 interface Props {
@@ -88,11 +87,15 @@ export function StepPrice({ data, updateData, onNext, onBack }: Props) {
         💳 Você será cobrado automaticamente após a conclusão do passeio.
       </p>
 
-      {/* Actions */}
-      <div className="flex justify-between pt-2">
-        <Button variant="ghost" onClick={onBack}>← Voltar</Button>
-        <Button onClick={onNext} disabled={loading}>Continuar →</Button>
-      </div>
+      <FlowActions
+        showBack
+        onBack={onBack}
+        cancelHref="/walks"
+        primaryLabel="Continuar"
+        primaryIcon={<ArrowRight className="h-4 w-4" />}
+        onPrimary={onNext}
+        primaryDisabled={loading}
+      />
     </div>
   );
 }

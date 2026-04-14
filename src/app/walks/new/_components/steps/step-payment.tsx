@@ -1,8 +1,8 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Check, CreditCard, Smartphone } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ArrowRight, Check, CreditCard, Smartphone } from "lucide-react";
+import { FlowActions } from "@/components/common/flow-actions";
 import Link from "next/link";
 import type { WalkFormData } from "../walk-request-form";
 
@@ -74,18 +74,20 @@ export function StepPayment({ data, updateData, onNext, onBack }: Props) {
       {/* Add new method */}
       <p className="text-sm text-muted-foreground">
         Não encontrou o método?{" "}
-        <Link href="/payments/methods/new" className="text-primary hover:underline font-medium">
+        <Link href="/payments/methods?action=add" className="text-primary hover:underline font-medium">
           Adicionar cartão
         </Link>
       </p>
 
-      {/* Actions */}
-      <div className="flex justify-between pt-2">
-        <Button variant="ghost" onClick={onBack}>← Voltar</Button>
-        <Button onClick={onNext} disabled={!data.selectedMethodId}>
-          Continuar →
-        </Button>
-      </div>
+      <FlowActions
+        showBack
+        onBack={onBack}
+        cancelHref="/walks"
+        primaryLabel="Continuar"
+        primaryIcon={<ArrowRight className="h-4 w-4" />}
+        onPrimary={onNext}
+        primaryDisabled={!data.selectedMethodId}
+      />
     </div>
   );
 }

@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { ArrowRight, LocateFixed, MapPin } from "lucide-react";
+import { FlowActions } from "@/components/common/flow-actions";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MapPin, LocateFixed } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import type { WalkFormData } from "../walk-request-form";
 
 interface Props {
@@ -77,15 +78,15 @@ export function StepLocation({ data, updateData, onNext, onBack }: Props) {
         </div>
       )}
 
-      {/* Actions */}
-      <div className="flex justify-between pt-2">
-        <Button variant="ghost" onClick={onBack}>
-          ← Voltar
-        </Button>
-        <Button onClick={onNext} disabled={!isValid}>
-          Continuar →
-        </Button>
-      </div>
+      <FlowActions
+        showBack
+        onBack={onBack}
+        cancelHref="/walks"
+        primaryLabel="Continuar"
+        primaryIcon={<ArrowRight className="h-4 w-4" />}
+        onPrimary={onNext}
+        primaryDisabled={!isValid}
+      />
     </div>
   );
 }

@@ -136,7 +136,7 @@ export function WalkRequestForm() {
       toast.success("Passeio solicitado!", {
         description: "Aguardando aceitação de um passeador.",
       });
-      router.push("/dashboard");
+      router.push("/walks");
     } catch {
       toast.error("Erro ao solicitar passeio", {
         description: "Tente novamente em instantes.",

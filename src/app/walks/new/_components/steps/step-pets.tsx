@@ -1,8 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { Check } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ArrowRight, Check } from "lucide-react";
+import { FlowActions } from "@/components/common/flow-actions";
 import type { WalkFormData } from "../walk-request-form";
 
 // ─── Mock pets (replace with API/store data) ───────────────────────────────
@@ -40,9 +41,9 @@ export function StepPets({ data, updateData, onNext }: Props) {
       {MOCK_PETS.length === 0 ? (
         <p className="text-muted-foreground text-sm py-6 text-center">
           Nenhum cão cadastrado. Adicione um na aba{" "}
-          <a href="/profile/pets" className="text-primary underline">
+          <Link href="/profile" className="text-primary underline">
             Perfil
-          </a>
+          </Link>
           .
         </p>
       ) : (
@@ -93,14 +94,14 @@ export function StepPets({ data, updateData, onNext }: Props) {
       )}
 
       {/* Actions */}
-      <div className="flex justify-end pt-2">
-        <Button
-          onClick={onNext}
-          disabled={data.selectedPetIds.length === 0}
-        >
-          Continuar →
-        </Button>
-      </div>
+      <FlowActions
+        showBack={false}
+        cancelHref="/walks"
+        primaryLabel="Continuar"
+        primaryIcon={<ArrowRight className="h-4 w-4" />}
+        onPrimary={onNext}
+        primaryDisabled={data.selectedPetIds.length === 0}
+      />
     </div>
   );
 }

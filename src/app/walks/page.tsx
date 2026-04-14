@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Plus, MapPin, Search } from "lucide-react";
+import { History, MapPin, Plus, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -9,62 +9,11 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/common/page-header";
 import { EmptyState } from "@/components/common/empty-state";
+import { walks as allWalks, getWalkerById, type WalkRecord } from "@/lib/mock-data";
 
 export const metadata: Metadata = { title: "Meus Passeios | DogTravel" };
 
-// ─── Placeholder data ───────────────────────────────────────────────────────
-type WalkStatus = "pending" | "accepted" | "in_progress" | "completed" | "cancelled";
-
-interface MockWalk {
-  id: string;
-  walkerName: string;
-  petNames: string[];
-  status: WalkStatus;
-  date: string;
-  price: string;
-  duration: string;
-}
-
-const mockWalks: MockWalk[] = [
-  {
-    id: "1",
-    walkerName: "Carlos Silva",
-    petNames: ["Rex"],
-    status: "in_progress",
-    date: "Hoje · 14:30",
-    price: "R$ 44,00",
-    duration: "45 min",
-  },
-  {
-    id: "2",
-    walkerName: "Ana Lima",
-    petNames: ["Rex", "Mel"],
-    status: "completed",
-    date: "18 Mar · 09:00",
-    price: "R$ 53,00",
-    duration: "60 min",
-  },
-  {
-    id: "3",
-    walkerName: "Pedro Santos",
-    petNames: ["Mel"],
-    status: "cancelled",
-    date: "10 Mar · 16:00",
-    price: "R$ 44,00",
-    duration: "45 min",
-  },
-  {
-    id: "4",
-    walkerName: "Márcia Souza",
-    petNames: ["Rex"],
-    status: "accepted",
-    date: "25 Mar · 10:00",
-    price: "R$ 44,00",
-    duration: "45 min",
-  },
-];
-
-const statusMap: Record<WalkStatus, { label: string; variant: "default" | "secondary" | "destructive" | "success" | "warning" | "info" | "outline" }> = {
+const statusMap: Record<WalkRecord["status"], { label: string; variant: "default" | "secondary" | "destructive" | "success" | "warning" | "info" | "outline" }> = {
   pending:     { label: "Aguardando",   variant: "warning" },
   accepted:    { label: "Agendado",     variant: "info" },
   in_progress: { label: "Em andamento", variant: "default" },
@@ -73,19 +22,33 @@ const statusMap: Record<WalkStatus, { label: string; variant: "default" | "secon
 };
 
 export default function WalksPage() {
+  const walks = allWalks.map((walk) => ({
+    ...walk,
+    walkerName: getWalkerById(walk.walkerId)?.name ?? "Passeador",
+  }));
+
   return (
     <div className="space-y-8 pb-8">
       <PageHeader
         title="Meus passeios"
         description="Histórico completo e acompanhamento de todos os passeios solicitados."
         action={
-          <Link 
-            href="/walks/new"
-            className={cn(buttonVariants({ variant: "default" }))}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Novo passeio
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/walks/history"
+              className={cn(buttonVariants({ variant: "outline" }))}
+            >
+              <History className="h-4 w-4 mr-2" />
+              Histórico detalhado
+            </Link>
+            <Link
+              href="/walks/new"
+              className={cn(buttonVariants({ variant: "default" }))}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Novo passeio
+            </Link>
+          </div>
         }
       />
 
@@ -109,23 +72,23 @@ export default function WalksPage() {
         </div>
 
         <TabsContent value="todos" className="m-0 focus-visible:outline-none focus-visible:ring-0">
-          <WalksGrid walks={mockWalks} />
+          <WalksGrid walks={walks} />
         </TabsContent>
         <TabsContent value="agendados" className="m-0 focus-visible:outline-none focus-visible:ring-0">
-          <WalksGrid walks={mockWalks.filter(w => w.status === "accepted" || w.status === "pending")} />
+          <WalksGrid walks={walks.filter(w => w.status === "accepted" || w.status === "pending")} />
         </TabsContent>
         <TabsContent value="em_andamento" className="m-0 focus-visible:outline-none focus-visible:ring-0">
-          <WalksGrid walks={mockWalks.filter(w => w.status === "in_progress")} />
+          <WalksGrid walks={walks.filter(w => w.status === "in_progress")} />
         </TabsContent>
         <TabsContent value="concluidos" className="m-0 focus-visible:outline-none focus-visible:ring-0">
-          <WalksGrid walks={mockWalks.filter(w => w.status === "completed")} />
+          <WalksGrid walks={walks.filter(w => w.status === "completed")} />
         </TabsContent>
       </Tabs>
     </div>
   );
 }
 
-function WalksGrid({ walks }: { walks: MockWalk[] }) {
+function WalksGrid({ walks }: { walks: Array<WalkRecord & { walkerName: string }> }) {
   if (walks.length === 0) {
     return (
       <EmptyState
@@ -163,7 +126,7 @@ function WalksGrid({ walks }: { walks: MockWalk[] }) {
                     {walk.walkerName}
                   </CardTitle>
                   <CardDescription className="text-xs mt-1">
-                    {walk.date} · {walk.duration}
+                    {walk.dateLabel} · {walk.durationMinutes} min
                   </CardDescription>
                 </div>
                 <div className="w-10 h-10 rounded-full bg-primary/10 flex flex-col items-center justify-center text-primary font-bold text-sm">
@@ -176,7 +139,7 @@ function WalksGrid({ walks }: { walks: MockWalk[] }) {
                 <span className="text-muted-foreground flex items-center gap-1.5">
                   <span className="text-base">🐕</span> {walk.petNames.join(", ")}
                 </span>
-                <span className="font-semibold text-foreground">{walk.price}</span>
+                <span className="font-semibold text-foreground">{walk.price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
               </div>
 
               <div className="mt-auto grid grid-cols-2 gap-2">
@@ -197,7 +160,7 @@ function WalksGrid({ walks }: { walks: MockWalk[] }) {
                       Detalhes
                     </Link>
                     <Link 
-                      href={walk.status === "completed" ? `/walkers/${walk.walkerName}` : `/walks/new`}
+                      href={walk.status === "completed" ? `/walks/${walk.id}/review` : `/walks/new?walker=${walk.walkerId}`}
                       className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "w-full")}
                     >
                       {walk.status === "completed" ? "Avaliar" : "Reagendar"}

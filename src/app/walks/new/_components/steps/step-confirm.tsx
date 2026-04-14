@@ -1,8 +1,7 @@
 "use client";
 
 import { Loader2, Check, Dog, Calendar, MapPin, CreditCard } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { FlowActions } from "@/components/common/flow-actions";
 import type { WalkFormData } from "../walk-request-form";
 
 // ─── Mock data (mirrors the other steps) ──────────────────────────────────
@@ -94,29 +93,19 @@ export function StepConfirm({ data, onBack, onSubmit, submitting }: Props) {
         e autoriza a cobrança automática após a conclusão do passeio.
       </p>
 
-      {/* Actions */}
-      <div className="flex justify-between pt-2">
-        <Button variant="ghost" onClick={onBack} disabled={submitting}>
-          ← Voltar
-        </Button>
-        <Button
-          onClick={onSubmit}
-          disabled={submitting}
-          className="gap-2 min-w-[180px]"
-        >
-          {submitting ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Solicitando...
-            </>
-          ) : (
-            <>
-              <Check className="h-4 w-4" />
-              Confirmar e buscar passeador
-            </>
-          )}
-        </Button>
-      </div>
+      <FlowActions
+        showBack
+        onBack={onBack}
+        cancelHref="/walks"
+        primaryLabel="Concluir solicitacao"
+        onPrimary={onSubmit}
+        primaryDisabled={submitting}
+        primaryLoading={submitting}
+        primaryVariant="success"
+        primaryIcon={
+          submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />
+        }
+      />
     </div>
   );
 }
