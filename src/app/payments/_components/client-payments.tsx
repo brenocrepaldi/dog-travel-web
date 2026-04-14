@@ -1,23 +1,31 @@
 "use client";
 
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CreditCard, CheckCircle2, History } from "lucide-react";
 
 const MOCK_HISTORY = [
-  { id: 1, date: "22/03/2026", pets: "Rex", duration: "30 min", amount: "R$ 44,00", status: "Pago" },
-  { id: 2, date: "18/03/2026", pets: "Rex", duration: "30 min", amount: "R$ 44,00", status: "Pago" },
-  { id: 3, date: "10/03/2026", pets: "Rex + Mel", duration: "45 min", amount: "R$ 53,00", status: "Pago" },
+  { id: 1, walkId: "1", date: "22/03/2026", pets: "Rex", duration: "30 min", amount: "R$ 44,00", status: "Pago" },
+  { id: 2, walkId: "2", date: "18/03/2026", pets: "Rex", duration: "30 min", amount: "R$ 44,00", status: "Pago" },
+  { id: 3, walkId: "3", date: "10/03/2026", pets: "Rex + Mel", duration: "45 min", amount: "R$ 53,00", status: "Pago" },
 ];
 
 export function ClientPayments() {
   return (
     <div className="space-y-8 pb-12">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Pagamentos</h1>
-        <p className="text-muted-foreground mt-2">
-          Gerencie seus métodos de pagamento e visualize o histórico de gastos.
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">Pagamentos</h1>
+            <p className="text-muted-foreground mt-2">
+              Gerencie seus métodos de pagamento e visualize o histórico de gastos.
+            </p>
+          </div>
+          <Button variant="outline" render={<Link href="/walks/history" />}>
+            Histórico detalhado
+          </Button>
+        </div>
       </div>
 
       {/* ─── Highlights ─── */}
@@ -41,7 +49,7 @@ export function ClientPayments() {
                 •••• 4242
               </CardTitle>
             </div>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" render={<Link href="/payments/methods" />}>
               Gerenciar
             </Button>
           </CardHeader>
@@ -76,6 +84,14 @@ export function ClientPayments() {
                 
                 <div className="flex items-center gap-4 text-right">
                   <span className="text-base font-bold text-foreground">{item.amount}</span>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="hidden sm:inline-flex"
+                    render={<Link href={`/walks/${item.walkId}`} />}
+                  >
+                    Detalhes
+                  </Button>
                   <div className="hidden sm:flex items-center gap-1.5 text-green-600 bg-green-50 px-2 py-1 rounded-md text-xs font-medium dark:bg-green-950/40 dark:text-green-400">
                     <CheckCircle2 className="h-3.5 w-3.5" />
                     {item.status}
