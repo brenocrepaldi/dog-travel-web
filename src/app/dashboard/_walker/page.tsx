@@ -49,12 +49,12 @@ export default function WalkerDashboardPage() {
     else toast.warning("Você ficou indisponível", {icon: "⚪"})
   }
 
-  function handleAccept(_id: string) {
-    toast.success("Passeio aceito!", { description: "O cliente foi notificado." });
+  function handleAccept(id: string) {
+    toast.success("Passeio aceito!", { description: `Pedido ${id} confirmado e cliente notificado.` });
   }
 
-  function handleDecline(_id: string) {
-    toast("Passeio recusado", { description: "O pedido foi devolvido à fila." });
+  function handleDecline(id: string) {
+    toast("Passeio recusado", { description: `Pedido ${id} devolvido para a fila.` });
   }
 
   return (

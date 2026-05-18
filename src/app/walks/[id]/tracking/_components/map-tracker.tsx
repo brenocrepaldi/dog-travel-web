@@ -24,7 +24,7 @@ export default function MapTracker({ walkId }: { walkId: string }) {
 	// Simulate live movement
 	useEffect(() => {
 		const interval = setInterval(() => {
-			// In a real app, listen to WebSockets here to update `currentPosIdx` or coordinates
+			setCurrentPosIdx((current) => (current + 1) % MOCK_ROUTE.length);
 		}, 5000);
 		return () => clearInterval(interval);
 	}, []);

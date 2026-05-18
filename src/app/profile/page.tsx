@@ -8,7 +8,7 @@ export default async function ProfilePage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const role = (session.user as any).role || "client";
+  const role = session.user.role || "client";
 
   return (
     <div className="space-y-8 pb-12">

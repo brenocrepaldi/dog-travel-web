@@ -1,63 +1,89 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Edit2, Info } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Edit2, Info, Plus } from "lucide-react";
+import { useAppStore } from "@/hooks/use-app-store";
+import { DEFAULT_CLIENT_PETS, DOG_SIZE_LABEL, petEmojiBySize } from "@/lib/pets";
+import type { Pet } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { PetFormSheet } from "./pet-form-sheet";
+import { PetFormSheet, type PetDraft } from "./pet-form-sheet";
 
-// Mock data
-type Pet = {
-  id: string;
-  name: string;
-  breed: string;
-  age: number;
-  size: "Pequeno" | "Médio" | "Grande";
-  behavior: string;
-  image?: string;
-};
-
-const MOCK_PETS: Pet[] = [
-  {
-    id: "1",
-    name: "Rex",
-    breed: "Golden Retriever",
-    age: 3,
-    size: "Grande",
-    behavior: "Brincalhão e dócil",
-  },
-  {
-    id: "2",
-    name: "Mel",
-    breed: "Poodle",
-    age: 1,
-    size: "Pequeno",
-    behavior: "Agitada, puxa a coleira nos primeiros 5 min.",
-  },
-];
+function toDraft(pet: Pet): PetDraft {
+  return {
+    name: pet.name,
+    breed: pet.breed,
+    age: pet.age,
+    size: pet.size,
+    behavior: pet.notes ?? "",
+  };
+}
 
 export function PetsList() {
-  const [pets, setPets] = useState<Pet[]>(MOCK_PETS);
+  const pets = useAppStore((state) => state.pets);
+  const setPets = useAppStore((state) => state.setPets);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingPet, setEditingPet] = useState<Pet | null>(null);
+  const [sheetVersion, setSheetVersion] = useState(0);
+
+  const hasPets = pets.length > 0;
+  const list = hasPets ? pets : DEFAULT_CLIENT_PETS;
+
+  const nextPetId = useMemo(() => {
+    const numericIds = pets
+      .map((pet) => Number.parseInt(pet.id, 10))
+      .filter((id) => Number.isFinite(id));
+    return String((numericIds.length > 0 ? Math.max(...numericIds) : 0) + 1);
+  }, [pets]);
 
   const handleEdit = (pet: Pet) => {
     setEditingPet(pet);
+    setSheetVersion((current) => current + 1);
     setSheetOpen(true);
   };
 
   const handleAdd = () => {
     setEditingPet(null);
+    setSheetVersion((current) => current + 1);
     setSheetOpen(true);
   };
 
-  const handleSavePet = (savedPet: any) => {
-    if (editingPet) {
-      setPets((prev) => prev.map((p) => (p.id === editingPet.id ? { ...p, ...savedPet } : p)));
-    } else {
-      setPets((prev) => [...prev, { ...savedPet, id: Math.random().toString() }]);
+  const handleSavePet = (savedPet: PetDraft) => {
+    if (!hasPets) {
+      setPets(DEFAULT_CLIENT_PETS);
     }
+
+    const currentPets = hasPets ? pets : DEFAULT_CLIENT_PETS;
+
+    if (editingPet) {
+      setPets(
+        currentPets.map((pet) =>
+          pet.id === editingPet.id
+            ? {
+                ...pet,
+                name: savedPet.name,
+                breed: savedPet.breed,
+                age: savedPet.age,
+                size: savedPet.size,
+                notes: savedPet.behavior,
+              }
+            : pet
+        )
+      );
+      return;
+    }
+
+    const newPet: Pet = {
+      id: nextPetId,
+      ownerId: "client_1",
+      name: savedPet.name,
+      breed: savedPet.breed,
+      age: savedPet.age,
+      size: savedPet.size,
+      notes: savedPet.behavior,
+    };
+    setPets([...currentPets, newPet]);
   };
 
   return (
@@ -70,29 +96,28 @@ export function PetsList() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {pets.length === 0 ? (
+        {list.length === 0 ? (
           <div className="col-span-1 md:col-span-2 p-8 text-center border-2 border-dashed border-border rounded-xl">
             <p className="text-muted-foreground mb-4">Você ainda não adicionou nenhum cão.</p>
-            <Button variant="outline" onClick={handleAdd}>Adicionar meu primeiro cão</Button>
+            <Button variant="outline" onClick={handleAdd}>
+              Adicionar meu primeiro cão
+            </Button>
           </div>
         ) : (
-          pets.map((pet) => (
+          list.map((pet) => (
             <Card key={pet.id} className="overflow-hidden group flex flex-col transition-all hover:shadow-md border-border/60">
               <CardContent className="p-0 flex flex-1">
-                {/* Visual placeholder for pet image */}
                 <div className="w-24 shrink-0 bg-primary/5 flex items-center justify-center border-r border-border/50 text-4xl">
-                  {pet.size === "Pequeno" ? "🐩" : "🦮"}
+                  {petEmojiBySize(pet.size)}
                 </div>
-                
+
                 <div className="p-4 flex-1 flex flex-col justify-between">
                   <div>
                     <div className="flex justify-between items-start">
                       <div>
-                        <h3 className="font-bold text-lg text-foreground leading-none mb-1">
-                          {pet.name}
-                        </h3>
+                        <h3 className="font-bold text-lg text-foreground leading-none mb-1">{pet.name}</h3>
                         <p className="text-sm text-muted-foreground mb-2">
-                          {pet.breed} • {pet.age} {pet.age === 1 ? 'ano' : 'anos'}
+                          {pet.breed} • {pet.age} {pet.age === 1 ? "ano" : "anos"}
                         </p>
                       </div>
                       <Button
@@ -107,17 +132,15 @@ export function PetsList() {
 
                     <div className="flex gap-2 mb-3">
                       <Badge variant="secondary" className="font-normal text-xs bg-secondary/50">
-                        {pet.size}
+                        {DOG_SIZE_LABEL[pet.size]}
                       </Badge>
                     </div>
                   </div>
 
-                  {pet.behavior && (
+                  {pet.notes && (
                     <div className="bg-muted/30 rounded-md p-2 flex items-start gap-2 max-w-full">
                       <Info className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
-                      <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                        {pet.behavior}
-                      </p>
+                      <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">{pet.notes}</p>
                     </div>
                   )}
                 </div>
@@ -128,9 +151,10 @@ export function PetsList() {
       </div>
 
       <PetFormSheet
+        key={`${editingPet?.id ?? "new"}-${sheetVersion}`}
         open={sheetOpen}
         onOpenChange={setSheetOpen}
-        petToEdit={editingPet}
+        petToEdit={editingPet ? toDraft(editingPet) : null}
         onSave={handleSavePet}
       />
     </div>

@@ -1,15 +1,11 @@
 "use client";
 
-import { Dog, Calendar, MapPin, CreditCard, Clock } from "lucide-react";
+import { Dog, Calendar, MapPin, CreditCard, Clock, BadgePercent } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { managedPaymentMethods } from "@/lib/mock-data";
+import { useAppStore } from "@/hooks/use-app-store";
+import { DEFAULT_CLIENT_PETS } from "@/lib/pets";
 import type { WalkFormData } from "./walk-request-form";
-
-const MOCK_PETS: Record<string, string> = { "1": "Rex", "2": "Mel" };
-const MOCK_METHODS: Record<string, { label: string; brand: string }> = {
-  m1: { label: "•••• 4242", brand: "Visa" },
-  m2: { label: "•••• 8888", brand: "Mastercard" },
-  m3: { label: "PIX",       brand: "PIX" },
-};
 
 function fmt(val: number) {
   return val.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -47,9 +43,13 @@ function Row({
  * Updates in real-time as the user fills in each step.
  */
 export function WalkSummary({ data, currentStep }: Props) {
+  const storedPets = useAppStore((state) => state.pets);
+  const pets = storedPets.length > 0 ? storedPets : DEFAULT_CLIENT_PETS;
   const petNames =
     data.selectedPetIds.length > 0
-      ? data.selectedPetIds.map((id) => MOCK_PETS[id] ?? id).join(", ")
+      ? data.selectedPetIds
+          .map((id) => pets.find((pet) => pet.id === id)?.name ?? id)
+          .join(", ")
       : null;
 
   const dateLabel =
@@ -69,7 +69,9 @@ export function WalkSummary({ data, currentStep }: Props) {
         })
       : null;
 
-  const method = data.selectedMethodId ? MOCK_METHODS[data.selectedMethodId] : null;
+  const method = data.selectedMethodId
+    ? managedPaymentMethods.find((paymentMethod) => paymentMethod.id === data.selectedMethodId)
+    : null;
 
   return (
     <div className="rounded-2xl border border-border bg-background shadow-sm p-5 space-y-4">
@@ -110,6 +112,12 @@ export function WalkSummary({ data, currentStep }: Props) {
           label="Pagamento"
           value={method ? `${method.brand} ${method.label}` : "Não selecionado"}
           dimmed={!method}
+        />
+        <Row
+          icon={BadgePercent}
+          label="Oferta"
+          value={data.isFirstRide ? "Desconto de primeira contratação ativo" : "Sem desconto aplicado"}
+          dimmed={!data.isFirstRide}
         />
       </div>
 

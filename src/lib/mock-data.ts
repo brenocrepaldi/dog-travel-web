@@ -1,4 +1,4 @@
-import type { PaymentMethodType, WalkStatus } from "@/types";
+import type { DogSize, PaymentMethodType, WalkStatus } from "@/types";
 
 export interface WalkerProfile {
   id: string;
@@ -11,9 +11,18 @@ export interface WalkerProfile {
   tags: string[];
   verified: boolean;
   priceRange: string;
+  startingPrice60Min: number;
   availability: string;
   completedWalks: number;
   responseTime: string;
+  trustChecks: {
+    identityVerified: boolean;
+    backgroundCheck: boolean;
+    firstAidCertified: boolean;
+  };
+  certifications: string[];
+  supportedSizes: DogSize[];
+  behaviorExpertise: string[];
 }
 
 export interface WalkParticipant {
@@ -91,9 +100,18 @@ export const walkers: WalkerProfile[] = [
     tags: ["Grande Porte", "Energeticos", "Adestrador"],
     verified: true,
     priceRange: "R$ 38 - R$ 62",
+    startingPrice60Min: 29,
     availability: "Seg-Sab, 07:00-19:00",
     completedWalks: 812,
     responseTime: "~5 min",
+    trustChecks: {
+      identityVerified: true,
+      backgroundCheck: true,
+      firstAidCertified: true,
+    },
+    certifications: ["Adestramento Positivo", "Primeiros Socorros Pet", "Manejo de Cao Reativo"],
+    supportedSizes: ["medium", "large", "giant"],
+    behaviorExpertise: ["agitado", "reativo", "multiplos-caes"],
   },
   {
     id: "2",
@@ -107,9 +125,18 @@ export const walkers: WalkerProfile[] = [
     tags: ["Idosos", "Medicacao", "Pequeno Porte"],
     verified: true,
     priceRange: "R$ 35 - R$ 58",
+    startingPrice60Min: 28,
     availability: "Seg-Dom, 08:00-20:00",
     completedWalks: 467,
     responseTime: "~8 min",
+    trustChecks: {
+      identityVerified: true,
+      backgroundCheck: true,
+      firstAidCertified: true,
+    },
+    certifications: ["Cuidados com Caes Idosos", "Administracao de Medicacao", "Primeiros Socorros Pet"],
+    supportedSizes: ["small", "medium"],
+    behaviorExpertise: ["idoso", "filhote", "medicacao"],
   },
   {
     id: "3",
@@ -123,9 +150,18 @@ export const walkers: WalkerProfile[] = [
     tags: ["Reativos", "Ansiosos"],
     verified: false,
     priceRange: "R$ 32 - R$ 54",
+    startingPrice60Min: 30,
     availability: "Seg-Sex, 06:00-18:00",
     completedWalks: 231,
     responseTime: "~12 min",
+    trustChecks: {
+      identityVerified: true,
+      backgroundCheck: false,
+      firstAidCertified: false,
+    },
+    certifications: ["Manejo de Cao Reativo", "Passeio em Baixo Estimulo"],
+    supportedSizes: ["small", "medium", "large"],
+    behaviorExpertise: ["reativo", "ansioso", "agitado"],
   },
   {
     id: "4",
@@ -135,13 +171,22 @@ export const walkers: WalkerProfile[] = [
     location: "Vila Mariana, Sao Paulo",
     serviceArea: "Vila Mariana, Aclimacao e Paraiso",
     description:
-      "Mais de 5 anos de experiencia. Foco em previsibilidade, primeiros socorros e passeio seguro para filhotes.",
+      "Mais de 5 anos de experiencia. Foco em previsibilidade, primeiros socorros e rotina estruturada para filhotes.",
     tags: ["Experiente", "Primeiros Socorros"],
     verified: true,
     priceRange: "R$ 40 - R$ 65",
+    startingPrice60Min: 31,
     availability: "Seg-Dom, 06:30-21:00",
     completedWalks: 1022,
     responseTime: "~4 min",
+    trustChecks: {
+      identityVerified: true,
+      backgroundCheck: true,
+      firstAidCertified: true,
+    },
+    certifications: ["Primeiros Socorros Veterinarios", "Socializacao de Filhotes", "Conduta Segura em Via Publica"],
+    supportedSizes: ["small", "medium", "large", "giant"],
+    behaviorExpertise: ["filhote", "agitado", "multiplos-caes"],
   },
 ];
 

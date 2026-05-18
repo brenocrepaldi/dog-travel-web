@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { History, MapPin, Plus, Search } from "lucide-react";
+import { History, MapPin, Plus, Repeat2, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -26,6 +26,9 @@ export default function WalksPage() {
     ...walk,
     walkerName: getWalkerById(walk.walkerId)?.name ?? "Passeador",
   }));
+  const lastCompletedWalk = [...allWalks]
+    .filter((walk) => walk.status === "completed")
+    .sort((a, b) => b.scheduledAt.localeCompare(a.scheduledAt))[0];
 
   return (
     <div className="space-y-8 pb-8">
@@ -41,6 +44,15 @@ export default function WalksPage() {
               <History className="h-4 w-4 mr-2" />
               Histórico detalhado
             </Link>
+            {lastCompletedWalk && (
+              <Link
+                href={`/walks/new?repeat=${lastCompletedWalk.id}`}
+                className={cn(buttonVariants({ variant: "outline" }))}
+              >
+                <Repeat2 className="h-4 w-4 mr-2" />
+                Repetir último
+              </Link>
+            )}
             <Link
               href="/walks/new"
               className={cn(buttonVariants({ variant: "default" }))}

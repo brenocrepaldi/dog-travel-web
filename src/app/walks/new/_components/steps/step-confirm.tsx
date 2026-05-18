@@ -1,16 +1,12 @@
 "use client";
 
-import { Loader2, Check, Dog, Calendar, MapPin, CreditCard } from "lucide-react";
+import { Loader2, Check, Dog, Calendar, MapPin, CreditCard, ShieldCheck, Camera, MessageSquare } from "lucide-react";
 import { FlowActions } from "@/components/common/flow-actions";
+import { Badge } from "@/components/ui/badge";
+import { managedPaymentMethods } from "@/lib/mock-data";
+import { useAppStore } from "@/hooks/use-app-store";
+import { DEFAULT_CLIENT_PETS } from "@/lib/pets";
 import type { WalkFormData } from "../walk-request-form";
-
-// ─── Mock data (mirrors the other steps) ──────────────────────────────────
-const MOCK_PETS: Record<string, string> = { "1": "Rex", "2": "Mel" };
-const MOCK_METHODS: Record<string, string> = {
-  m1: "Visa •••• 4242",
-  m2: "Mastercard •••• 8888",
-  m3: "PIX",
-};
 
 function fmt(val: number) {
   return val.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -48,8 +44,13 @@ interface Props {
 }
 
 export function StepConfirm({ data, onBack, onSubmit, submitting }: Props) {
-  const petNames = data.selectedPetIds.map((id) => MOCK_PETS[id] ?? id).join(", ");
-  const methodLabel = data.selectedMethodId ? MOCK_METHODS[data.selectedMethodId] ?? "—" : "—";
+  const storedPets = useAppStore((state) => state.pets);
+  const pets = storedPets.length > 0 ? storedPets : DEFAULT_CLIENT_PETS;
+  const petNames = data.selectedPetIds.map((id) => pets.find((pet) => pet.id === id)?.name ?? id).join(", ");
+  const selectedMethod = data.selectedMethodId
+    ? managedPaymentMethods.find((method) => method.id === data.selectedMethodId)
+    : null;
+  const methodLabel = selectedMethod ? `${selectedMethod.brand} ${selectedMethod.label}` : "—";
   const dateLabel = data.date
     ? new Date(data.date + "T" + (data.time || "00:00")).toLocaleString("pt-BR", {
         weekday: "long",
@@ -79,11 +80,34 @@ export function StepConfirm({ data, onBack, onSubmit, submitting }: Props) {
 
       {/* Price highlight */}
       {data.estimatedPrice !== null && (
-        <div className="flex items-center justify-between rounded-xl bg-primary/5 border border-primary/20 px-4 py-3.5">
-          <span className="text-sm font-semibold text-foreground">Total estimado</span>
-          <span className="text-xl font-bold text-primary">{fmt(data.estimatedPrice)}</span>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between rounded-xl bg-primary/5 border border-primary/20 px-4 py-3.5">
+            <span className="text-sm font-semibold text-foreground">Total estimado</span>
+            <span className="text-xl font-bold text-primary">{fmt(data.estimatedPrice)}</span>
+          </div>
+          {data.isFirstRide && (
+            <Badge variant="success">Desconto de primeira contratacao aplicado</Badge>
+          )}
         </div>
       )}
+
+      <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-3">
+        <p className="text-sm font-semibold text-foreground">Garantias deste passeio</p>
+        <div className="grid gap-2 text-sm text-muted-foreground">
+          <p className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-primary" />
+            Passeador com identidade e antecedentes verificados.
+          </p>
+          <p className="flex items-center gap-2">
+            <Camera className="h-4 w-4 text-primary" />
+            Atualizações por fotos/vídeos e rastreamento GPS durante o trajeto.
+          </p>
+          <p className="flex items-center gap-2">
+            <MessageSquare className="h-4 w-4 text-primary" />
+            Chat ativo e suporte durante todo o passeio.
+          </p>
+        </div>
+      </div>
 
       <p className="text-xs text-muted-foreground">
         ✅ Ao confirmar, você concorda com os{" "}

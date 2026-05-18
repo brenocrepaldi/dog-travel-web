@@ -7,6 +7,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { Loader2, Dog, ArrowLeft, UserStar } from "lucide-react";
+import type { Value as PhoneValue } from "react-phone-number-input";
 
 import { cn } from "@/lib/utils";
 import { maskCPF } from "@/lib/cpf";
@@ -109,6 +110,7 @@ function DataStep({
 
   async function onSubmit(data: RegisterFormValues) {
     try {
+      void data;
       // TODO: call AuthService.register({ ...data, role }) when backend is ready
       // For now, simulate registration success
       await new Promise((resolve) => setTimeout(resolve, 1200));
@@ -219,8 +221,8 @@ function DataStep({
                 id="phone"
                 defaultCountry="BR"
                 international
-                value={field.value as any}
-                onChange={field.onChange}
+                value={field.value as PhoneValue}
+                onChange={(value) => field.onChange(value ?? "")}
                 className={cn(errors.phone && "ring-1 ring-destructive rounded-lg")}
               />
             )}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Sheet,
   SheetContent,
@@ -12,38 +12,54 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { UploadCloud } from "lucide-react";
+import type { DogSize } from "@/types";
+import { DOG_SIZE_TEXT_OPTIONS } from "@/lib/pets";
+
+export interface PetDraft {
+  name: string;
+  breed: string;
+  age: number;
+  size: DogSize;
+  behavior: string;
+}
+
+interface PetFormState {
+  name: string;
+  breed: string;
+  age: string;
+  size: DogSize;
+  behavior: string;
+}
+
+function toFormState(petToEdit?: PetDraft | null): PetFormState {
+  if (!petToEdit) {
+    return {
+      name: "",
+      breed: "",
+      age: "",
+      size: "medium",
+      behavior: "",
+    };
+  }
+
+  return {
+    name: petToEdit.name,
+    breed: petToEdit.breed,
+    age: String(petToEdit.age),
+    size: petToEdit.size,
+    behavior: petToEdit.behavior,
+  };
+}
 
 interface PetFormSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  petToEdit?: any;
-  onSave: (pet: any) => void;
+  petToEdit?: PetDraft | null;
+  onSave: (pet: PetDraft) => void;
 }
 
 export function PetFormSheet({ open, onOpenChange, petToEdit, onSave }: PetFormSheetProps) {
-  const [formData, setFormData] = useState({
-    name: "",
-    breed: "",
-    age: "",
-    size: "Médio",
-    behavior: "",
-  });
-
-  useEffect(() => {
-    if (open) {
-      if (petToEdit) {
-        setFormData({
-          name: petToEdit.name,
-          breed: petToEdit.breed,
-          age: petToEdit.age.toString(),
-          size: petToEdit.size,
-          behavior: petToEdit.behavior || "",
-        });
-      } else {
-        setFormData({ name: "", breed: "", age: "", size: "Médio", behavior: "" });
-      }
-    }
-  }, [open, petToEdit]);
+  const [formData, setFormData] = useState<PetFormState>(() => toFormState(petToEdit));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,10 +69,7 @@ export function PetFormSheet({ open, onOpenChange, petToEdit, onSave }: PetFormS
     }
     
     // Save
-    onSave({
-      ...formData,
-      age: parseInt(formData.age, 10),
-    });
+    onSave({ ...formData, age: Number.parseInt(formData.age, 10) });
     toast.success(petToEdit ? "Dados do cão atualizados!" : "Cão adicionado com sucesso!");
     onOpenChange(false);
   };
@@ -119,14 +132,19 @@ export function PetFormSheet({ open, onOpenChange, petToEdit, onSave }: PetFormS
 
             <div className="space-y-2">
               <Label htmlFor="pet-size">Porte <span className="text-destructive">*</span></Label>
-              <Select value={formData.size} onValueChange={(val) => setFormData({ ...formData, size: val || "Médio" })}>
+              <Select
+                value={formData.size}
+                onValueChange={(value) => setFormData({ ...formData, size: value as DogSize })}
+              >
                 <SelectTrigger id="pet-size" className="w-full">
                   <SelectValue placeholder="Selecione o porte" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Pequeno">Pequeno (até 10kg)</SelectItem>
-                  <SelectItem value="Médio">Médio (11kg a 25kg)</SelectItem>
-                  <SelectItem value="Grande">Grande (mais de 25kg)</SelectItem>
+                  {DOG_SIZE_TEXT_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

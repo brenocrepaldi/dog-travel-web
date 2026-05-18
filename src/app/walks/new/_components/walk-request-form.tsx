@@ -1,10 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
+import { walks as mockWalks } from "@/lib/mock-data";
+import { useAppStore } from "@/hooks/use-app-store";
+import { DEFAULT_CLIENT_PETS } from "@/lib/pets";
+import { WalkService } from "@/services/walk.service";
+import { trackMetricEvent } from "@/lib/metrics";
 
 import { StepPets }     from "./steps/step-pets";
 import { StepDateTime } from "./steps/step-datetime";
@@ -25,6 +30,7 @@ export interface WalkFormData {
   lng: number | null;
   estimatedPrice: number | null;
   selectedMethodId: string | null;
+  isFirstRide: boolean;
 }
 
 const INITIAL_DATA: WalkFormData = {
@@ -37,7 +43,43 @@ const INITIAL_DATA: WalkFormData = {
   lng:             null,
   estimatedPrice:  null,
   selectedMethodId: null,
+  isFirstRide:     true,
 };
+
+function toDateAndTime(iso: string) {
+  const dateTime = new Date(iso);
+  const localDateTime = new Date(dateTime.getTime() - dateTime.getTimezoneOffset() * 60000);
+  const [date, time] = localDateTime.toISOString().split("T");
+  return { date, time: time.slice(0, 5) };
+}
+
+interface LocalWalkRequest {
+  id: string;
+  payload: {
+    petIds: string[];
+    scheduledAt: string;
+    durationMinutes: number;
+    address: string;
+    paymentMethodId: string;
+  };
+  createdAt: string;
+}
+
+function saveLocalRequest(request: LocalWalkRequest) {
+  if (typeof window === "undefined") return;
+  const raw = window.localStorage.getItem("dogtravel.local-walk-requests");
+  let current: LocalWalkRequest[] = [];
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      current = Array.isArray(parsed) ? (parsed as LocalWalkRequest[]) : [];
+    } catch {
+      current = [];
+    }
+  }
+  const next = [...current, request].slice(-50);
+  window.localStorage.setItem("dogtravel.local-walk-requests", JSON.stringify(next));
+}
 
 // ─── Step definitions ──────────────────────────────────────────────────────
 const STEPS = [
@@ -52,10 +94,8 @@ const STEPS = [
 // ─── Step indicator ────────────────────────────────────────────────────────
 function StepIndicator({
   currentStep,
-  totalSteps,
 }: {
   currentStep: number;
-  totalSteps: number;
 }) {
   return (
     <div className="flex items-center gap-0 mb-8">
@@ -112,9 +152,54 @@ function StepIndicator({
 // ─── Main form component ───────────────────────────────────────────────────
 export function WalkRequestForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const storedPets = useAppStore((state) => state.pets);
   const [step, setStep]         = useState(0);
   const [data, setData]         = useState<WalkFormData>(INITIAL_DATA);
   const [submitting, setSubmitting] = useState(false);
+  const hasPrefilledRepeat = useRef(false);
+  const pets = storedPets.length > 0 ? storedPets : DEFAULT_CLIENT_PETS;
+
+  useEffect(() => {
+    if (hasPrefilledRepeat.current) {
+      return;
+    }
+
+    const repeatWalkId = searchParams.get("repeat");
+    if (!repeatWalkId) {
+      return;
+    }
+
+    const walkToRepeat = mockWalks.find((walk) => walk.id === repeatWalkId);
+    if (!walkToRepeat) {
+      return;
+    }
+
+    hasPrefilledRepeat.current = true;
+    const { date, time } = toDateAndTime(walkToRepeat.scheduledAt);
+    const selectedPetIds = walkToRepeat.petNames
+      .map((petName) => pets.find((pet) => pet.name.toLowerCase() === petName.toLowerCase())?.id)
+      .filter((petId): petId is string => Boolean(petId));
+
+    setData((previous) => ({
+      ...previous,
+      selectedPetIds: selectedPetIds.length > 0 ? selectedPetIds : previous.selectedPetIds,
+      durationMinutes: walkToRepeat.durationMinutes,
+      date,
+      time,
+      address: walkToRepeat.startAddress,
+      isFirstRide: false,
+      estimatedPrice: null,
+    }));
+
+    toast("Dados do ultimo passeio carregados", {
+      description: "Revise os detalhes e confirme quando quiser.",
+    });
+    trackMetricEvent({
+      name: "walk_repeat_prefill_used",
+      payload: { walkId: walkToRepeat.id },
+    });
+  }, [pets, searchParams]);
 
   function updateData(partial: Partial<WalkFormData>) {
     setData((prev) => ({ ...prev, ...partial }));
@@ -131,15 +216,57 @@ export function WalkRequestForm() {
   async function handleSubmit() {
     setSubmitting(true);
     try {
-      // TODO: call WalkService.create({ ...data }) when backend is ready
-      await new Promise((res) => setTimeout(res, 1500));
+      const scheduledAt = new Date(`${data.date}T${data.time || "00:00"}:00`).toISOString();
+      const paymentMethodId = data.selectedMethodId ?? "";
+
+      if (!paymentMethodId) {
+        toast.error("Selecione uma forma de pagamento antes de concluir.");
+        return;
+      }
+
+      await WalkService.create({
+        petIds: data.selectedPetIds,
+        scheduledAt,
+        durationMinutes: data.durationMinutes,
+        startLocation: {
+          lat: data.lat ?? 0,
+          lng: data.lng ?? 0,
+          address: data.address,
+        },
+        paymentMethodId,
+      });
+
+      trackMetricEvent({
+        name: "walk_request_submitted",
+        payload: {
+          petCount: data.selectedPetIds.length,
+          durationMinutes: data.durationMinutes,
+          isFirstRide: data.isFirstRide,
+        },
+      });
       toast.success("Passeio solicitado!", {
         description: "Aguardando aceitação de um passeador.",
       });
       router.push("/walks");
     } catch {
-      toast.error("Erro ao solicitar passeio", {
-        description: "Tente novamente em instantes.",
+      const localRequest: LocalWalkRequest = {
+        id: crypto.randomUUID(),
+        createdAt: new Date().toISOString(),
+        payload: {
+          petIds: data.selectedPetIds,
+          scheduledAt: `${data.date}T${data.time || "00:00"}`,
+          durationMinutes: data.durationMinutes,
+          address: data.address,
+          paymentMethodId: data.selectedMethodId ?? "",
+        },
+      };
+      saveLocalRequest(localRequest);
+      trackMetricEvent({
+        name: "walk_request_failed",
+        payload: { savedLocally: true },
+      });
+      toast.warning("API indisponível no momento", {
+        description: "Pedido salvo localmente no navegador para não perder os dados.",
       });
     } finally {
       setSubmitting(false);
@@ -159,7 +286,7 @@ export function WalkRequestForm() {
       </div>
 
       {/* Step indicator */}
-      <StepIndicator currentStep={step} totalSteps={STEPS.length} />
+      <StepIndicator currentStep={step} />
 
       {/* Content: form (left 60%) + summary (right 40%) */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">

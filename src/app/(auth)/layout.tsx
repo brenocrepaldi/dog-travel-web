@@ -36,8 +36,8 @@ export default function AuthLayout({
         <div className="relative z-10">
           <blockquote className="space-y-4">
             <p className="text-3xl font-bold text-primary-foreground leading-tight">
-              "A plataforma que conecta passeadores{" "}
-              <span className="text-white/70">com quem mais precisa deles"</span>
+              &quot;A plataforma que conecta passeadores{" "}
+              <span className="text-white/70">com quem mais precisa deles&quot;</span>
             </p>
             <footer className="text-primary-foreground/60 text-sm">
               Mais de 500 passeadores ativos em todo o Brasil

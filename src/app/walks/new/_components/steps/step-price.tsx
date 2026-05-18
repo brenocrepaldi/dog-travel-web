@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ArrowRight, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { FlowActions } from "@/components/common/flow-actions";
 import type { WalkFormData } from "../walk-request-form";
 
@@ -12,15 +13,32 @@ interface Props {
   onBack: () => void;
 }
 
-// Simulate a price estimate based on duration + pet count
-function calcEstimate(durationMinutes: number, petCount: number) {
-  const BASE_RATE  = 1.0;   // R$/min
-  const EXTRA_PET  = 5;     // R$ per extra dog
-  const PLATFORM   = 0.10;  // 10% fee
-  const subtotal   = durationMinutes * BASE_RATE + Math.max(0, petCount - 1) * EXTRA_PET;
-  const platformFee = +(subtotal * PLATFORM).toFixed(2);
-  const total       = +(subtotal + platformFee).toFixed(2);
-  return { subtotal: +subtotal.toFixed(2), platformFee, total };
+const DURATION_BASE_PRICE: Record<number, number> = {
+  15: 12,
+  30: 18,
+  45: 24,
+  60: 27,
+};
+const EXTRA_PET_FEE = 4;
+const PLATFORM_AND_SAFETY_FEE_RATE = 0.08;
+const FIRST_RIDE_DISCOUNT_RATE = 0.15;
+
+function calcEstimate(durationMinutes: number, petCount: number, isFirstRide: boolean) {
+  const durationBase = DURATION_BASE_PRICE[durationMinutes] ?? 18;
+  const extraPetFee = Math.max(0, petCount - 1) * EXTRA_PET_FEE;
+  const subtotal = durationBase + extraPetFee;
+  const platformAndSafetyFee = +(subtotal * PLATFORM_AND_SAFETY_FEE_RATE).toFixed(2);
+  const totalBeforeDiscount = subtotal + platformAndSafetyFee;
+  const firstRideDiscount = isFirstRide ? +(totalBeforeDiscount * FIRST_RIDE_DISCOUNT_RATE).toFixed(2) : 0;
+  const total = +(totalBeforeDiscount - firstRideDiscount).toFixed(2);
+
+  return {
+    durationBase,
+    extraPetFee,
+    platformAndSafetyFee,
+    firstRideDiscount,
+    total,
+  };
 }
 
 function fmt(val: number) {
@@ -29,27 +47,34 @@ function fmt(val: number) {
 
 export function StepPrice({ data, updateData, onNext, onBack }: Props) {
   const [loading, setLoading] = useState(true);
-  const [estimate, setEstimate] = useState({ subtotal: 0, platformFee: 0, total: 0 });
+  const [estimate, setEstimate] = useState({
+    durationBase: 0,
+    extraPetFee: 0,
+    platformAndSafetyFee: 0,
+    firstRideDiscount: 0,
+    total: 0,
+  });
 
-  // Simulate API call
   useEffect(() => {
     setLoading(true);
     const timer = setTimeout(() => {
-      const est = calcEstimate(data.durationMinutes, data.selectedPetIds.length);
+      const est = calcEstimate(data.durationMinutes, data.selectedPetIds.length, data.isFirstRide);
       setEstimate(est);
       updateData({ estimatedPrice: est.total });
       setLoading(false);
-    }, 800);
+    }, 450);
     return () => clearTimeout(timer);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    // updateData is intentionally omitted to avoid triggering the estimate loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.durationMinutes, data.selectedPetIds.length, data.isFirstRide]);
 
   const rows = [
-    { label: `Taxa base (${data.durationMinutes} min)`, value: estimate.subtotal - Math.max(0, data.selectedPetIds.length - 1) * 5 },
-    ...(data.selectedPetIds.length > 1
-      ? [{ label: `Taxa por cão extra (${data.selectedPetIds.length - 1}x)`, value: (data.selectedPetIds.length - 1) * 5 }]
+    { label: `Passeio (${data.durationMinutes} min)`, value: estimate.durationBase },
+    ...(estimate.extraPetFee > 0 ? [{ label: "Taxa por cao extra", value: estimate.extraPetFee }] : []),
+    { label: "Taxa de plataforma e seguranca (8%)", value: estimate.platformAndSafetyFee },
+    ...(estimate.firstRideDiscount > 0
+      ? [{ label: "Desconto de primeira contratacao", value: -estimate.firstRideDiscount }]
       : []),
-    { label: "Taxa da plataforma (10%)", value: estimate.platformFee },
   ];
 
   return (
@@ -57,8 +82,35 @@ export function StepPrice({ data, updateData, onNext, onBack }: Props) {
       <div>
         <h2 className="text-lg font-semibold">Estimativa de preço</h2>
         <p className="text-sm text-muted-foreground">
-          Valor calculado com base nos dados informados.
+          Valor previsível antes da confirmação, com taxas e desconto já aplicados.
         </p>
+      </div>
+
+      <div className="rounded-xl border border-border bg-muted/20 p-4">
+        <p className="text-sm font-medium text-foreground">É seu primeiro passeio no DogTravel?</p>
+        <p className="mt-1 text-xs text-muted-foreground">Aplicamos 15% de desconto na primeira contratação.</p>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => updateData({ isFirstRide: true })}
+            className={cn(
+              "rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
+              data.isFirstRide ? "border-primary bg-primary/10 text-primary" : "border-border bg-background"
+            )}
+          >
+            Sim, aplicar desconto
+          </button>
+          <button
+            type="button"
+            onClick={() => updateData({ isFirstRide: false })}
+            className={cn(
+              "rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
+              !data.isFirstRide ? "border-primary bg-primary/10 text-primary" : "border-border bg-background"
+            )}
+          >
+            Não
+          </button>
+        </div>
       </div>
 
       {loading ? (
@@ -83,9 +135,9 @@ export function StepPrice({ data, updateData, onNext, onBack }: Props) {
         </div>
       )}
 
-      <p className="text-xs text-muted-foreground">
-        💳 Você será cobrado automaticamente após a conclusão do passeio.
-      </p>
+      <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-xs text-muted-foreground">
+        💡 Na pesquisa com donos de cães, a faixa mais buscada para 60 minutos ficou até R$30.
+      </div>
 
       <FlowActions
         showBack

@@ -4,14 +4,14 @@ import { cn } from "@/lib/utils";
 import { ArrowRight, Check, CreditCard, Smartphone } from "lucide-react";
 import { FlowActions } from "@/components/common/flow-actions";
 import Link from "next/link";
+import { managedPaymentMethods } from "@/lib/mock-data";
 import type { WalkFormData } from "../walk-request-form";
 
-// ─── Mock saved payment methods ────────────────────────────────────────────
-const MOCK_METHODS = [
-  { id: "m1", type: "credit_card", label: "•••• 4242", brand: "Visa",       icon: CreditCard },
-  { id: "m2", type: "credit_card", label: "•••• 8888", brand: "Mastercard", icon: CreditCard },
-  { id: "m3", type: "pix",         label: "PIX",        brand: "PIX",        icon: Smartphone },
-];
+const METHOD_ICON = {
+  credit_card: CreditCard,
+  debit_card: CreditCard,
+  pix: Smartphone,
+} as const;
 
 interface Props {
   data: WalkFormData;
@@ -31,7 +31,8 @@ export function StepPayment({ data, updateData, onNext, onBack }: Props) {
       </div>
 
       <div className="space-y-2">
-        {MOCK_METHODS.map((method) => {
+        {managedPaymentMethods.map((method) => {
+          const Icon = METHOD_ICON[method.type];
           const selected = data.selectedMethodId === method.id;
           return (
             <button
@@ -48,7 +49,7 @@ export function StepPayment({ data, updateData, onNext, onBack }: Props) {
             >
               {/* Method icon */}
               <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                <method.icon className="h-5 w-5 text-primary" />
+                <Icon className="h-5 w-5 text-primary" />
               </div>
 
               {/* Info */}

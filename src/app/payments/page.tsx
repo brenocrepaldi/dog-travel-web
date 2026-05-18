@@ -7,7 +7,7 @@ export default async function PaymentsPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const role = (session.user as any).role || "client";
+  const role = session.user.role || "client";
 
   return role === "walker" ? <WalkerPayments /> : <ClientPayments />;
 }
