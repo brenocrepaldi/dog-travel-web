@@ -2,19 +2,29 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { Calendar, Clock3, Info, MapPin, Search, ShieldCheck, Star } from "lucide-react";
+import {
+  Calendar,
+  ChevronRight,
+  Clock3,
+  Dog,
+  Info,
+  Lightbulb,
+  MapPin,
+  Search,
+  ShieldCheck,
+  SlidersHorizontal,
+  Star,
+} from "lucide-react";
 import { useAppStore } from "@/hooks/use-app-store";
 import { cn } from "@/lib/utils";
 import type { DogSize } from "@/types";
 import type { WalkerProfile } from "@/lib/mock-data";
 import { buttonVariants } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { EmptyState } from "@/components/common/empty-state";
 import { trackMetricEvent } from "@/lib/metrics";
 
@@ -22,12 +32,204 @@ interface WalkersExplorerProps {
   walkers: WalkerProfile[];
 }
 
+// ─── Walker Avatar ────────────────────────────────────────────────────────────
+
+const WALKER_GRADIENTS = [
+  "from-blue-400/30 to-indigo-500/30",
+  "from-emerald-400/30 to-teal-500/30",
+  "from-amber-400/30 to-orange-500/30",
+  "from-rose-400/30 to-pink-500/30",
+  "from-violet-400/30 to-purple-500/30",
+  "from-cyan-400/30 to-sky-500/30",
+];
+
+function WalkerAvatar({ name }: { name: string }) {
+  const idx = name.charCodeAt(0) % WALKER_GRADIENTS.length;
+  const initials = name
+    .split(" ")
+    .map((p) => p[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  return (
+    <div
+      className={cn(
+        "w-14 h-14 rounded-2xl bg-gradient-to-br flex items-center justify-center shrink-0 ring-2 ring-border/30",
+        WALKER_GRADIENTS[idx]
+      )}
+    >
+      <span className="text-base font-bold text-foreground/70">{initials}</span>
+    </div>
+  );
+}
+
+// ─── Size labels ──────────────────────────────────────────────────────────────
+
 const SIZE_LABEL: Record<DogSize, string> = {
   small: "Pequeno",
   medium: "Médio",
   large: "Grande",
   giant: "Gigante",
 };
+
+const SIZE_OPTIONS: Array<{ value: DogSize | ""; label: string }> = [
+  { value: "", label: "Todos" },
+  { value: "small", label: "Pequeno" },
+  { value: "medium", label: "Médio" },
+  { value: "large", label: "Grande" },
+  { value: "giant", label: "Gigante" },
+];
+
+// ─── Walker Card ──────────────────────────────────────────────────────────────
+
+function WalkerCard({ walker, index }: { walker: WalkerProfile; index: number }) {
+  return (
+    <div
+      style={{ animationDelay: `${index * 60}ms` }}
+      className="animate-in fade-in slide-in-from-bottom-2 duration-400 h-full"
+    >
+      <div className="group relative flex flex-col h-full rounded-2xl border border-border/50 bg-card overflow-hidden transition-all duration-300 hover:shadow-md hover:shadow-black/5 hover:border-border hover:-translate-y-0.5 dark:hover:shadow-black/20">
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+
+        <div className="flex flex-col flex-1 p-5 gap-4">
+          {/* Avatar + nome + avaliação */}
+          <div className="flex items-center gap-4">
+            <WalkerAvatar name={walker.name} />
+
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5 flex-wrap" title="Verificado">
+                <h3 className="text-base font-semibold text-foreground leading-tight">{walker.name}</h3>
+                {walker.verified && (
+                  <ShieldCheck className="w-4 h-4 text-primary shrink-0" aria-label="Verificado" />
+                )}
+              </div>
+
+              <div className="flex items-center gap-3 mt-0.5 text-sm text-muted-foreground flex-wrap">
+                <span className="flex items-center gap-1">
+                  <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                  <span className="font-semibold text-foreground">{walker.rating.toFixed(1)}</span>
+                  <span className="text-xs">({walker.reviews})</span>
+                </span>
+                <span className="flex items-center gap-1 truncate max-w-[180px]">
+                  <MapPin className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate text-xs">{walker.location}</span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Descrição */}
+          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+            {walker.description}
+          </p>
+
+          {/* Tags */}
+          <div className="flex flex-wrap gap-1.5">
+            {walker.tags.map((tag) => (
+              <Badge key={tag} variant="secondary" className="text-xs font-normal">
+                {tag}
+              </Badge>
+            ))}
+          </div>
+
+          {/* Portes suportados */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            {walker.supportedSizes.map((size) => (
+              <Badge key={`${walker.id}-${size}`} variant="outline" className="text-[11px] text-muted-foreground">
+                {SIZE_LABEL[size]}
+              </Badge>
+            ))}
+          </div>
+
+          {/* Stats — empilhados para não quebrar */}
+          <div className="rounded-xl border border-border/60 bg-muted/30 px-3 py-2.5 text-xs space-y-1.5">
+            <span className="flex items-center gap-1.5 text-muted-foreground">
+              <Clock3 className="h-3.5 w-3.5 shrink-0" />
+              <span className="font-semibold text-foreground">{walker.completedWalks}</span>
+              <span>passeios realizados</span>
+            </span>
+            <span className="flex items-center gap-1.5 text-muted-foreground">
+              <Calendar className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">{walker.availability}</span>
+            </span>
+          </div>
+
+          {/* Ação principal — empurrada para o rodapé com mt-auto */}
+          <Link
+            href={`/walks/new?walker=${walker.id}`}
+            className={cn(buttonVariants({ variant: "default", size: "lg" }), "w-full mt-auto")}
+          >
+            Agendar passeio
+          </Link>
+        </div>
+
+        {/* Rodapé do card */}
+        <div className="shrink-0 border-t border-border/40 px-5 py-3 flex items-center justify-between bg-muted/20">
+          <span className="text-[11px] text-muted-foreground/60 font-medium uppercase tracking-wider">
+            {walker.verified ? "Perfil verificado" : "Perfil público"}
+          </span>
+          <Link
+            href={`/walkers/${walker.id}`}
+            className="flex items-center gap-1 text-[11px] text-primary/70 hover:text-primary transition-colors font-medium"
+          >
+            Ver perfil completo
+            <ChevronRight className="w-3 h-3" />
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Tips Sidebar ─────────────────────────────────────────────────────────────
+
+const WALKER_TIPS = [
+  { icon: Star, text: "Verifique a nota e o número de avaliações antes de agendar." },
+  { icon: ShieldCheck, text: "Dê preferência a passeadores com pack completo de confiança verificado." },
+  { icon: Dog, text: "Use o filtro de porte para garantir compatibilidade com seus cães." },
+  { icon: MapPin, text: "Escolha alguém que atue próximo à sua região para mais conveniência." },
+] as const;
+
+function WalkersTipsSidebar() {
+  return (
+    <Card className="overflow-hidden">
+      <div className="h-1 w-full bg-gradient-to-r from-primary/60 via-primary to-primary/40" />
+
+      <CardHeader className="pb-2 pt-5">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+            <Lightbulb className="w-4 h-4 text-primary" />
+          </div>
+          <div>
+            <CardTitle className="text-sm font-semibold">Como escolher</CardTitle>
+            <CardDescription className="text-xs mt-0.5">
+              Dicas para encontrar o passeador ideal
+            </CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+
+      <CardContent className="pb-3">
+        <ul className="space-y-3.5 mt-1">
+          {WALKER_TIPS.map((tip, i) => {
+            const Icon = tip.icon;
+            return (
+              <li key={i} className="flex items-start gap-3">
+                <div className="w-6 h-6 rounded-lg bg-muted flex items-center justify-center shrink-0 mt-0.5 text-muted-foreground">
+                  <Icon className="w-3.5 h-3.5" />
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">{tip.text}</p>
+              </li>
+            );
+          })}
+        </ul>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function inferBehaviorNeeds(notes: string | undefined) {
   const text = (notes ?? "").toLowerCase();
@@ -37,108 +239,17 @@ function inferBehaviorNeeds(notes: string | undefined) {
   };
 }
 
-function WalkerCard({ walker }: { walker: WalkerProfile }) {
-  const initials = walker.name
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2);
-
-  return (
-    <Card interactive className="group flex flex-col overflow-hidden">
-      <CardContent className="flex flex-col flex-1 p-5 py-2.5 gap-4">
-        {/* Avatar + name + rating row */}
-        <div className="flex items-center gap-4">
-          <Avatar className="w-14 h-14 border-2 border-border shrink-0">
-            <AvatarFallback className="text-base font-bold bg-primary/10 text-primary">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
-
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5 flex-wrap" title="Verificado">
-              <h3 className="text-base font-semibold text-foreground leading-tight">{walker.name}</h3>
-              {walker.verified && (
-                <ShieldCheck className="w-4 h-4 text-primary shrink-0" aria-label="Verificado" />
-              )}
-            </div>
-
-            <div className="flex items-center gap-3 mt-0.5 text-sm text-muted-foreground flex-wrap">
-              <span className="flex items-center gap-1">
-                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                <span className="font-medium text-foreground">{walker.rating.toFixed(1)}</span>
-                <span>({walker.reviews} avaliações)</span>
-              </span>
-              <span className="flex items-center gap-1 truncate max-w-[200px]">
-                <MapPin className="w-3.5 h-3.5 shrink-0" />
-                <span className="truncate">{walker.location}</span>
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Description */}
-        <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-          {walker.description}
-        </p>
-
-        {/* Tags */}
-        <div className="flex flex-wrap gap-1.5">
-          {walker.tags.map((tag) => (
-            <Badge key={tag} variant="secondary" className="text-xs font-normal">
-              {tag}
-            </Badge>
-          ))}
-        </div>
-
-        {/* Sizes + trust badges */}
-        <div className="flex flex-wrap items-center gap-1.5">
-          {walker.supportedSizes.map((size) => (
-            <Badge key={`${walker.id}-${size}`} variant="outline" className="text-xs">
-              {SIZE_LABEL[size]}
-            </Badge>
-          ))}
-        </div>
-
-        {/* Walks count + availability */}
-        <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-3 py-2.5 text-xs">
-          <span className="flex items-center gap-1.5 text-muted-foreground">
-            <Clock3 className="h-3.5 w-3.5" />
-            <span className="font-semibold text-foreground">{walker.completedWalks}</span>
-            {" "}passeios realizados
-          </span>
-          <span className="flex items-center gap-1.5 text-muted-foreground">
-            <Calendar className="h-3.5 w-3.5" />
-            {walker.availability}
-          </span>
-        </div>
-
-        {/* Actions */}
-        <div className="grid grid-cols-2 gap-2 mt-auto">
-          <Link
-            href={`/walkers/${walker.id}`}
-            className={cn(buttonVariants({ variant: "outline", size: "lg" }), "w-full")}
-          >
-            Ver perfil
-          </Link>
-          <Link
-            href={`/walks/new?walker=${walker.id}`}
-            className={cn(buttonVariants({ variant: "default", size: "lg" }), "w-full")}
-          >
-            Agendar
-          </Link>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
+// ─── Main Explorer ────────────────────────────────────────────────────────────
 
 export function WalkersExplorer({ walkers }: WalkersExplorerProps) {
   const pets = useAppStore((state) => state.pets);
   const [query, setQuery] = useState("");
-  const [sizeFilter, setSizeFilter] = useState<"all" | DogSize>("all");
+  const [sizeFilter, setSizeFilter] = useState<DogSize | "">("");
   const [onlyWithTrustPack, setOnlyWithTrustPack] = useState(false);
   const [fitMyPets, setFitMyPets] = useState(false);
+
+  const hasActiveFilters =
+    Boolean(query.trim()) || sizeFilter !== "" || onlyWithTrustPack || fitMyPets;
 
   const derivedProfile = useMemo(() => {
     const sizes = new Set<DogSize>();
@@ -162,34 +273,25 @@ export function WalkersExplorer({ walkers }: WalkersExplorerProps) {
   const filteredWalkers = useMemo(() => {
     return walkers.filter((walker) => {
       const search = query.trim().toLowerCase();
-      const textSource = `${walker.name} ${walker.location} ${walker.tags.join(" ")} ${walker.behaviorExpertise.join(" ")}`.toLowerCase();
+      const textSource =
+        `${walker.name} ${walker.location} ${walker.tags.join(" ")} ${walker.behaviorExpertise.join(" ")}`.toLowerCase();
       const matchesSearch = search.length === 0 || textSource.includes(search);
-
-      const matchesSize = sizeFilter === "all" || walker.supportedSizes.includes(sizeFilter);
-
+      const matchesSize = !sizeFilter || walker.supportedSizes.includes(sizeFilter);
       const hasTrustPack =
-        walker.trustChecks.identityVerified &&
-        walker.trustChecks.backgroundCheck;
+        walker.trustChecks.identityVerified && walker.trustChecks.backgroundCheck;
       const matchesTrust = !onlyWithTrustPack || hasTrustPack;
 
-      if (!fitMyPets) {
-        return matchesSearch && matchesSize && matchesTrust;
-      }
+      if (!fitMyPets) return matchesSearch && matchesSize && matchesTrust;
 
       const supportsAllMySizes =
         derivedProfile.sizes.length === 0 ||
         derivedProfile.sizes.every((size) => walker.supportedSizes.includes(size));
-      const supportsReactive = !derivedProfile.needsReactiveSupport || walker.behaviorExpertise.includes("reativo");
-      const supportsMultiDog = !derivedProfile.needsMultiDogSupport || walker.behaviorExpertise.includes("multiplos-caes");
+      const supportsReactive =
+        !derivedProfile.needsReactiveSupport || walker.behaviorExpertise.includes("reativo");
+      const supportsMultiDog =
+        !derivedProfile.needsMultiDogSupport || walker.behaviorExpertise.includes("multiplos-caes");
 
-      return (
-        matchesSearch &&
-        matchesSize &&
-        matchesTrust &&
-        supportsAllMySizes &&
-        supportsReactive &&
-        supportsMultiDog
-      );
+      return matchesSearch && matchesSize && matchesTrust && supportsAllMySizes && supportsReactive && supportsMultiDog;
     });
   }, [derivedProfile, fitMyPets, onlyWithTrustPack, query, sizeFilter, walkers]);
 
@@ -207,7 +309,6 @@ export function WalkersExplorer({ walkers }: WalkersExplorerProps) {
   }, [derivedProfile.needsMultiDogSupport, derivedProfile.needsReactiveSupport, fitMyPets, pets.length]);
 
   useEffect(() => {
-    const hasActiveFilters = Boolean(query.trim()) || sizeFilter !== "all" || onlyWithTrustPack || fitMyPets;
     if (!hasActiveFilters) return;
     trackMetricEvent({
       name: "walkers_filters_applied",
@@ -219,104 +320,163 @@ export function WalkersExplorer({ walkers }: WalkersExplorerProps) {
         resultCount: filteredWalkers.length,
       },
     });
-  }, [filteredWalkers.length, fitMyPets, onlyWithTrustPack, query, sizeFilter]);
+  }, [filteredWalkers.length, fitMyPets, hasActiveFilters, onlyWithTrustPack, query, sizeFilter]);
+
+  const clearFilters = () => {
+    setQuery("");
+    setSizeFilter("");
+    setOnlyWithTrustPack(false);
+    setFitMyPets(false);
+  };
 
   return (
-    <div className="space-y-6">
-      {/* Filter panel */}
-      <Card className="border-border/70 bg-muted/20">
-        <CardContent className="px-4 space-y-4">
-          {/* Search + selects */}
-          <div className="flex gap-3">
-            {/* Search */}
-            <div className="flex flex-col gap-1">
-              <Label className="text-xs text-muted-foreground">Nome, região ou especialidade</Label>
+    <div className="flex flex-col lg:flex-row lg:items-start gap-8 lg:gap-10">
+      {/* ── Aside: filtros + dicas ── */}
+      <aside className="w-full shrink-0 lg:w-72 lg:order-2 lg:sticky lg:top-8 lg:self-start space-y-4">
+        {/* Filtro */}
+        <Card className="overflow-hidden border-border/70">
+          <div className="h-1 w-full bg-gradient-to-r from-primary/60 via-primary to-primary/40" />
+
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                  <SlidersHorizontal className="w-4 h-4 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="text-sm font-semibold">Filtrar</CardTitle>
+                  <CardDescription className="text-xs mt-0.5">Refine sua busca</CardDescription>
+                </div>
+              </div>
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="text-[11px] text-primary/70 hover:text-primary transition-colors font-medium cursor-pointer"
+                >
+                  Limpar
+                </button>
+              )}
+            </div>
+          </CardHeader>
+
+          <CardContent className="pb-3 space-y-4">
+            {/* Busca */}
+            <div className="space-y-1.5">
+              <Label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                Busca
+              </Label>
               <div className="relative">
-                <Search className="absolute left-3 top-4 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                 <Input
                   type="search"
                   value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Digite aqui..."
-                  className="pl-9 bg-background w-[428px]"
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Nome, região ou especialidade..."
+                  className="pl-9 bg-background"
                 />
               </div>
             </div>
 
-            {/* Size select */}
-            <div className="flex flex-col gap-1">
-              <Label className="text-xs text-muted-foreground">Porte do cão</Label>
-              <Select value={sizeFilter} onValueChange={(value) => setSizeFilter(value as "all" | DogSize)}>
-                <SelectTrigger className="bg-background">
-                  <SelectValue placeholder="Todos os portes" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os portes</SelectItem>
-                  <SelectItem value="small">Pequeno</SelectItem>
-                  <SelectItem value="medium">Médio</SelectItem>
-                  <SelectItem value="large">Grande</SelectItem>
-                  <SelectItem value="giant">Gigante</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Toggles + pet badges */}
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-3 cursor-pointer">
-            <div className="flex items-center gap-2">
-              <Switch id="trust-pack" checked={onlyWithTrustPack} onCheckedChange={setOnlyWithTrustPack} />
-              <Label htmlFor="trust-pack" className="text-sm cursor-pointer">
-                Pack completo de confiança
+            {/* Porte — pills de seleção */}
+            <div className="space-y-1.5">
+              <Label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                Porte do cão
               </Label>
-            </div>
-
-            <div className="flex items-center gap-2 cursor-pointer">
-              <Switch id="fit-my-pets" checked={fitMyPets} onCheckedChange={setFitMyPets} />
-              <Label htmlFor="fit-my-pets" className="text-sm cursor-pointer">
-                Compatível com meus cães
-              </Label>
-            </div>
-
-            {pets.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
-                {pets.map((pet) => (
-                  <Badge key={pet.id} variant="secondary">
-                    {pet.name}
-                  </Badge>
+                {SIZE_OPTIONS.map(({ value, label }) => (
+                  <button
+                    key={value || "all"}
+                    type="button"
+                    onClick={() => setSizeFilter(value)}
+                    className={cn(
+                      "rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors cursor-pointer",
+                      sizeFilter === value
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                    )}
+                  >
+                    {label}
+                  </button>
                 ))}
               </div>
-            )}
-          </div>
+            </div>
 
-          {/* Tip */}
-          <p className="flex items-start gap-1.5 text-xs text-muted-foreground border-t border-border/40 pt-3">
-            <Info className="w-3.5 h-3.5 mt-0.5 shrink-0 text-primary/60" />
-            Use os filtros para encontrar passeadores com experiência no porte e comportamento do seu cão. Ative &ldquo;Compatível com meus cães&rdquo; para uma seleção personalizada.
-          </p>
-        </CardContent>
-      </Card>
+            <div className="h-px bg-border/40" />
 
-      {/* Results */}
-      {filteredWalkers.length === 0 ? (
-        <EmptyState
-          icon={Search}
-          title="Nenhum passeador encontrado"
-          description="Ajuste os filtros para ampliar a busca e encontrar um perfil mais compatível."
-          actionLabel="Limpar filtros"
-          actionHref="/walkers"
-        />
-      ) : (
-        <>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredWalkers.map((walker) => (
-              <WalkerCard key={walker.id} walker={walker} />
-            ))}
-          </div>
+            {/* Toggles */}
+            <div className="space-y-1.5">
+              <Label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                Filtros rápidos
+              </Label>
+              <div className="space-y-3 pt-0.5">
+                <div className="flex items-center justify-between gap-3">
+                  <Label htmlFor="trust-pack" className="text-sm cursor-pointer leading-tight font-normal">
+                    Pack completo de confiança
+                  </Label>
+                  <Switch
+                    id="trust-pack"
+                    checked={onlyWithTrustPack}
+                    onCheckedChange={setOnlyWithTrustPack}
+                  />
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <Label htmlFor="fit-my-pets" className="text-sm cursor-pointer leading-tight font-normal">
+                    Compatível com meus cães
+                  </Label>
+                  <Switch
+                    id="fit-my-pets"
+                    checked={fitMyPets}
+                    onCheckedChange={setFitMyPets}
+                  />
+                </div>
+              </div>
+            </div>
 
-          <p className="text-center text-sm text-muted-foreground py-4">Todos os perfis são verificados pela equipe DogTravel.
-          </p>
-        </>
-      )}
+            {/* Dica contextual */}
+            <p className="flex items-start gap-1.5 text-xs text-muted-foreground border-t border-border/40 pt-3">
+              <Info className="w-3.5 h-3.5 mt-0.5 shrink-0 text-primary/60" />
+              Ative &ldquo;Compatível com meus cães&rdquo; para uma seleção personalizada baseada nos seus pets.
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Dicas */}
+        <WalkersTipsSidebar />
+      </aside>
+
+      {/* ── Main: resultados ── */}
+      <div className="flex min-w-0 flex-1 flex-col gap-6 lg:order-1">
+        {filteredWalkers.length === 0 ? (
+          <EmptyState
+            icon={Search}
+            title="Nenhum passeador encontrado"
+            description="Ajuste os filtros para ampliar a busca e encontrar um perfil mais compatível."
+            actionLabel="Limpar filtros"
+            actionHref="/walkers"
+          />
+        ) : (
+          <>
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" aria-hidden />
+              <span className="text-sm text-muted-foreground">
+                {filteredWalkers.length}{" "}
+                {filteredWalkers.length === 1 ? "passeador encontrado" : "passeadores encontrados"}
+              </span>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 items-start">
+              {filteredWalkers.map((walker, index) => (
+                <WalkerCard key={walker.id} walker={walker} index={index} />
+              ))}
+            </div>
+
+            <p className="text-center text-sm text-muted-foreground/70 py-8">
+              Todos os perfis são verificados pela equipe DogTravel.
+            </p>
+          </>
+        )}
+      </div>
     </div>
   );
 }
