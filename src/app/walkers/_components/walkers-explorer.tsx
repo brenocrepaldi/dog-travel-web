@@ -44,11 +44,6 @@ function WalkerCard({ walker }: { walker: WalkerProfile }) {
     .join("")
     .slice(0, 2);
 
-  const hasTrustPack =
-    walker.trustChecks.identityVerified &&
-    walker.trustChecks.backgroundCheck &&
-    walker.trustChecks.firstAidCertified;
-
   return (
     <Card interactive className="group flex flex-col overflow-hidden">
       <CardContent className="flex flex-col flex-1 p-5 py-2.5 gap-4">
@@ -174,8 +169,7 @@ export function WalkersExplorer({ walkers }: WalkersExplorerProps) {
 
       const hasTrustPack =
         walker.trustChecks.identityVerified &&
-        walker.trustChecks.backgroundCheck &&
-        walker.trustChecks.firstAidCertified;
+        walker.trustChecks.backgroundCheck 
       const matchesTrust = !onlyWithTrustPack || hasTrustPack;
 
       if (!fitMyPets) {
