@@ -23,14 +23,14 @@ export const DEFAULT_CLIENT_PETS: Pet[] = [
 
 export const DOG_SIZE_LABEL: Record<DogSize, string> = {
   small: "Pequeno",
-  medium: "Medio",
+  medium: "Médio",
   large: "Grande",
   giant: "Gigante",
 };
 
 export const DOG_SIZE_TEXT_OPTIONS: Array<{ value: DogSize; label: string }> = [
-  { value: "small", label: "Pequeno (ate 10kg)" },
-  { value: "medium", label: "Medio (11kg a 25kg)" },
+  { value: "small", label: "Pequeno (até 10kg)" },
+  { value: "medium", label: "Médio (11kg a 25kg)" },
   { value: "large", label: "Grande (26kg a 40kg)" },
   { value: "giant", label: "Gigante (acima de 40kg)" },
 ];

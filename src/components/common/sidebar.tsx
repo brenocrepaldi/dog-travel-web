@@ -24,8 +24,9 @@ const clientNav = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/walks/new", icon: Plus, label: "Solicitar passeio" },
   { href: "/walks", icon: ClipboardList, label: "Meus passeios" },
-  { href: "/walkers", icon: Dog, label: "Passeadores" },
+  { href: "/walkers", icon: PawPrint, label: "Passeadores" },
   { href: "/payments", icon: CreditCard, label: "Pagamentos" },
+  { href: "/dogs", icon: Dog, label: "Meus Cães" },
   { href: "/profile", icon: User, label: "Perfil" },
 ];
 
