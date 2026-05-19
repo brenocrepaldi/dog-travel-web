@@ -41,12 +41,16 @@ export function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
 
-  const role = (session?.user as { role?: string })?.role ?? "client";
+  const role = session?.user?.role ?? "client";
   const navItems = role === "walker" ? walkerNav : clientNav;
 
   const userInitials = session?.user?.name
     ? session.user.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()
     : "?";
+
+  const activeHref = navItems
+    .filter(({ href }) => pathname === href || pathname.startsWith(href + "/"))
+    .sort((a, b) => b.href.length - a.href.length)[0]?.href ?? null;
 
   return (
     <aside className="hidden lg:flex flex-col w-60 shrink-0 border-r border-border bg-background h-screen sticky top-0">
@@ -65,10 +69,7 @@ export function Sidebar() {
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
-          const isActive =
-            item.href === "/dashboard"
-              ? pathname === "/dashboard"
-              : pathname?.startsWith(item.href);
+          const isActive = item.href === activeHref;
           return (
             <Link
               key={item.href}
