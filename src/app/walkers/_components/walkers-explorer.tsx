@@ -169,7 +169,7 @@ export function WalkersExplorer({ walkers }: WalkersExplorerProps) {
 
       const hasTrustPack =
         walker.trustChecks.identityVerified &&
-        walker.trustChecks.backgroundCheck 
+        walker.trustChecks.backgroundCheck;
       const matchesTrust = !onlyWithTrustPack || hasTrustPack;
 
       if (!fitMyPets) {
@@ -221,14 +221,6 @@ export function WalkersExplorer({ walkers }: WalkersExplorerProps) {
     });
   }, [filteredWalkers.length, fitMyPets, onlyWithTrustPack, query, sizeFilter]);
 
-  function getSizeLabel(sizeFilter: "all" | DogSize) {
-    if (sizeFilter === "small") return "Pequeno";
-    if (sizeFilter === "medium") return "Médio";
-    if (sizeFilter === "large") return "Grande";
-    if (sizeFilter === "giant") return "Gigante";
-    return "Todos os portes";
-  }
-
   return (
     <div className="space-y-6">
       {/* Filter panel */}
@@ -254,7 +246,7 @@ export function WalkersExplorer({ walkers }: WalkersExplorerProps) {
             {/* Size select */}
             <div className="flex flex-col gap-1">
               <Label className="text-xs text-muted-foreground">Porte do cão</Label>
-              <Select value={getSizeLabel(sizeFilter)} onValueChange={(value) => setSizeFilter(value as "all" | DogSize)}>
+              <Select value={sizeFilter} onValueChange={(value) => setSizeFilter(value as "all" | DogSize)}>
                 <SelectTrigger className="bg-background">
                   <SelectValue placeholder="Todos os portes" />
                 </SelectTrigger>
@@ -299,7 +291,7 @@ export function WalkersExplorer({ walkers }: WalkersExplorerProps) {
           {/* Tip */}
           <p className="flex items-start gap-1.5 text-xs text-muted-foreground border-t border-border/40 pt-3">
             <Info className="w-3.5 h-3.5 mt-0.5 shrink-0 text-primary/60" />
-            Use os filtros para encontrar passeadores com experiência no porte e comportamento do seu cão. Ative "Compatível com meus cães" para uma seleção personalizada.
+            Use os filtros para encontrar passeadores com experiência no porte e comportamento do seu cão. Ative &ldquo;Compatível com meus cães&rdquo; para uma seleção personalizada.
           </p>
         </CardContent>
       </Card>

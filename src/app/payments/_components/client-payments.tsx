@@ -14,7 +14,6 @@ import {
   CheckCircle2,
   History,
   Receipt,
-  Wallet,
   ChevronRight,
 } from "lucide-react";
 

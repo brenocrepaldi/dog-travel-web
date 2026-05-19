@@ -16,9 +16,7 @@ import {
 import { useAppStore } from "@/hooks/use-app-store";
 import { DEFAULT_CLIENT_PETS, DOG_SIZE_LABEL, petEmojiBySize } from "@/lib/pets";
 import type { Pet } from "@/types";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { PetFormSheet, type PetDraft } from "./pet-form-sheet";
 import { cn } from "@/lib/utils";
 
@@ -95,8 +93,8 @@ const SIZE_CONFIG: Record<string, { label: string; color: string }> = {
 		label: "Grande",
 		color: "bg-violet-500/10 text-violet-700 dark:text-violet-400 border-violet-500/20",
 	},
-	xlarge: {
-		label: "Extra Grande",
+	giant: {
+		label: "Gigante",
 		color: "bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/20",
 	},
 };
@@ -133,6 +131,7 @@ function PetNotes({
 	const textRef = useRef<HTMLParagraphElement>(null);
 
 	useEffect(() => {
+		// eslint-disable-next-line react-hooks/set-state-in-effect
 		setExpanded(false);
 	}, [notes]);
 
@@ -143,6 +142,7 @@ function PetNotes({
 	useEffect(() => {
 		const el = textRef.current;
 		if (!el || !notes) {
+			// eslint-disable-next-line react-hooks/set-state-in-effect
 			setCanExpand(false);
 			return;
 		}

@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/card";
 import {
   ArrowUpRight,
-  Banknote,
   History,
   Wallet,
   ChevronRight,

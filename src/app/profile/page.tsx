@@ -10,7 +10,6 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import {
-  UserCircle2,
   ShieldCheck,
   Lightbulb,
   Mail,

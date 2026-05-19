@@ -70,10 +70,10 @@ export function StepPrice({ data, updateData, onNext, onBack }: Props) {
 
   const rows = [
     { label: `Passeio (${data.durationMinutes} min)`, value: estimate.durationBase },
-    ...(estimate.extraPetFee > 0 ? [{ label: "Taxa por cao extra", value: estimate.extraPetFee }] : []),
-    { label: "Taxa de plataforma e seguranca (8%)", value: estimate.platformAndSafetyFee },
+    ...(estimate.extraPetFee > 0 ? [{ label: "Taxa por cão extra", value: estimate.extraPetFee }] : []),
+    { label: "Taxa de plataforma e segurança (8%)", value: estimate.platformAndSafetyFee },
     ...(estimate.firstRideDiscount > 0
-      ? [{ label: "Desconto de primeira contratacao", value: -estimate.firstRideDiscount }]
+      ? [{ label: "Desconto de primeira contratação", value: -estimate.firstRideDiscount }]
       : []),
   ];
 

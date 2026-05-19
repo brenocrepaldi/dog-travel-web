@@ -12,13 +12,12 @@ import type { Value as PhoneValue } from "react-phone-number-input";
 import { cn } from "@/lib/utils";
 import { maskCPF } from "@/lib/cpf";
 import { registerSchema, type RegisterFormValues } from "@/lib/validations/auth";
+import type { UserRole } from "@/types";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PhoneInput } from "@/components/ui/phone-input";
-
-type UserRole = "client" | "walker";
 
 // ─── Role Cards ───────────────────────────────────────────────────────────────
 const roleOptions: {

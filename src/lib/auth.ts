@@ -50,7 +50,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user }) {
       // Persist user role in the JWT token
       if (user) {
-        token.role = (user as Record<string, unknown>).role as string;
+        token.role = user.role ?? "";
         token.id = user.id;
       }
       return token;

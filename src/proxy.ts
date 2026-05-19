@@ -16,8 +16,8 @@ export default auth((req) => {
   const isProtectedRoute =
     nextUrl.pathname.startsWith("/dashboard") ||
     nextUrl.pathname.startsWith("/walk") ||
-    nextUrl.pathname.startsWith("/chat") ||
     nextUrl.pathname.startsWith("/dogs") ||
+    nextUrl.pathname.startsWith("/payments") ||
     nextUrl.pathname.startsWith("/profile");
 
   // Already logged in and trying to access auth pages → redirect to dashboard

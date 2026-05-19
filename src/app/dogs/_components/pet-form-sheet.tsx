@@ -26,8 +26,6 @@ import type { DogSize } from "@/types";
 import { DOG_SIZE_TEXT_OPTIONS } from "@/lib/pets";
 import { cn } from "@/lib/utils";
 
-import { DOG_SIZE_LABEL } from "@/lib/pets";
-
 export interface PetDraft {
   name: string;
   breed: string;
@@ -419,7 +417,7 @@ export function PetFormSheet({
 
             <Field label="Porte do cão" required htmlFor="pet-size">
               <Select
-                value={DOG_SIZE_LABEL[formData.size]}
+                value={formData.size}
                 onValueChange={(v) => set("size")(v as DogSize)}
               >
                 <SelectTrigger

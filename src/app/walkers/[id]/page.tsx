@@ -23,11 +23,6 @@ import { getWalkerById } from '@/lib/mock-data';
 
 export const metadata: Metadata = { title: 'Detalhe do Passeador | DogTravel' };
 
-// Calculate joined date (mock for now)
-const mockJoinedDate = new Date(
-	Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000,
-).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-
 export default async function WalkerDetailPage({ params }: { params: Promise<{ id: string }> }) {
 	const { id } = await params;
 	const walker = getWalkerById(id);
@@ -43,6 +38,17 @@ export default async function WalkerDetailPage({ params }: { params: Promise<{ i
 				.filter((expertise) => expertise === 'multiplos-caes')
 				.map(() => 'Passeio com mais de um cão'),
 		]),
+	);
+
+	const joinedYear = 2023 + (parseInt(id, 10) % 2);
+	const joinedMonth = (parseInt(id, 10) * 3) % 12;
+	const joinedDate = new Date(joinedYear, joinedMonth, 1).toLocaleDateString('pt-BR', {
+		month: 'long',
+		year: 'numeric',
+	});
+
+	const hasFirstAid = walker.certifications.some((cert) =>
+		cert.toLowerCase().includes('socorros'),
 	);
 
 	return (
@@ -88,7 +94,7 @@ export default async function WalkerDetailPage({ params }: { params: Promise<{ i
 						location={walker.location}
 						verified={walker.verified}
 						availability={walker.availability}
-						joinedDate={mockJoinedDate}
+						joinedDate={joinedDate}
 					/>
 				</CardHeader>
 
@@ -180,10 +186,8 @@ export default async function WalkerDetailPage({ params }: { params: Promise<{ i
 						<TrustItemCard
 							icon={CheckCircle2}
 							label="Primeiros socorros pet"
-							value={
-								walker.trustChecks.firstAidCertified ? 'Certificação comprovada' : 'Não informado'
-							}
-							verified={walker.trustChecks.firstAidCertified}
+							value={hasFirstAid ? 'Certificação comprovada' : 'Não informado'}
+							verified={hasFirstAid}
 						/>
 					</CardContent>
 				</Card>
