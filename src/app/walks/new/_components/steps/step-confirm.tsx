@@ -1,8 +1,21 @@
 "use client";
 
-import { Loader2, Check, Dog, Calendar, MapPin, CreditCard, ShieldCheck, Camera, MessageSquare } from "lucide-react";
+import {
+  BadgePercent,
+  Camera,
+  Check,
+  CheckCircle2,
+  CreditCard,
+  Calendar,
+  Clock,
+  Dog,
+  Loader2,
+  MapPin,
+  MessageSquare,
+  ShieldCheck,
+} from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 import { FlowActions } from "@/components/common/flow-actions";
-import { Badge } from "@/components/ui/badge";
 import { managedPaymentMethods } from "@/lib/mock-data";
 import { useAppStore } from "@/hooks/use-app-store";
 import { DEFAULT_CLIENT_PETS } from "@/lib/pets";
@@ -22,13 +35,15 @@ function SummaryRow({
   value: string;
 }) {
   return (
-    <div className="flex items-start gap-3 py-3 border-b border-border last:border-0">
-      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-        <Icon className="h-4 w-4 text-primary" />
+    <div className="flex items-start gap-3 py-3 last:pb-0">
+      <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0 mt-0.5">
+        <Icon className="h-4 w-4 text-muted-foreground" />
       </div>
-      <div>
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-sm font-medium text-foreground">{value}</p>
+      <div className="flex-1 min-w-0">
+        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+          {label}
+        </p>
+        <p className="text-sm font-medium text-foreground mt-0.5">{value}</p>
       </div>
     </div>
   );
@@ -45,73 +60,107 @@ interface Props {
 
 export function StepConfirm({ data, onBack, onSubmit, submitting }: Props) {
   const storedPets = useAppStore((state) => state.pets);
-  const pets = storedPets.length > 0 ? storedPets : DEFAULT_CLIENT_PETS;
-  const petNames = data.selectedPetIds.map((id) => pets.find((pet) => pet.id === id)?.name ?? id).join(", ");
+  const pets       = storedPets.length > 0 ? storedPets : DEFAULT_CLIENT_PETS;
+
+  const petNames = data.selectedPetIds
+    .map((id) => pets.find((pet) => pet.id === id)?.name ?? id)
+    .join(", ");
+
   const selectedMethod = data.selectedMethodId
     ? managedPaymentMethods.find((method) => method.id === data.selectedMethodId)
     : null;
-  const methodLabel = selectedMethod ? `${selectedMethod.brand} ${selectedMethod.label}` : "—";
+  const methodLabel = selectedMethod
+    ? `${selectedMethod.brand} ${selectedMethod.label}`
+    : "—";
+
   const dateLabel = data.date
     ? new Date(data.date + "T" + (data.time || "00:00")).toLocaleString("pt-BR", {
         weekday: "long",
-        day: "2-digit",
-        month: "long",
-        hour: "2-digit",
-        minute: "2-digit",
+        day:     "2-digit",
+        month:   "long",
+        hour:    "2-digit",
+        minute:  "2-digit",
       })
     : "—";
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-lg font-semibold">Confirmar pedido</h2>
-        <p className="text-sm text-muted-foreground">
-          Revise as informações antes de solicitar o passeio.
-        </p>
+      {/* Header */}
+      <div className="flex items-start gap-3">
+        <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0">
+          <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+        </div>
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">Confirmar pedido</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Revise as informações antes de solicitar o passeio.
+          </p>
+        </div>
       </div>
 
-      {/* Summary card */}
-      <div className="rounded-xl border border-border bg-muted/20 px-4">
-        <SummaryRow icon={Dog}        label="Cães"              value={petNames || "—"} />
-        <SummaryRow icon={Calendar}   label="Data e horário"    value={dateLabel} />
-        <SummaryRow icon={MapPin}     label="Local de partida"  value={data.address || "—"} />
+      <Separator />
+
+      {/* Summary rows */}
+      <div className="divide-y divide-border/60">
+        <SummaryRow icon={Dog}        label="Cães"               value={petNames || "—"} />
+        <SummaryRow icon={Calendar}   label="Data e horário"     value={dateLabel} />
+        <SummaryRow icon={Clock}      label="Duração"            value={`${data.durationMinutes} minutos`} />
+        <SummaryRow icon={MapPin}     label="Local de partida"   value={data.address || "—"} />
         <SummaryRow icon={CreditCard} label="Forma de pagamento" value={methodLabel} />
       </div>
 
+      <Separator />
+
       {/* Price highlight */}
       {data.estimatedPrice !== null && (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between rounded-xl bg-primary/5 border border-primary/20 px-4 py-3.5">
-            <span className="text-sm font-semibold text-foreground">Total estimado</span>
-            <span className="text-xl font-bold text-primary">{fmt(data.estimatedPrice)}</span>
-          </div>
+        <div className="space-y-2.5">
           {data.isFirstRide && (
-            <Badge variant="success">Desconto de primeira contratacao aplicado</Badge>
+            <div className="flex items-center gap-3 rounded-xl border border-emerald-200/60 dark:border-emerald-900/40 bg-emerald-50 dark:bg-emerald-950/30 px-4 py-3">
+              <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center shrink-0">
+                <BadgePercent className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
+                  Desconto de primeira contratação
+                </p>
+                <p className="text-xs text-emerald-600/80 dark:text-emerald-400/80 mt-0.5">
+                  15% aplicado no valor total deste pedido
+                </p>
+              </div>
+            </div>
           )}
+          <div className="flex items-center justify-between rounded-xl bg-primary/5 border border-primary/20 px-4 py-4">
+            <span className="text-sm font-semibold text-foreground">Total</span>
+            <span className="text-2xl font-bold text-primary">{fmt(data.estimatedPrice)}</span>
+          </div>
         </div>
       )}
 
-      <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-3">
-        <p className="text-sm font-semibold text-foreground">Garantias deste passeio</p>
-        <div className="grid gap-2 text-sm text-muted-foreground">
-          <p className="flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4 text-primary" />
-            Passeador com identidade e antecedentes verificados.
+      {/* Guarantees */}
+      <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-3">
+        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+          Garantias deste passeio
+        </p>
+        <div className="space-y-2.5">
+          <p className="flex items-center gap-2.5 text-sm text-foreground">
+            <ShieldCheck className="h-4 w-4 text-emerald-500 shrink-0" />
+            Passeador com identidade e antecedentes verificados
           </p>
-          <p className="flex items-center gap-2">
-            <Camera className="h-4 w-4 text-primary" />
-            Atualizações por fotos/vídeos e rastreamento GPS durante o trajeto.
+          <p className="flex items-center gap-2.5 text-sm text-foreground">
+            <Camera className="h-4 w-4 text-primary shrink-0" />
+            Fotos, vídeos e rastreamento GPS durante o trajeto
           </p>
-          <p className="flex items-center gap-2">
-            <MessageSquare className="h-4 w-4 text-primary" />
-            Chat ativo e suporte durante todo o passeio.
+          <p className="flex items-center gap-2.5 text-sm text-foreground">
+            <MessageSquare className="h-4 w-4 text-primary shrink-0" />
+            Chat ativo e suporte durante todo o passeio
           </p>
         </div>
       </div>
 
-      <p className="text-xs text-muted-foreground">
-        ✅ Ao confirmar, você concorda com os{" "}
-        <a href="#" className="text-primary underline">
+      {/* Terms */}
+      <p className="text-xs text-muted-foreground leading-relaxed">
+        Ao confirmar, você concorda com os{" "}
+        <a href="#" className="text-primary underline underline-offset-2">
           termos de uso
         </a>{" "}
         e autoriza a cobrança automática após a conclusão do passeio.
@@ -120,8 +169,7 @@ export function StepConfirm({ data, onBack, onSubmit, submitting }: Props) {
       <FlowActions
         showBack
         onBack={onBack}
-        cancelHref="/walks"
-        primaryLabel="Concluir solicitacao"
+        primaryLabel="Concluir solicitação"
         onPrimary={onSubmit}
         primaryDisabled={submitting}
         primaryLoading={submitting}

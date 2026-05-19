@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Check, ShieldCheck } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 import { useAppStore } from "@/hooks/use-app-store";
 import { DEFAULT_CLIENT_PETS, DOG_SIZE_LABEL, petEmojiBySize } from "@/lib/pets";
 import { cn } from "@/lib/utils";
@@ -13,6 +13,7 @@ interface Props {
   updateData: (partial: Partial<WalkFormData>) => void;
   onNext: () => void;
   onBack: () => void;
+  onCancel?: () => void;
 }
 
 function petBehaviorTag(notes: string | undefined) {
@@ -23,7 +24,7 @@ function petBehaviorTag(notes: string | undefined) {
   return "Perfil tranquilo";
 }
 
-export function StepPets({ data, updateData, onNext }: Props) {
+export function StepPets({ data, updateData, onNext, onCancel }: Props) {
   const storedPets = useAppStore((state) => state.pets);
   const pets = storedPets.length > 0 ? storedPets : DEFAULT_CLIENT_PETS;
 
@@ -59,7 +60,7 @@ export function StepPets({ data, updateData, onNext }: Props) {
                 type="button"
                 onClick={() => togglePet(pet.id)}
                 className={cn(
-                  "flex items-start gap-4 p-4 rounded-xl border text-left transition-all duration-200",
+                  "flex items-start gap-4 p-4 rounded-xl border text-left transition-all duration-200 cursor-pointer",
                   "hover:border-primary/60 hover:bg-primary/5",
                   selected ? "border-primary bg-primary/5 ring-1 ring-primary/30" : "border-border bg-background"
                 )}
@@ -97,16 +98,9 @@ export function StepPets({ data, updateData, onNext }: Props) {
         </div>
       )}
 
-      <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-xs text-muted-foreground">
-        <p className="flex items-center gap-1.5">
-          <ShieldCheck className="h-4 w-4 text-primary" />
-          Usamos essas informações para destacar passeadores com experiência no perfil do seu cão.
-        </p>
-      </div>
-
       <FlowActions
         showBack={false}
-        cancelHref="/walks"
+        onCancel={onCancel}
         primaryLabel="Continuar"
         primaryIcon={<ArrowRight className="h-4 w-4" />}
         onPrimary={onNext}

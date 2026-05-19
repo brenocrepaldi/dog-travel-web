@@ -61,13 +61,15 @@ export function FlowActions({
           />
         )}
 
-        <FlowButton
-          variant="outline"
-          label={cancelLabel}
-          icon={<X className="h-4 w-4" />}
-          href={cancelHref}
-          onClick={onCancel}
-        />
+        {(cancelHref ?? onCancel) && (
+          <FlowButton
+            variant="outline"
+            label={cancelLabel}
+            icon={<X className="h-4 w-4" />}
+            href={cancelHref}
+            onClick={onCancel}
+          />
+        )}
       </div>
 
       <FlowButton

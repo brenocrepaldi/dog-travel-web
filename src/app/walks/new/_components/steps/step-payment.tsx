@@ -40,7 +40,7 @@ export function StepPayment({ data, updateData, onNext, onBack }: Props) {
               type="button"
               onClick={() => updateData({ selectedMethodId: method.id })}
               className={cn(
-                "w-full flex items-center gap-4 p-4 rounded-xl border text-left transition-all duration-200",
+                "w-full flex items-center gap-4 p-4 rounded-xl border text-left transition-all duration-200 cursor-pointer",
                 "hover:border-primary/60 hover:bg-primary/5",
                 selected
                   ? "border-primary bg-primary/5 ring-1 ring-primary/30"
@@ -83,7 +83,6 @@ export function StepPayment({ data, updateData, onNext, onBack }: Props) {
       <FlowActions
         showBack
         onBack={onBack}
-        cancelHref="/walks"
         primaryLabel="Continuar"
         primaryIcon={<ArrowRight className="h-4 w-4" />}
         onPrimary={onNext}
