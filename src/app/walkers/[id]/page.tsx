@@ -1,41 +1,150 @@
 import type { Metadata } from 'next';
+import type { ElementType } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import {
 	ArrowLeft,
+	Award,
+	Calendar,
 	CalendarClock,
 	CheckCircle2,
+	Clock3,
 	FileCheck2,
-	HeartHandshake,
 	MapPin,
 	ShieldCheck,
+	Star,
 	Target,
-	Award,
+	XCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { buttonVariants } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { WalkerHero } from '@/components/walkers/walker-hero';
-import { InfoBlockEnhanced } from '@/components/walkers/info-block-enhanced';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { WalkerHero, walkerGradient, walkerInitials } from '@/components/walkers/walker-hero';
 import { TrustItemCard } from '@/components/walkers/trust-item-card';
 import { getWalkerById } from '@/lib/mock-data';
+import type { DogSize } from '@/types';
+import { Separator } from '@/components/ui/separator';
 
-export const metadata: Metadata = { title: 'Detalhe do Passeador | DogTravel' };
+export const metadata: Metadata = { title: 'Perfil do Passeador | DogTravel' };
+
+const SIZE_LABEL: Record<DogSize, string> = {
+	small: 'Pequeno',
+	medium: 'Médio',
+	large: 'Grande',
+	giant: 'Gigante',
+};
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function StatCard({
+	icon: Icon,
+	label,
+	value,
+	className,
+}: {
+	icon: ElementType;
+	label: string;
+	value: string;
+	className?: string;
+}) {
+	return (
+		<div
+			className={cn(
+				'flex flex-col gap-1.5 rounded-xl border border-border/50 bg-card px-4 py-3.5',
+				className,
+			)}
+		>
+			<div className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+				<Icon className="w-3.5 h-3.5 shrink-0" />
+				{label}
+			</div>
+			<p className="text-sm font-semibold text-foreground leading-snug">{value}</p>
+		</div>
+	);
+}
+
+function SectionHeader({
+	icon: Icon,
+	iconColor = 'text-primary',
+	iconBg = 'bg-primary/10',
+	title,
+	description,
+}: {
+	icon: ElementType;
+	iconColor?: string;
+	iconBg?: string;
+	title: string;
+	description: string;
+}) {
+	return (
+		<CardHeader className="pt-5">
+			<div className="flex items-center gap-2.5">
+				<div className={cn('w-8 h-8 rounded-xl flex items-center justify-center shrink-0', iconBg)}>
+					<Icon className={cn('w-4 h-4', iconColor)} />
+				</div>
+				<div>
+					<CardTitle className="text-sm font-semibold">{title}</CardTitle>
+					<CardDescription className="text-xs mt-0.5">{description}</CardDescription>
+				</div>
+			</div>
+		</CardHeader>
+	);
+}
+
+function SidebarAvatar({ name }: { name: string }) {
+	return (
+		<div
+			className={cn(
+				'w-10 h-10 rounded-xl bg-gradient-to-br flex items-center justify-center shrink-0 ring-2 ring-border/30',
+				walkerGradient(name),
+			)}
+		>
+			<span className="text-sm font-bold text-foreground/70">{walkerInitials(name)}</span>
+		</div>
+	);
+}
+
+function SidebarTrustRow({ verified, label }: { verified: boolean; label: string }) {
+	return (
+		<div className="flex items-center gap-2.5">
+			<div
+				className={cn(
+					'w-5 h-5 rounded-full flex items-center justify-center shrink-0',
+					verified ? 'bg-emerald-100 dark:bg-emerald-950/50' : 'bg-muted',
+				)}
+			>
+				{verified ? (
+					<CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+				) : (
+					<XCircle className="w-3 h-3 text-muted-foreground/40" />
+				)}
+			</div>
+			<span
+				className={cn(
+					'text-xs',
+					verified ? 'text-foreground' : 'text-muted-foreground/60 line-through',
+				)}
+			>
+				{label}
+			</span>
+		</div>
+	);
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function WalkerDetailPage({ params }: { params: Promise<{ id: string }> }) {
 	const { id } = await params;
 	const walker = getWalkerById(id);
 
-	if (!walker) {
-		notFound();
-	}
+	if (!walker) notFound();
 
 	const specialtyLabels = Array.from(
 		new Set([
 			...walker.tags,
 			...walker.behaviorExpertise
-				.filter((expertise) => expertise === 'multiplos-caes')
+				.filter((e) => e === 'multiplos-caes')
 				.map(() => 'Passeio com mais de um cão'),
 		]),
 	);
@@ -47,175 +156,245 @@ export default async function WalkerDetailPage({ params }: { params: Promise<{ i
 		year: 'numeric',
 	});
 
-	const hasFirstAid = walker.certifications.some((cert) =>
-		cert.toLowerCase().includes('socorros'),
-	);
 
 	return (
-		<div className="space-y-10 pb-12">
-			<div className="flex flex-wrap items-center justify-between gap-3">
-				<Link
-					href="/walkers"
-					className={cn(
-						buttonVariants({
-							variant: 'ghost',
-							size: 'sm',
-							className: 'text-muted-foreground hover:text-foreground',
-						}),
-					)}
-				>
-					<ArrowLeft className="mr-1.5 h-4 w-4" />
-					Voltar
-				</Link>
-				<Link
-					href={`/walks/new?walker=${walker.id}`}
-					className={cn(
-						buttonVariants({
-							variant: 'default',
-							className: 'shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all',
-						}),
-					)}
-				>
-					Agendar passeio
-				</Link>
-			</div>
+		<div className="flex flex-col gap-6 pb-10">
+			{/* Back */}
+			<Link
+				href="/walkers"
+				className={cn(
+					buttonVariants({ variant: 'ghost', size: 'sm' }),
+					'-ml-2 self-start text-muted-foreground hover:text-foreground',
+				)}
+			>
+				<ArrowLeft className="mr-1.5 h-4 w-4" />
+				Todos os passeadores
+			</Link>
 
-			{/* Hero Section - Enhanced Avatar & Info with Especialidades */}
-			<Card className="overflow-hidden border border-border/40 relative shadow-sm hover:shadow-md transition-shadow duration-300">
-				{/* Decorative blur background */}
-				<div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-gradient-to-l from-primary/5 to-transparent blur-3xl opacity-40" />
-
-				<CardHeader className="border-b border-border/60 pt-2 pb-8 relative z-10">
-					<WalkerHero
-						name={walker.name}
-						description={walker.description}
-						rating={walker.rating}
-						reviews={walker.reviews}
-						location={walker.location}
-						verified={walker.verified}
-						availability={walker.availability}
-						joinedDate={joinedDate}
-					/>
-				</CardHeader>
-
-				{/* Info Grid & Especialidades - Side by Side */}
-				<CardContent className="grid gap-8 pt-4 pb-4 lg:grid-cols-2 relative z-10">
-					{/* Info Blocks - Left Side */}
-					<div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2">
-						<InfoBlockEnhanced
-							icon={MapPin}
-							label="Área de atendimento"
-							value={walker.serviceArea}
-							color="info"
-							size="sm"
-						/>
-						<InfoBlockEnhanced
-							icon={CalendarClock}
-							label="Passeios concluídos"
-							value={String(walker.completedWalks)}
-							color="success"
-							size="sm"
-						/>
-					</div>
-
-					{/* Especialidades - Right Side */}
-					<div className="flex flex-col gap-1">
-						<p className="mb-4 text-sm font-semibold tracking-wide text-foreground flex items-center gap-2.5">
-							<Target className="h-4 w-4 text-primary/70" />
-							Especialidades
-						</p>
-						<div className="flex flex-wrap gap-2.5">
-							{specialtyLabels.map((tag) => (
-								<Badge
-									key={tag}
-									variant="secondary"
-									className="px-3 py-1.5 text-xs font-medium bg-slate-100 text-slate-700 dark:bg-slate-900/40 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800/60 transition-all duration-200 border border-slate-200/50 dark:border-slate-800/50"
-								>
-									{tag}
-								</Badge>
-							))}
-						</div>
-					</div>
-				</CardContent>
-			</Card>
-
-			{/* Trust & Credentials - 2 Column Layout */}
-			<div className="grid gap-6 lg:grid-cols-2">
-				{/* Trust & Security */}
-				<Card className="border border-border/30 bg-gradient-to-br from-emerald-50/60 dark:from-emerald-950/20 via-background to-background shadow-sm hover:shadow-md transition-shadow duration-300">
-					<CardHeader className="pb-6">
-						<CardTitle className="text-base font-semibold tracking-tight text-foreground flex items-center gap-2.5">
-							<ShieldCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-							Confiança e Segurança
-						</CardTitle>
-						<CardDescription className="text-xs mt-1.5">
-							Critérios usados para manter a qualidade do serviço.
-						</CardDescription>
-					</CardHeader>
-					<CardContent className="space-y-3">
-						<TrustItemCard
-							icon={ShieldCheck}
-							label="Identidade validada"
-							value={
-								walker.trustChecks.identityVerified
-									? 'Documento e selfie confirmados'
-									: 'Em revisão'
-							}
-							verified={walker.trustChecks.identityVerified}
-						/>
-						<TrustItemCard
-							icon={FileCheck2}
-							label="Antecedentes"
-							value={
-								walker.trustChecks.backgroundCheck
-									? 'Checagem concluída e aprovada'
-									: 'Em atualização'
-							}
-							verified={walker.trustChecks.backgroundCheck}
-						/>
-						<TrustItemCard
-							icon={HeartHandshake}
-							label="Experiencia no perfil do pet"
-							value={
-								walker.behaviorExpertise.length > 0
-									? 'Atende perfis comportamentais diversos'
-									: 'Perfil em atualização'
-							}
-							verified={walker.behaviorExpertise.length > 0}
-						/>
-						<TrustItemCard
-							icon={CheckCircle2}
-							label="Primeiros socorros pet"
-							value={hasFirstAid ? 'Certificação comprovada' : 'Não informado'}
-							verified={hasFirstAid}
-						/>
-					</CardContent>
-				</Card>
-
-				{/* Credentials & Certifications */}
-				<Card className="border border-border/30 bg-gradient-to-br from-cyan-50/60 dark:from-cyan-950/20 via-background to-background shadow-sm hover:shadow-md transition-shadow duration-300">
-					<CardHeader className="pb-6">
-						<CardTitle className="text-base font-semibold tracking-tight text-foreground flex items-center gap-2.5">
-							<Award className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
-							Credenciais e Certificados
-						</CardTitle>
-						<CardDescription className="text-xs mt-1.5">
-							Formações e treinamentos apresentados por este profissional.
-						</CardDescription>
-					</CardHeader>
-					<CardContent className="space-y-4">
-						{walker.certifications.map((certification) => (
-							<TrustItemCard
-								key={certification}
-								icon={Award}
-								label="Certificação"
-								value={certification}
-								verified
-								accent="cyan"
+			{/* Two-column layout */}
+			<div className="flex flex-col lg:flex-row lg:items-start gap-8 lg:gap-10">
+				{/* ── Main content ── */}
+				<div className="flex min-w-0 flex-1 flex-col gap-6">
+					{/* Hero */}
+					<Card className="overflow-hidden">
+						<div className="h-1 w-full bg-gradient-to-r from-primary/60 via-primary to-primary/40" />
+						<CardContent className="p-6">
+							<WalkerHero
+								name={walker.name}
+								description={walker.description}
+								rating={walker.rating}
+								reviews={walker.reviews}
+								location={walker.location}
+								verified={walker.verified}
+								availability={walker.availability}
+								joinedDate={joinedDate}
 							/>
-						))}
-					</CardContent>
-				</Card>
+						</CardContent>
+					</Card>
+
+					{/* Stats */}
+					<div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+						<StatCard icon={MapPin} label="Área de atendimento" value={walker.serviceArea} />
+						<StatCard
+							icon={Clock3}
+							label="Passeios realizados"
+							value={`${walker.completedWalks}+`}
+						/>
+						<StatCard
+							icon={Calendar}
+							label="Disponibilidade"
+							value={walker.availability}
+							className="col-span-2 sm:col-span-1"
+						/>
+					</div>
+
+					{/* Especialidades */}
+					<Card className="overflow-hidden pt-1">
+						<SectionHeader
+							icon={Target}
+							title="Especialidades"
+							description="Áreas de atuação e portes atendidos"
+						/>
+						<Separator />
+						<CardContent className="pb-5 space-y-4">
+							<div className="flex flex-wrap gap-2">
+								{specialtyLabels.map((tag) => (
+									<Badge key={tag} variant="secondary" className="text-xs font-normal px-2.5 py-1">
+										{tag}
+									</Badge>
+								))}
+							</div>
+							<div>
+								<p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+									Portes atendidos
+								</p>
+								<div className="flex flex-wrap gap-1.5">
+									{walker.supportedSizes.map((size) => (
+										<Badge
+											key={size}
+											variant="outline"
+											className="text-[11px] text-muted-foreground"
+										>
+											{SIZE_LABEL[size]}
+										</Badge>
+									))}
+								</div>
+							</div>
+						</CardContent>
+					</Card>
+
+					{/* Trust & Security */}
+					<Card className="overflow-hidden pt-1">
+						<SectionHeader
+							icon={ShieldCheck}
+							iconBg="bg-emerald-500/10"
+							iconColor="text-emerald-600 dark:text-emerald-400"
+							title="Confiança e Segurança"
+							description="Critérios de qualidade verificados pela DogTravel"
+						/>
+						<Separator />
+						<CardContent className="pb-5 space-y-3">
+							<TrustItemCard
+								icon={ShieldCheck}
+								label="Identidade validada"
+								value={
+									walker.trustChecks.identityVerified
+										? 'Documento e selfie confirmados'
+										: 'Em revisão'
+								}
+								verified={walker.trustChecks.identityVerified}
+							/>
+							<TrustItemCard
+								icon={FileCheck2}
+								label="Antecedentes Criminais"
+								value={
+									walker.trustChecks.backgroundCheck
+										? 'Checagem concluída e aprovada'
+										: 'Em revisão'
+								}
+								verified={walker.trustChecks.backgroundCheck}
+							/>
+						</CardContent>
+					</Card>
+
+					{/* Certifications */}
+					{walker.certifications.length > 0 && (
+						<Card className="overflow-hidden pt-1">
+							<SectionHeader
+								icon={Award}
+								title="Credenciais e Certificados"
+								description="Formações e treinamentos apresentados por este profissional"
+							/>
+							<Separator />
+							<CardContent className="pb-5 space-y-3">
+								{walker.certifications.map((cert) => (
+									<TrustItemCard
+										key={cert.title}
+										icon={Award}
+										label={cert.title}
+										value={cert.verified ? 'Verificado pela DogTravel' : 'Aguardando verificação'}
+										verified={cert.verified}
+										accent={cert.verified ? 'cyan' : 'amber'}
+									/>
+								))}
+							</CardContent>
+						</Card>
+					)}
+
+					{/* Bottom CTA banner */}
+					<div className="rounded-2xl border border-primary/15 bg-primary/5 px-5 py-5 sm:px-6 flex flex-col sm:flex-row sm:items-center gap-5">
+						<div className="w-10 h-10 rounded-xl bg-primary/10 items-center justify-center shrink-0 hidden sm:flex">
+							<CalendarClock className="w-5 h-5 text-primary" />
+						</div>
+						<div className="flex-1 min-w-0">
+							<p className="font-semibold text-foreground text-sm">Pronto para agendar?</p>
+							<p className="text-sm text-muted-foreground mt-0.5 leading-relaxed">
+								Reserve um horário com {walker.name} e garanta o melhor cuidado para o seu cão.
+							</p>
+						</div>
+						<Link
+							href={`/walks/new?walker=${walker.id}`}
+							className={cn(buttonVariants({ size: 'xl' }), 'shrink-0 shadow-sm')}
+						>
+							Agendar passeio
+						</Link>
+					</div>
+				</div>
+
+				{/* ── Sidebar: booking panel ── */}
+				<aside className="w-full shrink-0 lg:w-80 lg:sticky lg:top-8 lg:self-start">
+					<Card className="overflow-hidden">
+						<div className="h-1 w-full bg-gradient-to-r from-primary/60 via-primary to-primary/40" />
+						<CardContent className="p-5 space-y-4">
+							{/* Mini perfil */}
+							<div className="flex items-center gap-3">
+								<SidebarAvatar name={walker.name} />
+								<div className="min-w-0">
+									<p className="font-semibold text-sm text-foreground truncate">{walker.name}</p>
+									<div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+										<Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" />
+										<span className="font-semibold text-foreground">{walker.rating.toFixed(1)}</span>
+										<span>· {walker.reviews} avaliações</span>
+									</div>
+								</div>
+							</div>
+
+							<div className="h-px bg-border/40" />
+
+							{/* CTA */}
+							<div className="space-y-2">
+								<Link
+									href={`/walks/new?walker=${walker.id}`}
+									className={cn(buttonVariants({ size: 'xl' }), 'w-full shadow-sm')}
+								>
+									<CalendarClock className="w-4 h-4 mr-2 shrink-0" />
+									Agendar passeio com {walker.name.split(' ')[0]}
+								</Link>
+								<p className="text-center text-[11px] text-muted-foreground leading-relaxed">
+									Escolha data, horário e pets na próxima etapa
+								</p>
+							</div>
+
+							{/* Disponibilidade */}
+							<div className="flex items-center gap-2 rounded-lg bg-muted/40 border border-border/50 px-3 py-2">
+								<Calendar className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+								<span className="text-xs text-muted-foreground">{walker.availability}</span>
+							</div>
+
+							<div className="h-px bg-border/40" />
+
+							{/* Verificações rápidas */}
+							<div className="space-y-2.5">
+								<p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+									Verificações
+								</p>
+								<SidebarTrustRow
+									verified={walker.trustChecks.identityVerified}
+									label="Identidade validada"
+								/>
+								<SidebarTrustRow
+									verified={walker.trustChecks.backgroundCheck}
+									label="Antecedentes checados"
+								/>
+								<SidebarTrustRow
+									verified={walker.certifications.some((c) => c.verified)}
+									label="Certificações comprovadas"
+								/>
+							</div>
+
+							<div className="h-px bg-border/40" />
+
+							{/* Link voltar */}
+							<Link
+								href="/walkers"
+								className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+							>
+								<ArrowLeft className="w-3.5 h-3.5" />
+								Ver outros passeadores
+							</Link>
+						</CardContent>
+					</Card>
+				</aside>
 			</div>
 		</div>
 	);

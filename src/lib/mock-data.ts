@@ -1,5 +1,10 @@
 import type { DogSize, PaymentMethodType, WalkStatus } from '@/types';
 
+export interface WalkerCertification {
+	title: string;
+	verified: boolean;
+}
+
 export interface WalkerProfile {
 	id: string;
 	name: string;
@@ -16,7 +21,7 @@ export interface WalkerProfile {
 		identityVerified: boolean;
 		backgroundCheck: boolean;
 	};
-	certifications: string[];
+	certifications: WalkerCertification[];
 	supportedSizes: DogSize[];
 	behaviorExpertise: string[];
 }
@@ -101,7 +106,12 @@ export const walkers: WalkerProfile[] = [
 			identityVerified: true,
 			backgroundCheck: true,
 		},
-		certifications: ['Adestramento Positivo', 'Primeiros Socorros Pet', 'Manejo de Cao Reativo'],
+		certifications: [
+			{ title: 'Adestramento Positivo', verified: true },
+			{ title: 'Primeiros Socorros com Pets', verified: true },
+			{ title: 'Manejo de Cão Reativo', verified: true },
+			{ title: 'Experiência Comportamental', verified: true },
+		],
 		supportedSizes: ['medium', 'large', 'giant'],
 		behaviorExpertise: ['agitado', 'reativo', 'multiplos-caes'],
 	},
@@ -123,9 +133,10 @@ export const walkers: WalkerProfile[] = [
 			backgroundCheck: true,
 		},
 		certifications: [
-			'Cuidados com Caes Idosos',
-			'Administracao de Medicacao',
-			'Primeiros Socorros Pet',
+			{ title: 'Cuidados com Cães Idosos', verified: true },
+			{ title: 'Administração de Medicação', verified: true },
+			{ title: 'Primeiros Socorros com Pets', verified: true },
+			{ title: 'Socialização e Comportamento', verified: false },
 		],
 		supportedSizes: ['small', 'medium'],
 		behaviorExpertise: ['idoso', 'filhote', 'medicacao'],
@@ -147,7 +158,11 @@ export const walkers: WalkerProfile[] = [
 			identityVerified: true,
 			backgroundCheck: false,
 		},
-		certifications: ['Manejo de Cao Reativo', 'Passeio em Baixo Estimulo'],
+		certifications: [
+			{ title: 'Manejo de Cão Reativo', verified: true },
+			{ title: 'Passeio em Baixo Estímulo', verified: true },
+			{ title: 'Primeiros Socorros com Pets', verified: false },
+		],
 		supportedSizes: ['small', 'medium', 'large'],
 		behaviorExpertise: ['reativo', 'ansioso', 'agitado'],
 	},
@@ -169,9 +184,10 @@ export const walkers: WalkerProfile[] = [
 			backgroundCheck: true,
 		},
 		certifications: [
-			'Primeiros Socorros Veterinarios',
-			'Socializacao de Filhotes',
-			'Conduta Segura em Via Publica',
+			{ title: 'Primeiros Socorros Veterinários', verified: true },
+			{ title: 'Socialização de Filhotes', verified: true },
+			{ title: 'Conduta Segura em Via Pública', verified: true },
+			{ title: 'Experiência Comportamental Avançada', verified: true },
 		],
 		supportedSizes: ['small', 'medium', 'large', 'giant'],
 		behaviorExpertise: ['filhote', 'agitado', 'multiplos-caes'],

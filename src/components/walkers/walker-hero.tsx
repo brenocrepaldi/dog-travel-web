@@ -1,105 +1,92 @@
-import { ShieldCheck, MapPin, Star, Calendar } from 'lucide-react';
+import { MapPin, ShieldCheck, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+const WALKER_GRADIENTS = [
+  'from-blue-400/30 to-indigo-500/30',
+  'from-emerald-400/30 to-teal-500/30',
+  'from-amber-400/30 to-orange-500/30',
+  'from-rose-400/30 to-pink-500/30',
+  'from-violet-400/30 to-purple-500/30',
+  'from-cyan-400/30 to-sky-500/30',
+];
+
+export function walkerGradient(name: string) {
+  return WALKER_GRADIENTS[name.charCodeAt(0) % WALKER_GRADIENTS.length];
+}
+
+export function walkerInitials(name: string) {
+  return name
+    .split(' ')
+    .map((p) => p[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+}
+
 type WalkerHeroProps = {
-	name: string;
-	description: string;
-	rating: number;
-	reviews: number;
-	location: string;
-	verified: boolean;
-	availability: string;
-	joinedDate?: string;
+  name: string;
+  description: string;
+  rating: number;
+  reviews: number;
+  location: string;
+  verified: boolean;
+  availability: string;
+  joinedDate?: string;
 };
 
 export function WalkerHero({
-	name,
-	description,
-	rating,
-	reviews,
-	location,
-	verified,
-	availability,
-	joinedDate,
+  name,
+  description,
+  rating,
+  reviews,
+  location,
+  verified,
+  joinedDate,
 }: WalkerHeroProps) {
-	return (
-		<div className="flex flex-col sm:flex-row sm:items-start sm:justify-between">
-			<div className="flex items-start gap-5">
-				{/* Avatar com gradiente e efeito visual */}
-				<div className="relative flex-shrink-0">
-					{/* Glow background */}
-					<div className="absolute -inset-1 rounded-full bg-gradient-to-br from-primary/30 via-primary/10 to-transparent opacity-60 blur-md" />
+  return (
+    <div className="flex flex-col sm:flex-row items-start gap-6">
+      {/* Avatar */}
+      <div
+        className={cn(
+          'w-20 h-20 rounded-2xl bg-gradient-to-br flex items-center justify-center shrink-0 ring-2 ring-border/30',
+          walkerGradient(name)
+        )}
+      >
+        <span className="text-2xl font-bold text-foreground/70">{walkerInitials(name)}</span>
+      </div>
 
-					<div
-						className={cn(
-							'relative flex h-24 w-24 items-center justify-center rounded-full',
-							'border-2 border-primary/30 font-bold text-2xl',
-							'bg-gradient-to-br from-primary/25 via-primary/15 to-primary/10 text-primary',
-							'shadow-lg',
-						)}
-					>
-						{name
-							.split(' ')
-							.map((chunk) => chunk[0])
-							.join('')
-							.slice(0, 2)
-							.toUpperCase()}
-					</div>
-				</div>
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">{name}</h1>
+          {verified && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-900/40">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                Verificado
+              </span>
+            </span>
+          )}
+        </div>
 
-				{/* Text Content */}
-				<div className="flex-1 min-w-0">
-					<div className="flex items-center gap-2 flex-wrap">
-						<h1 className="text-3xl font-bold tracking-tight text-foreground">{name}</h1>
-						{verified && (
-							<div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40">
-								<ShieldCheck
-									className="h-4 w-4 text-emerald-600 dark:text-emerald-400"
-									aria-label="Verificado"
-								/>
-								<span className="text-xs font-semibold text-emerald-700 dark:text-emerald-300">
-									Verificado
-								</span>
-							</div>
-						)}
-					</div>
+        {joinedDate && (
+          <p className="text-xs text-muted-foreground mt-1">Membro desde {joinedDate}</p>
+        )}
 
-					{joinedDate && (
-						<div className="mt-2 inline-flex items-center gap-2 px-3 py-1 rounded-sm bg-gradient-to-r from-slate-50 to-slate-50/50 dark:from-slate-950/50 dark:to-slate-950/30 border border-slate-200 dark:border-slate-800/50">
-							<Calendar className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
-							<span className="text-xs font-medium text-slate-600 dark:text-slate-400">
-								Membro desde {joinedDate}
-							</span>
-						</div>
-					)}
-					<p className="mt-3 text-base text-muted-foreground leading-relaxed">{description}</p>
+        <p className="text-sm text-muted-foreground leading-relaxed mt-3">{description}</p>
 
-					{/* Rating + Location + Joined Date */}
-					<div className="mt-4 flex flex-col gap-3 text-sm">
-						<div className="flex items-center gap-4 flex-wrap">
-							<span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40">
-								<Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-								<span className="font-semibold text-amber-900 dark:text-amber-200">
-									{rating.toFixed(1)}
-								</span>
-								<span className="text-xs text-amber-700 dark:text-amber-300">({reviews})</span>
-							</span>
-
-							<span className="flex items-center gap-1.5 text-foreground">
-								<MapPin className="h-4 w-4 text-slate-500 dark:text-slate-400" />
-								<span className="font-medium">{location}</span>
-							</span>
-						</div>
-					</div>
-				</div>
-			</div>
-			{/* Availability Badge */}
-			<div className="w-1/6 inline-flex justify-center items-center gap-2 px-3 py-1 rounded-sm bg-gradient-to-r from-slate-50 to-slate-50/50 dark:from-slate-950/50 dark:to-slate-950/30 border border-slate-200 dark:border-slate-800/50">
-				<Calendar className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
-				<span className="text-xs font-medium text-slate-700 dark:text-slate-300">
-					{availability}
-				</span>
-			</div>
-		</div>
-	);
+        <div className="flex items-center gap-4 mt-4 flex-wrap text-sm">
+          <span className="flex items-center gap-1.5">
+            <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+            <span className="font-semibold text-foreground">{rating.toFixed(1)}</span>
+            <span className="text-muted-foreground text-xs">({reviews} avaliações)</span>
+          </span>
+          <span className="flex items-center gap-1.5 text-muted-foreground">
+            <MapPin className="w-4 h-4 shrink-0" />
+            <span>{location}</span>
+          </span>
+        </div>
+      </div>
+    </div>
+  );
 }
