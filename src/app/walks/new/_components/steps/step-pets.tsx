@@ -16,14 +16,6 @@ interface Props {
   onCancel?: () => void;
 }
 
-function petBehaviorTag(notes: string | undefined) {
-  const text = (notes ?? "").toLowerCase();
-  if (text.includes("reativ") || text.includes("agitado")) return "Requer manejo calmo";
-  if (text.includes("puxa")) return "Puxa no inicio";
-  if (text.includes("medo")) return "Pode ter receio em rua movimentada";
-  return "Perfil tranquilo";
-}
-
 export function StepPets({ data, updateData, onNext, onCancel }: Props) {
   const storedPets = useAppStore((state) => state.pets);
   const pets = storedPets.length > 0 ? storedPets : DEFAULT_CLIENT_PETS;
@@ -77,9 +69,6 @@ export function StepPets({ data, updateData, onNext, onCancel }: Props) {
                   <div className="flex flex-wrap gap-1.5">
                     <span className="rounded-full border border-border px-2 py-0.5 text-[11px] text-muted-foreground">
                       Porte {DOG_SIZE_LABEL[pet.size]}
-                    </span>
-                    <span className="rounded-full border border-border px-2 py-0.5 text-[11px] text-muted-foreground">
-                      {petBehaviorTag(pet.notes)}
                     </span>
                   </div>
                 </div>
