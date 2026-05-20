@@ -120,8 +120,7 @@ export default async function DogsPage() {
 								Meus Cães
 							</h1>
 							<p className="text-sm text-muted-foreground leading-relaxed">
-								Gerencie os perfis dos seus cães e mantenha as informações sempre
-								atualizadas.
+								Gerencie os perfis dos seus cães.
 							</p>
 						</div>
 					</div>
