@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { PetsList } from "./_components/pets-list";
@@ -127,7 +128,9 @@ export default async function DogsPage() {
 					<Separator className="mt-6" />
 				</header>
 				<section className="min-w-0">
-					<PetsList />
+					<Suspense>
+						<PetsList />
+					</Suspense>
 				</section>
 
 				<ProtectedDataFooter />

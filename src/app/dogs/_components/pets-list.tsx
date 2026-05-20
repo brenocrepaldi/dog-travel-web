@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
 	Edit2,
 	Info,
 	Plus,
 	Dog,
 	Heart,
+	PawPrint,
 	Shield,
 	Star,
 	ChevronRight,
@@ -14,7 +16,7 @@ import {
 	ChevronUp,
 } from "lucide-react";
 import { useAppStore } from "@/hooks/use-app-store";
-import { DEFAULT_CLIENT_PETS, DOG_SIZE_LABEL, petEmojiBySize } from "@/lib/pets";
+import { DEFAULT_CLIENT_PETS, DOG_SIZE_LABEL } from "@/lib/pets";
 import type { Pet } from "@/types";
 import { Button } from "@/components/ui/button";
 import { PetFormSheet, type PetDraft } from "./pet-form-sheet";
@@ -31,50 +33,23 @@ function toDraft(pet: Pet): PetDraft {
 	};
 }
 
-// Avatar com gradiente baseado no nome do pet
+// Avatar do pet — imagem real ou patinha âmbar como fallback
 function PetAvatar({ pet, size = "md" }: { pet: Pet; size?: "md" | "lg" }) {
-	const gradients = [
-		"from-blue-400/30 to-indigo-500/30",
-		"from-emerald-400/30 to-teal-500/30",
-		"from-amber-400/30 to-orange-500/30",
-		"from-rose-400/30 to-pink-500/30",
-		"from-violet-400/30 to-purple-500/30",
-		"from-cyan-400/30 to-sky-500/30",
-	];
-	const idx = pet.name.charCodeAt(0) % gradients.length;
-	const gradient = gradients[idx];
-
-	const sizeClass = size === "lg" ? "w-20 h-20 text-4xl" : "w-16 h-16 text-3xl";
+	const sizeClass    = size === "lg" ? "w-20 h-20" : "w-16 h-16";
+	const iconSizeClass = size === "lg" ? "h-8 w-8"  : "h-6 w-6";
 
 	if (pet.photoUrl) {
 		return (
-			<div
-				className={cn(
-					"rounded-2xl overflow-hidden shrink-0 ring-2 ring-border/30",
-					sizeClass
-				)}
-			>
+			<div className={cn("rounded-2xl overflow-hidden shrink-0 ring-2 ring-border/30", sizeClass)}>
 				{/* eslint-disable-next-line @next/next/no-img-element */}
-				<img
-					src={pet.photoUrl}
-					alt={pet.name}
-					className="h-full w-full object-cover"
-				/>
+				<img src={pet.photoUrl} alt={pet.name} className="h-full w-full object-cover" />
 			</div>
 		);
 	}
 
 	return (
-		<div
-			className={cn(
-				"rounded-2xl bg-gradient-to-br flex items-center justify-center shrink-0 ring-2 ring-border/30",
-				gradient,
-				sizeClass
-			)}
-		>
-			<span role="img" aria-label={pet.name}>
-				{petEmojiBySize(pet.size)}
-			</span>
+		<div className={cn("rounded-2xl bg-amber-500/10 flex items-center justify-center shrink-0 ring-2 ring-border/30", sizeClass)}>
+			<PawPrint className={cn(iconSizeClass, "text-amber-600 dark:text-amber-400")} />
 		</div>
 	);
 }
@@ -344,7 +319,10 @@ export function PetsList() {
 	const [sheetOpen, setSheetOpen] = useState(false);
 	const [editingPet, setEditingPet] = useState<Pet | null>(null);
 	const [sheetVersion, setSheetVersion] = useState(0);
-	const [isLoading] = useState(false); // Pode ser conectado à lógica real de loading
+	const [isLoading] = useState(false);
+
+	const router = useRouter();
+	const searchParams = useSearchParams();
 
 	const hasPets = pets.length > 0;
 	const list = hasPets ? pets : DEFAULT_CLIENT_PETS;
@@ -366,6 +344,25 @@ export function PetsList() {
 		setEditingPet(null);
 		setSheetVersion((c) => c + 1);
 		setSheetOpen(true);
+	};
+
+	// Abre o sheet automaticamente quando há query params de navegação
+	useEffect(() => {
+		const editId = searchParams.get("edit");
+		const shouldAdd = searchParams.get("add") === "true";
+
+		if (shouldAdd) {
+			handleAdd();
+		} else if (editId) {
+			const pet = list.find((p) => p.id === editId);
+			if (pet) handleEdit(pet);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
+	const handleSheetOpenChange = (open: boolean) => {
+		setSheetOpen(open);
+		if (!open) router.replace("/dogs", { scroll: false });
 	};
 
 	const handleSavePet = (savedPet: PetDraft) => {
@@ -459,7 +456,7 @@ export function PetsList() {
 			<PetFormSheet
 				key={`${editingPet?.id ?? "new"}-${sheetVersion}`}
 				open={sheetOpen}
-				onOpenChange={setSheetOpen}
+				onOpenChange={handleSheetOpenChange}
 				petToEdit={editingPet ? toDraft(editingPet) : null}
 				onSave={handleSavePet}
 			/>
