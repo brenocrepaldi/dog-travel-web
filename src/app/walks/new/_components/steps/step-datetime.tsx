@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Calendar, CalendarClock, Clock } from "lucide-react";
+import { ArrowRight, CalendarClock } from "lucide-react";
 import { FlowActions } from "@/components/common/flow-actions";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,12 @@ interface Props {
 export function StepDateTime({ data, updateData, onNext, onBack }: Props) {
   const isValid = data.date && data.time && data.durationMinutes > 0;
   const today   = new Date().toISOString().split("T")[0];
+
+  function openPicker(e: React.FocusEvent<HTMLInputElement>) {
+    const input = e.currentTarget;
+    // Wait for React to commit the type change before calling showPicker
+    setTimeout(() => input.showPicker?.(), 50);
+  }
 
   const previewLabel =
     data.date && data.time
@@ -46,33 +52,33 @@ export function StepDateTime({ data, updateData, onNext, onBack }: Props) {
           <Label htmlFor="date" className="text-sm font-medium">
             Data
           </Label>
-          <div className="relative">
-            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-            <Input
-              id="date"
-              type="date"
-              min={today}
-              value={data.date}
-              onChange={(e) => updateData({ date: e.target.value })}
-              className="pl-9"
-            />
-          </div>
+          <Input
+            id="date"
+            type={data.date ? "date" : undefined}
+            placeholder="dd/mm/aaaa"
+            min={today}
+            value={data.date}
+            onChange={(e) => updateData({ date: e.target.value })}
+            onFocus={(e) => { e.currentTarget.type = "date"; openPicker(e); }}
+            onBlur={(e)  => { if (!data.date) e.currentTarget.type = "text"; }}
+            className="cursor-pointer"
+          />
         </div>
 
         <div className="space-y-1.5">
           <Label htmlFor="time" className="text-sm font-medium">
             Horário
           </Label>
-          <div className="relative">
-            <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-            <Input
-              id="time"
-              type="time"
-              value={data.time}
-              onChange={(e) => updateData({ time: e.target.value })}
-              className="pl-9"
-            />
-          </div>
+          <Input
+            id="time"
+            type={data.time ? "time" : undefined}
+            placeholder="hh:mm"
+            value={data.time}
+            onChange={(e) => updateData({ time: e.target.value })}
+            onFocus={(e) => { e.currentTarget.type = "time"; openPicker(e); }}
+            onBlur={(e)  => { if (!data.time) e.currentTarget.type = "text"; }}
+            className="cursor-pointer"
+          />
         </div>
       </div>
 
