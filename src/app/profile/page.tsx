@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ChevronRight, CreditCard, WalletCards } from 'lucide-react';
+import { Building2, ChevronRight, CreditCard, FileCheck2, TrendingUp, WalletCards } from 'lucide-react';
 import { LogoutButton } from './_components/logout-button';
 
 function getInitials(name: string) {
@@ -54,6 +54,7 @@ export default async function ProfilePage() {
 	if (!session?.user) redirect('/login');
 
 	const { name, email, image } = session.user;
+	const role = (session.user as { role?: string })?.role ?? 'client';
 	const initials = name ? getInitials(name) : '?';
 
 	return (
@@ -88,23 +89,59 @@ export default async function ProfilePage() {
 				<ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
 			</Link>
 
+			{/* Profissional — somente para passeadores */}
+			{role === 'walker' && (
+				<div>
+					<SectionLabel>Profissional</SectionLabel>
+					<Card className="overflow-hidden py-0 gap-0">
+						<CardContent className="p-0">
+							<NavItem
+								href="/profile/documents"
+								icon={FileCheck2}
+								label="Documentos profissionais"
+								description="Identidade, antecedentes e certificações"
+							/>
+						</CardContent>
+					</Card>
+				</div>
+			)}
+
 			{/* Financeiro */}
 			<div>
 				<SectionLabel>Financeiro</SectionLabel>
 				<Card className="overflow-hidden py-0 gap-0">
 					<CardContent className="p-0 divide-y divide-border/60">
-						<NavItem
-							href="/profile/payments"
-							icon={CreditCard}
-							label="Pagamentos"
-							description="Histórico de transações"
-						/>
-						<NavItem
-							href="/profile/payment-methods"
-							icon={WalletCards}
-							label="Métodos de pagamento"
-							description="Cartões e chaves PIX salvos"
-						/>
+						{role === 'walker' ? (
+							<>
+								<NavItem
+									href="/profile/payments"
+									icon={TrendingUp}
+									label="Ganhos"
+									description="Histórico de recebimentos"
+								/>
+								<NavItem
+									href="/profile/payment-methods"
+									icon={Building2}
+									label="Dados bancários"
+									description="Conta para recebimento de pagamentos"
+								/>
+							</>
+						) : (
+							<>
+								<NavItem
+									href="/profile/payments"
+									icon={CreditCard}
+									label="Pagamentos"
+									description="Histórico de transações"
+								/>
+								<NavItem
+									href="/profile/payment-methods"
+									icon={WalletCards}
+									label="Métodos de pagamento"
+									description="Cartões e chaves PIX salvos"
+								/>
+							</>
+						)}
 					</CardContent>
 				</Card>
 			</div>
