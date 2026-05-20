@@ -26,6 +26,8 @@ import { StepLocation } from './steps/step-location';
 import { StepPrice } from './steps/step-price';
 import { StepPayment } from './steps/step-payment';
 import { StepConfirm } from './steps/step-confirm';
+import { StepPixPayment } from './steps/step-pix-payment';
+import { PIX_INSTANT_ID } from './pix-constants';
 
 // ─── Form state shape ──────────────────────────────────────────────────────
 export interface WalkFormData {
@@ -147,6 +149,8 @@ export function WalkRequestForm() {
 	const [step, setStep] = useState(0);
 	const [data, setData] = useState<WalkFormData>(INITIAL_DATA);
 	const [submitting, setSubmitting] = useState(false);
+	const [submitted, setSubmitted] = useState(false);
+	const [pixPayment, setPixPayment] = useState(false);
 	const hasPrefilledRepeat = useRef(false);
 	const pets = storedPets.length > 0 ? storedPets : DEFAULT_CLIENT_PETS;
 
@@ -220,10 +224,15 @@ export function WalkRequestForm() {
 					isFirstRide: data.isFirstRide,
 				},
 			});
-			toast.success('Passeio solicitado!', {
-				description: 'Aguardando aceitação de um passeador.',
-			});
-			router.push('/walks');
+			setSubmitted(true);
+			if (data.selectedMethodId === PIX_INSTANT_ID) {
+				setPixPayment(true);
+			} else {
+				toast.success('Passeio solicitado!', {
+					description: 'Aguardando aceitação de um passeador.',
+				});
+				router.push('/walks');
+			}
 		} catch {
 			const localRequest: LocalWalkRequest = {
 				id: crypto.randomUUID(),
@@ -254,7 +263,8 @@ export function WalkRequestForm() {
 	const [pendingUrl, setPendingUrl] = useState<string | null>(null);
 
 	const isDirty =
-		step > 0 || data.selectedPetIds.length > 0 || data.date !== '' || data.addressStreet !== '';
+		!submitted &&
+		(step > 0 || data.selectedPetIds.length > 0 || data.date !== '' || data.addressStreet !== '');
 
 	// Intercept browser close / tab refresh
 	useEffect(() => {
@@ -333,26 +343,38 @@ export function WalkRequestForm() {
 				</p>
 			</div>
 
-			{/* Step indicator */}
-			<StepIndicator currentStep={step} />
+			{pixPayment ? (
+				/* PIX payment screen — replaces step flow after submission */
+				<Card className="overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
+					<div className="h-1 w-full bg-gradient-to-r from-primary/60 via-primary to-primary/40" />
+					<CardContent className="p-6">
+						<StepPixPayment data={data} onDone={() => router.push('/walks')} />
+					</CardContent>
+				</Card>
+			) : (
+				<>
+					{/* Step indicator */}
+					<StepIndicator currentStep={step} />
 
-			{/* Step card — key forces remount + animation on step change */}
-			<Card
-				key={step}
-				className="overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300"
-			>
-				<div className="h-1 w-full bg-gradient-to-r from-primary/60 via-primary to-primary/40" />
-				<CardContent className="p-6">
-					{step === 0 && <StepPets {...stepProps} onCancel={() => setShowExitModal(true)} />}
-					{step === 1 && <StepDateTime {...stepProps} />}
-					{step === 2 && <StepLocation {...stepProps} />}
-					{step === 3 && <StepPrice {...stepProps} />}
-					{step === 4 && <StepPayment {...stepProps} />}
-					{step === 5 && (
-						<StepConfirm {...stepProps} onSubmit={handleSubmit} submitting={submitting} />
-					)}
-				</CardContent>
-			</Card>
+					{/* Step card — key forces remount + animation on step change */}
+					<Card
+						key={step}
+						className="overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300"
+					>
+						<div className="h-1 w-full bg-gradient-to-r from-primary/60 via-primary to-primary/40" />
+						<CardContent className="p-6">
+							{step === 0 && <StepPets {...stepProps} onCancel={() => setShowExitModal(true)} />}
+							{step === 1 && <StepDateTime {...stepProps} />}
+							{step === 2 && <StepLocation {...stepProps} />}
+							{step === 3 && <StepPrice {...stepProps} />}
+							{step === 4 && <StepPayment {...stepProps} />}
+							{step === 5 && (
+								<StepConfirm {...stepProps} onSubmit={handleSubmit} submitting={submitting} />
+							)}
+						</CardContent>
+					</Card>
+				</>
+			)}
 
 			{/* Exit confirmation modal */}
 			<Dialog open={showExitModal} onOpenChange={(open) => !open && setShowExitModal(false)}>

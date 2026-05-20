@@ -17,6 +17,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { FlowActions } from "@/components/common/flow-actions";
 import { managedPaymentMethods } from "@/lib/mock-data";
+import { PIX_INSTANT_ID } from "../pix-constants";
 import { useAppStore } from "@/hooks/use-app-store";
 import { DEFAULT_CLIENT_PETS } from "@/lib/pets";
 import type { WalkFormData } from "../walk-request-form";
@@ -66,12 +67,15 @@ export function StepConfirm({ data, onBack, onSubmit, submitting }: Props) {
     .map((id) => pets.find((pet) => pet.id === id)?.name ?? id)
     .join(", ");
 
-  const selectedMethod = data.selectedMethodId
-    ? managedPaymentMethods.find((method) => method.id === data.selectedMethodId)
-    : null;
-  const methodLabel = selectedMethod
-    ? `${selectedMethod.brand} ${selectedMethod.label}`
-    : "—";
+  const methodLabel =
+    data.selectedMethodId === PIX_INSTANT_ID
+      ? "PIX — QR Code após confirmação"
+      : data.selectedMethodId
+        ? (() => {
+            const m = managedPaymentMethods.find((method) => method.id === data.selectedMethodId);
+            return m ? `${m.brand} ${m.label}` : "—";
+          })()
+        : "—";
 
   const dateLabel = data.date
     ? new Date(data.date + "T" + (data.time || "00:00")).toLocaleString("pt-BR", {
