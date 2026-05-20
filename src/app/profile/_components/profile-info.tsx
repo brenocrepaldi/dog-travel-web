@@ -9,7 +9,7 @@ import {
   PET_IMAGE_ACCEPT,
   validatePetImage,
 } from "@/lib/validations/pet";
-import { Camera, Edit2, Mail, Phone, Save, User, X } from "lucide-react";
+import { Camera, Edit2, FileText, Mail, MapPin, Phone, Save, User, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import type { User as NextAuthUser } from "next-auth";
@@ -81,7 +81,7 @@ function EditField({
           type={type}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="pl-9 rounded-xl"
+          className="pl-9 rounded-lg"
         />
       </div>
     </div>
@@ -95,6 +95,8 @@ export function ProfileInfo({ user }: ProfileInfoProps) {
     name: user.name ?? "",
     email: user.email ?? "",
     phone: "(11) 99999-9999",
+    cpf: "000.000.000-00",
+    address: "Rua Example, 123, São Paulo - SP",
     image: user.image ?? "",
   });
   const [draft, setDraft] = useState(formData);
@@ -145,101 +147,72 @@ export function ProfileInfo({ user }: ProfileInfoProps) {
   };
 
   return (
-    <Card className="overflow-hidden">
-      {/* Faixa decorativa */}
-      <div className="h-1 w-full bg-gradient-to-r from-primary/60 via-primary to-primary/40" />
-
-      <CardContent className="p-0">
-        {/* ── Área superior: avatar + nome + ações ── */}
-        <div className="relative px-6 pt-6 pb-5 flex flex-col sm:flex-row sm:items-center gap-5 border-b border-border/50">
-          {/* Avatar */}
-          <div className="relative shrink-0 self-start sm:self-auto">
-            <Avatar className="h-20 w-20 ring-2 ring-border/40 ring-offset-2 ring-offset-card shadow-sm">
-              <AvatarImage src={displayImage} alt={formData.name} />
-              <AvatarFallback className="text-xl bg-primary/10 text-primary font-semibold">
-                {initials || "?"}
-              </AvatarFallback>
-            </Avatar>
-            {isEditing && (
-              <>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept={PET_IMAGE_ACCEPT}
-                  className="sr-only"
-                  onChange={handleFileChange}
-                  aria-label="Enviar foto de perfil"
-                />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md ring-2 ring-card hover:bg-primary/90 transition-colors cursor-pointer"
-                  aria-label="Trocar foto"
-                >
-                  <Camera className="w-3.5 h-3.5" />
-                </button>
-              </>
-            )}
-          </div>
-
-          {/* Nome e cargo */}
-          <div className="flex-1 min-w-0">
-            <h2 className="text-lg font-semibold text-foreground leading-tight truncate">
-              {formData.name || "Sem nome"}
-            </h2>
-            <p className="text-sm text-muted-foreground mt-0.5 truncate">
-              {formData.email}
-            </p>
-          </div>
-
-          {/* Botões de ação */}
-          <div className="shrink-0 flex gap-2 sm:self-start">
-            {!isEditing ? (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleEdit}
-                className="rounded-xl gap-1.5"
+    <div className="space-y-6">
+      {/* ── Bloco de identidade (nível de página, sem card) ── */}
+      <div className="flex flex-col items-center gap-3 py-2">
+        <div className="relative">
+          <Avatar className="h-20 w-20 ring-2 ring-border/40 ring-offset-2 ring-offset-background shadow-sm">
+            <AvatarImage src={displayImage} alt={formData.name} />
+            <AvatarFallback className="text-xl bg-primary/10 text-primary font-semibold">
+              {initials || "?"}
+            </AvatarFallback>
+          </Avatar>
+          {isEditing && (
+            <>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept={PET_IMAGE_ACCEPT}
+                className="sr-only"
+                onChange={handleFileChange}
+                aria-label="Enviar foto de perfil"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md ring-2 ring-background hover:bg-primary/90 transition-colors cursor-pointer"
+                aria-label="Trocar foto"
               >
-                <Edit2 className="h-3.5 w-3.5" />
-                Editar perfil
-              </Button>
-            ) : (
-              <>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleCancel}
-                  className="rounded-xl gap-1.5 text-muted-foreground"
-                >
-                  <X className="h-3.5 w-3.5" />
-                  Cancelar
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={handleSave}
-                  className="rounded-xl gap-1.5 shadow-sm"
-                >
-                  <Save className="h-3.5 w-3.5" />
-                  Salvar
-                </Button>
-              </>
-            )}
-          </div>
+                <Camera className="w-3.5 h-3.5" />
+              </button>
+            </>
+          )}
         </div>
 
-        {/* ── Área inferior: campos ── */}
-        <div className="px-6 py-5">
-          {/* Cabeçalho da seção */}
-          <div className="flex items-center gap-2 mb-4">
+        {!isEditing && (
+          <div className="text-center">
+            <p className="text-base font-semibold text-foreground leading-tight">
+              {formData.name || "Sem nome"}
+            </p>
+            <p className="text-sm text-muted-foreground mt-0.5">{formData.email}</p>
+          </div>
+        )}
+      </div>
+
+      {/* ── Card de contato (formulário puro) ── */}
+      <Card className="overflow-hidden py-0 gap-0">
+        <div className="h-1 w-full bg-gradient-to-r from-primary/60 via-primary to-primary/40" />
+
+        <CardContent className="p-0">
+          {/* Cabeçalho do card */}
+          <div className="flex items-center justify-between px-5 py-3.5 border-b border-border/50">
             <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
               Informações de contato
             </span>
-            <div className="flex-1 h-px bg-border/60" />
+            {!isEditing && (
+              <button
+                type="button"
+                onClick={handleEdit}
+                className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              >
+                <Edit2 className="h-3.5 w-3.5" />
+                Editar
+              </button>
+            )}
           </div>
 
           {!isEditing ? (
-            <div className="md:grid md:grid-cols-2 md:gap-x-8">
+            <div className="px-5">
               <ReadonlyField
                 icon={<User className="w-4 h-4" />}
                 label="Nome completo"
@@ -255,9 +228,19 @@ export function ProfileInfo({ user }: ProfileInfoProps) {
                 label="Telefone"
                 value={formData.phone}
               />
+              <ReadonlyField
+                icon={<FileText className="w-4 h-4" />}
+                label="CPF"
+                value={formData.cpf}
+              />
+              <ReadonlyField
+                icon={<MapPin className="w-4 h-4" />}
+                label="Endereço"
+                value={formData.address}
+              />
             </div>
           ) : (
-            <div className="space-y-4 md:grid md:grid-cols-2 md:gap-x-6 md:gap-y-4 md:space-y-0">
+            <div className="px-5 py-5 space-y-4">
               <EditField
                 id="name"
                 label="Nome completo"
@@ -280,13 +263,43 @@ export function ProfileInfo({ user }: ProfileInfoProps) {
                 value={draft.phone}
                 onChange={(v) => setDraft((p) => ({ ...p, phone: v }))}
               />
-              <p className="text-[11px] text-muted-foreground/70 pt-1 md:col-span-2">
-                Suas informações são usadas apenas para facilitar a comunicação com passeadores.
-              </p>
+              <EditField
+                id="cpf"
+                label="CPF"
+                icon={<FileText className="w-3.5 h-3.5" />}
+                value={draft.cpf}
+                onChange={(v) => setDraft((p) => ({ ...p, cpf: v }))}
+              />
+              <EditField
+                id="address"
+                label="Endereço"
+                icon={<MapPin className="w-3.5 h-3.5" />}
+                value={draft.address}
+                onChange={(v) => setDraft((p) => ({ ...p, address: v }))}
+              />
+              <div className="flex justify-end gap-2 pt-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCancel}
+                  className="rounded-lg gap-1.5 text-muted-foreground"
+                >
+                  <X className="h-3.5 w-3.5" />
+                  Cancelar
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleSave}
+                  className="rounded-lg gap-1.5 shadow-sm"
+                >
+                  <Save className="h-3.5 w-3.5" />
+                  Salvar
+                </Button>
+              </div>
             </div>
           )}
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

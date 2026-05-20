@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
-export default function NewPaymentMethodAliasPage() {
-  redirect("/payments/methods?action=add");
+export default function NewPaymentMethodLegacyPage() {
+  redirect("/profile/payments/methods?action=add");
 }

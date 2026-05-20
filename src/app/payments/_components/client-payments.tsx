@@ -15,6 +15,7 @@ import {
   History,
   Receipt,
   ChevronRight,
+  ArrowLeft,
 } from "lucide-react";
 
 const MOCK_HISTORY = [
@@ -60,7 +61,7 @@ function PaymentMethodsSidebar() {
           variant="default"
           size="sm"
           className="w-full py-4"
-          render={<Link href="/payments/methods" />}
+          render={<Link href="/profile/payment-methods" />}
         >
           Gerenciar formas de pagamento
         </Button>
@@ -115,6 +116,14 @@ export function ClientPayments() {
         <header className="space-y-1.5">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                render={<Link href="/profile" />}
+                aria-label="Voltar ao perfil"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
               <div>
                 <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground leading-tight">
                   Pagamentos

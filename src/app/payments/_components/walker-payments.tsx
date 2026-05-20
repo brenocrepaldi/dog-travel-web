@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
+  ArrowLeft,
   ArrowUpRight,
   History,
   Wallet,
@@ -105,6 +106,14 @@ export function WalkerPayments() {
       <div className="flex min-w-0 flex-1 flex-col gap-8">
         <header className="space-y-1.5">
           <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              render={<Link href="/profile" />}
+              aria-label="Voltar ao perfil"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground leading-tight">
                 Meus Ganhos

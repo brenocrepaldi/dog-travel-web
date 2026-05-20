@@ -2,39 +2,31 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import {
   PawPrint,
   LayoutDashboard,
-  Plus,
   ClipboardList,
   Dog,
-  CreditCard,
   User,
-  LogOut,
-  DollarSign,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
 // ─── Nav items per role ───────────────────────────────────────────────────────
 const clientNav = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/walks/new", icon: Plus, label: "Solicitar passeio" },
-  { href: "/walks", icon: ClipboardList, label: "Meus passeios" },
-  { href: "/walkers", icon: PawPrint, label: "Passeadores" },
-  { href: "/payments", icon: CreditCard, label: "Pagamentos" },
-  { href: "/dogs", icon: Dog, label: "Meus Cães" },
-  { href: "/profile", icon: User, label: "Perfil" },
+  { href: "/dashboard",  icon: LayoutDashboard, label: "Dashboard"      },
+  { href: "/walks",      icon: ClipboardList,   label: "Meus passeios"  },
+  { href: "/walkers",    icon: PawPrint,         label: "Passeadores"   },
+  { href: "/dogs",       icon: Dog,              label: "Meus Cães"     },
+  { href: "/profile",    icon: User,             label: "Perfil"        },
 ];
 
 const walkerNav = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/walks", icon: ClipboardList, label: "Meus passeios" },
-  { href: "/payments", icon: DollarSign, label: "Ganhos" },
-  { href: "/profile", icon: User, label: "Perfil" },
+  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard"     },
+  { href: "/walks",     icon: ClipboardList,   label: "Meus passeios" },
+  { href: "/profile",   icon: User,            label: "Perfil"        },
 ];
 
 export function Sidebar() {
@@ -93,14 +85,14 @@ export function Sidebar() {
 
       <Separator />
 
-      {/* User / Logout */}
-      <div className="px-3 py-4 space-y-2">
+      {/* User */}
+      <div className="px-3 py-4">
         <Link
           href="/profile"
           className={cn(
             "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 min-h-[44px]",
-            pathname === "/profile" 
-              ? "bg-accent/80 ring-1 ring-accent" 
+            pathname === "/profile" || pathname.startsWith("/profile/")
+              ? "bg-accent/80 ring-1 ring-accent"
               : "hover:bg-accent/50 active:bg-accent"
           )}
         >
@@ -118,15 +110,6 @@ export function Sidebar() {
             </p>
           </div>
         </Link>
-
-        <Button
-          variant="ghost"
-          className="w-full justify-start gap-3 px-3 py-2.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 active:bg-destructive/15 transition-all duration-200 cursor-pointer min-h-[44px]"
-          onClick={() => signOut({ callbackUrl: "/login" })}
-        >
-          <LogOut className="h-5 w-5" />
-          <span>Sair da conta</span>
-        </Button>
       </div>
     </aside>
   );
