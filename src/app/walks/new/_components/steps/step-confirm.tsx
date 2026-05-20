@@ -9,9 +9,11 @@ import {
   Calendar,
   Clock,
   Dog,
+  FileText,
   Loader2,
   MapPin,
   MessageSquare,
+  PawPrint,
   ShieldCheck,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
@@ -63,9 +65,9 @@ export function StepConfirm({ data, onBack, onSubmit, submitting }: Props) {
   const storedPets = useAppStore((state) => state.pets);
   const pets       = storedPets.length > 0 ? storedPets : DEFAULT_CLIENT_PETS;
 
-  const petNames = data.selectedPetIds
-    .map((id) => pets.find((pet) => pet.id === id)?.name ?? id)
-    .join(", ");
+  const selectedPets = data.selectedPetIds
+    .map((id) => pets.find((pet) => pet.id === id))
+    .filter(Boolean) as typeof pets;
 
   const methodLabel =
     data.selectedMethodId === PIX_INSTANT_ID
@@ -106,11 +108,40 @@ export function StepConfirm({ data, onBack, onSubmit, submitting }: Props) {
 
       {/* Summary rows */}
       <div className="divide-y divide-border/60">
-        <SummaryRow icon={Dog}        label="Cães"               value={petNames || "—"} />
+        {/* Cães — com avatars */}
+        <div className="flex items-start gap-3 py-3">
+          <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0 mt-0.5">
+            <Dog className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Cães</p>
+            <div className="mt-2 flex flex-wrap gap-3">
+              {selectedPets.map((pet) => (
+                <div key={pet.id} className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 ring-1 ring-border/30">
+                    {pet.photoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={pet.photoUrl} alt={pet.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-amber-500/10 flex items-center justify-center">
+                        <PawPrint className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-sm font-medium text-foreground">{pet.name}</span>
+                </div>
+              ))}
+              {selectedPets.length === 0 && <span className="text-sm text-muted-foreground">—</span>}
+            </div>
+          </div>
+        </div>
         <SummaryRow icon={Calendar}   label="Data e horário"     value={dateLabel} />
         <SummaryRow icon={Clock}      label="Duração"            value={`${data.durationMinutes} minutos`} />
         <SummaryRow icon={MapPin}     label="Local de partida"   value={data.address || "—"} />
         <SummaryRow icon={CreditCard} label="Forma de pagamento" value={methodLabel} />
+        {data.notes && (
+          <SummaryRow icon={FileText} label="Observações" value={data.notes} />
+        )}
       </div>
 
       <Separator />

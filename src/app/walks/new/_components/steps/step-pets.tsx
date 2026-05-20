@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight, Check, PawPrint } from "lucide-react";
 import { useAppStore } from "@/hooks/use-app-store";
-import { DEFAULT_CLIENT_PETS, DOG_SIZE_LABEL, petEmojiBySize } from "@/lib/pets";
+import { DEFAULT_CLIENT_PETS, DOG_SIZE_LABEL } from "@/lib/pets";
 import { cn } from "@/lib/utils";
 import { FlowActions } from "@/components/common/flow-actions";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import type { WalkFormData } from "../walk-request-form";
 
 interface Props {
@@ -52,13 +54,20 @@ export function StepPets({ data, updateData, onNext, onCancel }: Props) {
                 type="button"
                 onClick={() => togglePet(pet.id)}
                 className={cn(
-                  "flex items-start gap-4 p-4 rounded-xl border text-left transition-all duration-200 cursor-pointer",
+                  "flex items-center gap-4 p-4 rounded-xl border text-left transition-all duration-200 cursor-pointer",
                   "hover:border-primary/60 hover:bg-primary/5",
                   selected ? "border-primary bg-primary/5 ring-1 ring-primary/30" : "border-border bg-background"
                 )}
               >
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-2xl shrink-0">
-                  {petEmojiBySize(pet.size)}
+                <div className="w-20 h-20 rounded-xl overflow-hidden shrink-0 ring-1 ring-border/30">
+                  {pet.photoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={pet.photoUrl} alt={pet.name} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-amber-500/10 flex items-center justify-center">
+                      <PawPrint className="h-7 w-7 text-amber-600 dark:text-amber-400" />
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex-1 min-w-0 space-y-1.5">
@@ -86,6 +95,27 @@ export function StepPets({ data, updateData, onNext, onCancel }: Props) {
           })}
         </div>
       )}
+
+      {/* Observações */}
+      <div className="space-y-1.5">
+        <Label htmlFor="notes" className="text-sm font-medium">
+          Observações para o passeador
+          <span className="ml-1.5 text-xs font-normal text-muted-foreground">(opcional)</span>
+        </Label>
+        <Textarea
+          id="notes"
+          rows={3}
+          placeholder="Ex: Rex puxa bastante a coleira, evite ruas movimentadas no início..."
+          value={data.notes}
+          onChange={(e) => updateData({ notes: e.target.value })}
+          maxLength={300}
+        />
+        {data.notes.length > 0 && (
+          <p className="text-right text-[11px] text-muted-foreground">
+            {data.notes.length}/300
+          </p>
+        )}
+      </div>
 
       <FlowActions
         showBack={false}

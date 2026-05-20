@@ -47,6 +47,7 @@ export interface WalkFormData {
 	estimatedPrice: number | null;
 	selectedMethodId: string | null;
 	isFirstRide: boolean;
+	notes: string;
 }
 
 const INITIAL_DATA: WalkFormData = {
@@ -64,6 +65,7 @@ const INITIAL_DATA: WalkFormData = {
 	estimatedPrice: null,
 	selectedMethodId: null,
 	isFirstRide: true,
+	notes: "",
 };
 
 function toDateAndTime(iso: string) {
@@ -112,10 +114,17 @@ const STEPS = [
 ];
 
 // ─── Step indicator ────────────────────────────────────────────────────────
-function StepIndicator({ currentStep }: { currentStep: number }) {
+function StepIndicator({
+	currentStep,
+	maxStep,
+	onStepClick,
+}: {
+	currentStep: number;
+	maxStep: number;
+	onStepClick: (step: number) => void;
+}) {
 	return (
 		<div className="space-y-3">
-			{/* Step name + dot trail */}
 			<div className="flex items-center justify-between">
 				<div>
 					<p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
@@ -127,15 +136,31 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
 
 			{/* Segmented progress bar */}
 			<div className="flex gap-1">
-				{STEPS.map((_, i) => (
-					<div
-						key={i}
-						className={cn(
-							'h-1 flex-1 rounded-full transition-all duration-500',
-							i < currentStep ? 'bg-primary' : i === currentStep ? 'bg-primary/40' : 'bg-border/60',
-						)}
-					/>
-				))}
+				{STEPS.map((step, i) => {
+					const isCurrent   = i === currentStep;
+					const isVisited   = i <= maxStep && !isCurrent; // already filled, clickable
+					const isFuture    = i > maxStep;                // not yet reached
+
+					return (
+						<button
+							key={i}
+							type="button"
+							disabled={!isVisited}
+							onClick={() => isVisited && onStepClick(i)}
+							title={isVisited ? step.label : undefined}
+							className={cn(
+								'h-1.5 flex-1 rounded-full transition-all duration-500 self-center',
+								isVisited
+									? 'bg-primary cursor-pointer hover:bg-primary/70 hover:h-2.5'
+									: isCurrent
+										? 'bg-primary/40 cursor-default'
+										: isFuture
+											? 'bg-border/60 cursor-default'
+											: 'bg-border/60 cursor-default',
+							)}
+						/>
+					);
+				})}
 			</div>
 		</div>
 	);
@@ -146,7 +171,8 @@ export function WalkRequestForm() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const storedPets = useAppStore((state) => state.pets);
-	const [step, setStep] = useState(0);
+	const [step,    setStep]    = useState(0);
+	const [maxStep, setMaxStep] = useState(0);
 	const [data, setData] = useState<WalkFormData>(INITIAL_DATA);
 	const [submitting, setSubmitting] = useState(false);
 	const [submitted, setSubmitted] = useState(false);
@@ -189,11 +215,19 @@ export function WalkRequestForm() {
 	}
 
 	function next() {
-		if (step < STEPS.length - 1) setStep((s) => s + 1);
+		if (step < STEPS.length - 1) {
+			const next = step + 1;
+			setStep(next);
+			setMaxStep((m) => Math.max(m, next));
+		}
 	}
 
 	function back() {
 		if (step > 0) setStep((s) => s - 1);
+	}
+
+	function goToStep(target: number) {
+		if (target !== step && target <= maxStep) setStep(target);
 	}
 
 	async function handleSubmit() {
@@ -334,7 +368,7 @@ export function WalkRequestForm() {
 	const stepProps = { data, updateData, onNext: next, onBack: back };
 
 	return (
-		<div className="max-w-2xl mx-auto space-y-6 pb-10">
+		<div className="w-full max-w-2xl mx-auto space-y-6 pb-10">
 			{/* Page header */}
 			<div>
 				<h1 className="text-2xl font-bold tracking-tight text-foreground">Solicitar passeio</h1>
@@ -354,7 +388,7 @@ export function WalkRequestForm() {
 			) : (
 				<>
 					{/* Step indicator */}
-					<StepIndicator currentStep={step} />
+					<StepIndicator currentStep={step} maxStep={maxStep} onStepClick={goToStep} />
 
 					{/* Step card — key forces remount + animation on step change */}
 					<Card
