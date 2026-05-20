@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { User, Pet, Walk, ChatMessage } from "@/types";
+import type { WalkRecord } from "@/lib/mock-data";
 
 // ─── Auth Slice ───────────────────────────────────────────────────────────────
 interface AuthSlice {
@@ -15,6 +16,14 @@ interface PetsSlice {
   setPets: (pets: Pet[]) => void;
   addPet: (pet: Pet) => void;
   removePet: (petId: string) => void;
+}
+
+// ─── Local Walks Slice ────────────────────────────────────────────────────────
+interface LocalWalksSlice {
+  localWalks: WalkRecord[];
+  addLocalWalk: (walk: WalkRecord) => void;
+  cancelLocalWalk: (id: string) => void;
+  clearLocalWalks: () => void;
 }
 
 // ─── Walk Slice ───────────────────────────────────────────────────────────────
@@ -66,7 +75,7 @@ interface UISlice {
 }
 
 // ─── Combined Store ───────────────────────────────────────────────────────────
-type AppStore = AuthSlice & PetsSlice & WalkSlice & ChatSlice & PaymentSlice & UISlice;
+type AppStore = AuthSlice & PetsSlice & LocalWalksSlice & WalkSlice & ChatSlice & PaymentSlice & UISlice;
 
 export const useAppStore = create<AppStore>()(
   persist(
@@ -82,6 +91,17 @@ export const useAppStore = create<AppStore>()(
       addPet: (pet) => set((state) => ({ pets: [...state.pets, pet] })),
       removePet: (petId) =>
         set((state) => ({ pets: state.pets.filter((p) => p.id !== petId) })),
+
+      // Local Walks
+      localWalks: [],
+      addLocalWalk: (walk) => set((state) => ({ localWalks: [walk, ...state.localWalks] })),
+      cancelLocalWalk: (id) =>
+        set((state) => ({
+          localWalks: state.localWalks.map((w) =>
+            w.id === id ? { ...w, status: 'cancelled' as const } : w
+          ),
+        })),
+      clearLocalWalks: () => set({ localWalks: [] }),
 
       // Walk
       activeWalk: null,
@@ -124,8 +144,8 @@ export const useAppStore = create<AppStore>()(
     }),
     {
       name: "dogtravel-storage",
-      // Only persist user and pets; all real-time + ephemeral state starts fresh
-      partialize: (state) => ({ user: state.user, pets: state.pets }),
+      // Persist user, pets, and locally-submitted walks
+      partialize: (state) => ({ user: state.user, pets: state.pets, localWalks: state.localWalks }),
     }
   )
 );

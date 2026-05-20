@@ -4,11 +4,10 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { LogOut } from 'lucide-react';
+import { CheckCircle2, LogOut } from 'lucide-react';
 import { walks as mockWalks } from '@/lib/mock-data';
 import { useAppStore } from '@/hooks/use-app-store';
 import { DEFAULT_CLIENT_PETS } from '@/lib/pets';
-import { WalkService } from '@/services/walk.service';
 import { trackMetricEvent } from '@/lib/metrics';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -73,34 +72,6 @@ function toDateAndTime(iso: string) {
 	const localDateTime = new Date(dateTime.getTime() - dateTime.getTimezoneOffset() * 60000);
 	const [date, time] = localDateTime.toISOString().split('T');
 	return { date, time: time.slice(0, 5) };
-}
-
-interface LocalWalkRequest {
-	id: string;
-	payload: {
-		petIds: string[];
-		scheduledAt: string;
-		durationMinutes: number;
-		address: string;
-		paymentMethodId: string;
-	};
-	createdAt: string;
-}
-
-function saveLocalRequest(request: LocalWalkRequest) {
-	if (typeof window === 'undefined') return;
-	const raw = window.localStorage.getItem('dogtravel.local-walk-requests');
-	let current: LocalWalkRequest[] = [];
-	if (raw) {
-		try {
-			const parsed = JSON.parse(raw);
-			current = Array.isArray(parsed) ? (parsed as LocalWalkRequest[]) : [];
-		} catch {
-			current = [];
-		}
-	}
-	const next = [...current, request].slice(-50);
-	window.localStorage.setItem('dogtravel.local-walk-requests', JSON.stringify(next));
 }
 
 // ─── Step definitions ──────────────────────────────────────────────────────
@@ -171,11 +142,13 @@ export function WalkRequestForm() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const storedPets = useAppStore((state) => state.pets);
+	const addLocalWalk = useAppStore((state) => state.addLocalWalk);
 	const [step,    setStep]    = useState(0);
 	const [maxStep, setMaxStep] = useState(0);
 	const [data, setData] = useState<WalkFormData>(INITIAL_DATA);
 	const [submitting, setSubmitting] = useState(false);
 	const [submitted, setSubmitted] = useState(false);
+	const [showSuccess, setShowSuccess] = useState(false);
 	const [pixPayment, setPixPayment] = useState(false);
 	const hasPrefilledRepeat = useRef(false);
 	const pets = storedPets.length > 0 ? storedPets : DEFAULT_CLIENT_PETS;
@@ -231,64 +204,79 @@ export function WalkRequestForm() {
 	}
 
 	async function handleSubmit() {
+		const paymentMethodId = data.selectedMethodId ?? '';
+		if (!paymentMethodId) {
+			toast.error('Selecione uma forma de pagamento antes de concluir.');
+			return;
+		}
+
 		setSubmitting(true);
-		try {
-			const scheduledAt = new Date(`${data.date}T${data.time || '00:00'}:00`).toISOString();
-			const paymentMethodId = data.selectedMethodId ?? '';
-			if (!paymentMethodId) {
-				toast.error('Selecione uma forma de pagamento antes de concluir.');
-				return;
-			}
-			await WalkService.create({
-				petIds: data.selectedPetIds,
-				scheduledAt,
+
+		// Simulate a short processing delay for realism
+		await new Promise((resolve) => setTimeout(resolve, 800));
+
+		const scheduledAt = new Date(`${data.date}T${data.time || '00:00'}:00`).toISOString();
+		const petNames = pets
+			.filter((p) => data.selectedPetIds.includes(p.id))
+			.map((p) => p.name);
+
+		const dateLabel = new Date(scheduledAt).toLocaleDateString('pt-BR', {
+			day: '2-digit',
+			month: 'short',
+			hour: '2-digit',
+			minute: '2-digit',
+		});
+
+		const newWalk = {
+			id: `local-${crypto.randomUUID()}`,
+			walkerId: 'walker-1',
+			clientName: 'Você',
+			petNames,
+			status: 'pending' as const,
+			dateLabel,
+			scheduledAt,
+			durationMinutes: data.durationMinutes,
+			price: data.estimatedPrice ?? 0,
+			distanceKm: 0,
+			startAddress: data.address,
+			notes: data.notes || undefined,
+			paymentMethodId,
+			participants: [],
+			timeline: [
+				{
+					id: 'ev-1',
+					label: 'Pedido criado',
+					at: new Date().toISOString(),
+					state: 'done' as const,
+				},
+				{
+					id: 'ev-2',
+					label: 'Aguardando passeador',
+					at: scheduledAt,
+					state: 'pending' as const,
+				},
+			],
+		};
+
+		addLocalWalk(newWalk);
+
+		trackMetricEvent({
+			name: 'walk_request_submitted',
+			payload: {
+				petCount: data.selectedPetIds.length,
 				durationMinutes: data.durationMinutes,
-				startLocation: {
-					lat: data.lat ?? 0,
-					lng: data.lng ?? 0,
-					address: data.address,
-				},
-				paymentMethodId,
-			});
-			trackMetricEvent({
-				name: 'walk_request_submitted',
-				payload: {
-					petCount: data.selectedPetIds.length,
-					durationMinutes: data.durationMinutes,
-					isFirstRide: data.isFirstRide,
-				},
-			});
-			setSubmitted(true);
-			if (data.selectedMethodId === PIX_INSTANT_ID) {
-				setPixPayment(true);
-			} else {
-				toast.success('Passeio solicitado!', {
-					description: 'Aguardando aceitação de um passeador.',
-				});
-				router.push('/walks');
-			}
-		} catch {
-			const localRequest: LocalWalkRequest = {
-				id: crypto.randomUUID(),
-				createdAt: new Date().toISOString(),
-				payload: {
-					petIds: data.selectedPetIds,
-					scheduledAt: `${data.date}T${data.time || '00:00'}`,
-					durationMinutes: data.durationMinutes,
-					address: data.address,
-					paymentMethodId: data.selectedMethodId ?? '',
-				},
-			};
-			saveLocalRequest(localRequest);
-			trackMetricEvent({
-				name: 'walk_request_failed',
-				payload: { savedLocally: true },
-			});
-			toast.warning('API indisponível no momento', {
-				description: 'Pedido salvo localmente no navegador para não perder os dados.',
-			});
-		} finally {
-			setSubmitting(false);
+				isFirstRide: data.isFirstRide,
+			},
+		});
+
+		setSubmitting(false);
+		setSubmitted(true);
+
+		if (data.selectedMethodId === PIX_INSTANT_ID) {
+			setPixPayment(true);
+		} else {
+			setShowSuccess(true);
+			setTimeout(() => router.push('/walks'), 2200);
 		}
 	}
 
@@ -376,6 +364,24 @@ export function WalkRequestForm() {
 					Preencha os detalhes para encontrar o passeador ideal.
 				</p>
 			</div>
+
+			{/* Success overlay */}
+			{showSuccess && (
+				<div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in duration-300">
+					<div className="flex flex-col items-center gap-4 animate-in zoom-in-95 duration-300">
+						<div className="relative">
+							<div className="w-24 h-24 rounded-full bg-emerald-500/10 flex items-center justify-center animate-in zoom-in duration-500">
+								<CheckCircle2 className="w-14 h-14 text-emerald-500" strokeWidth={1.5} />
+							</div>
+							<div className="absolute inset-0 rounded-full border-2 border-emerald-500/30 animate-ping" />
+						</div>
+						<div className="text-center space-y-1">
+							<p className="text-xl font-bold text-foreground">Passeio solicitado!</p>
+							<p className="text-sm text-muted-foreground">Aguardando aceitação de um passeador.</p>
+						</div>
+					</div>
+				</div>
+			)}
 
 			{pixPayment ? (
 				/* PIX payment screen — replaces step flow after submission */
