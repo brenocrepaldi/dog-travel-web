@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { ArrowRight, Check, PawPrint } from "lucide-react";
-import { useAppStore } from "@/hooks/use-app-store";
-import { DEFAULT_CLIENT_PETS, DOG_SIZE_LABEL } from "@/lib/pets";
+import { useDogs } from "@/features/dogs/hooks/use-dogs";
+import { DOG_SIZE_LABEL } from "@/lib/pets";
 import { cn } from "@/lib/utils";
 import { FlowActions } from "@/components/common/flow-actions";
 import { Label } from "@/components/ui/label";
@@ -19,8 +19,7 @@ interface Props {
 }
 
 export function StepPets({ data, updateData, onNext, onCancel }: Props) {
-  const storedPets = useAppStore((state) => state.pets);
-  const pets = storedPets.length > 0 ? storedPets : DEFAULT_CLIENT_PETS;
+  const { data: pets = [] } = useDogs();
 
   function togglePet(id: string) {
     const already = data.selectedPetIds.includes(id);

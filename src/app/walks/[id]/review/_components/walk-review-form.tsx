@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import type { WalkReview } from "@/lib/mock-data";
+import type { WalkReview } from "@/types";
 
 interface WalkReviewFormProps {
   walkId: string;

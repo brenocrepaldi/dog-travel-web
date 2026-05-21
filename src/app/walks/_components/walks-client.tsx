@@ -6,15 +6,16 @@ import { toast } from 'sonner';
 import { buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { walks as mockWalks, getWalkerById, getReviewByWalkId, type WalkRecord } from '@/lib/mock-data';
-import { useAppStore } from '@/hooks/use-app-store';
+import { WalksApi } from '@/features/walks/api/walks.api';
+import { useWalks } from '@/features/walks/hooks/use-walks';
+import { useCancelWalk } from '@/features/walks/hooks/use-walk-actions';
 import { cn } from '@/lib/utils';
+import type { WalkRecord } from '@/types';
 import {
 	AlertCircle,
 	CalendarDays,
 	Clock,
 	Dog,
-	History,
 	MapPin,
 	Plus,
 	Search,
@@ -82,22 +83,16 @@ function PetBadge({ name }: { name: string }) {
 	);
 }
 
-type EnrichedWalk = WalkRecord & {
-	walkerName: string;
-	isLocal?: boolean;
-	hasReview?: boolean;
-};
-
 // ── Sort order ─────────────────────────────────────────────────────────────
-function walkPriority(w: EnrichedWalk): number {
-	if (w.isLocal && w.status === 'pending') return 0; // procurando passeador
-	if (w.status === 'in_progress')          return 1;
-	if (w.status === 'accepted' || w.status === 'pending') return 2;
-	if (w.status === 'completed')            return 3;
+function walkPriority(w: WalkRecord): number {
+	if (w.status === 'pending')   return 0;
+	if (w.status === 'in_progress') return 1;
+	if (w.status === 'accepted')  return 2;
+	if (w.status === 'completed') return 3;
 	return 4; // cancelled
 }
 
-function sortWalks(walks: EnrichedWalk[]): EnrichedWalk[] {
+function sortWalks(walks: WalkRecord[]): WalkRecord[] {
 	return [...walks].sort((a, b) => {
 		const pDiff = walkPriority(a) - walkPriority(b);
 		if (pDiff !== 0) return pDiff;
@@ -108,19 +103,24 @@ function sortWalks(walks: EnrichedWalk[]): EnrichedWalk[] {
 // ── WalkCard ───────────────────────────────────────────────────────────────
 function WalkCard({
 	walk,
+	walkerName,
+	hasReview,
 	onCancel,
 }: {
-	walk: EnrichedWalk;
-	onCancel: (id: string, isLocal: boolean) => void;
+	walk: WalkRecord;
+	walkerName: string;
+	hasReview: boolean;
+	onCancel: (id: string) => void;
 }) {
+	const isSearching = walk.status === 'pending';
 	const isActive    = walk.status === 'in_progress';
 	const isCompleted = walk.status === 'completed';
-	const isPending   = walk.status === 'pending' || walk.status === 'accepted';
+	const isPending   = walk.status === 'accepted';
 	const isCancelled = walk.status === 'cancelled';
 
 	const [confirmingCancel, setConfirmingCancel] = useState(false);
 
-	const walkerInitials = walk.walkerName
+	const walkerInitials = walkerName
 		.split(' ')
 		.map((n) => n[0])
 		.slice(0, 2)
@@ -134,22 +134,21 @@ function WalkCard({
 				'hover:shadow-md hover:shadow-black/5 dark:hover:shadow-black/20',
 				isActive
 					? 'border-emerald-500/60 shadow-sm shadow-emerald-500/10'
-					: isPending && walk.isLocal
+					: isSearching
 						? 'border-amber-500/60 shadow-sm shadow-amber-500/10'
 						: 'border-border/60 hover:border-border',
 			)}
 		>
-			{/* Faixa colorida no topo */}
 			{isActive && (
 				<div className="h-1 w-full bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-400" />
 			)}
-			{isPending && walk.isLocal && (
+			{isSearching && (
 				<div className="h-1 w-full bg-gradient-to-r from-amber-400/60 via-amber-500 to-amber-400/60" />
 			)}
 
 			{/* Header */}
 			<div className="px-5 pt-5 pb-4 flex items-start justify-between gap-3">
-				{isPending && walk.isLocal ? (
+				{isSearching ? (
 					<div className="flex items-center gap-3 min-w-0">
 						<div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 bg-amber-500/10 ring-1 ring-amber-500/20">
 							<CalendarDays className="w-4 h-4 text-amber-600 dark:text-amber-400" />
@@ -169,7 +168,7 @@ function WalkCard({
 						</div>
 						<div className="min-w-0">
 							<p className="text-sm font-semibold text-foreground leading-tight truncate">
-								{walk.walkerName}
+								{walkerName}
 							</p>
 							<div className="flex items-center gap-1.5 mt-1 text-[11px] text-muted-foreground">
 								<CalendarDays className="w-3 h-3 shrink-0" />
@@ -178,7 +177,7 @@ function WalkCard({
 						</div>
 					</div>
 				)}
-				{isPending && walk.isLocal ? (
+				{isSearching ? (
 					<span className="relative flex w-2.5 h-2.5 shrink-0 mt-1">
 						<span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
 						<span className="relative inline-flex w-2.5 h-2.5 rounded-full bg-amber-400" />
@@ -215,15 +214,14 @@ function WalkCard({
 					<span className="text-lg font-bold text-foreground tabular-nums">
 						{walk.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
 					</span>
-					{/* Estrelas só aparecem se existe avaliação real */}
-					{isCompleted && walk.hasReview && (
+					{isCompleted && hasReview && (
 						<div className="flex items-center gap-0.5">
 							{[1, 2, 3, 4, 5].map((star) => (
 								<Star key={star} className="w-3 h-3 text-amber-400 fill-amber-400" />
 							))}
 						</div>
 					)}
-					{isCompleted && !walk.hasReview && (
+					{isCompleted && !hasReview && (
 						<span className="text-[11px] text-muted-foreground">Sem avaliação</span>
 					)}
 				</div>
@@ -244,8 +242,28 @@ function WalkCard({
 					</Link>
 				)}
 
+				{isSearching && !confirmingCancel && (
+					<button
+						type="button"
+						onClick={() => setConfirmingCancel(true)}
+						className={cn(
+							buttonVariants({ variant: 'outline', size: 'lg' }),
+							'rounded-lg w-full gap-1.5 text-destructive border-destructive/30 hover:bg-destructive/5 hover:border-destructive/50 cursor-pointer',
+						)}
+					>
+						<X className="w-3.5 h-3.5" />
+						Cancelar busca
+					</button>
+				)}
+
 				{isPending && !confirmingCancel && (
-					walk.isLocal ? (
+					<div className="grid grid-cols-2 gap-2">
+						<Link
+							href={`/walks/${walk.id}`}
+							className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), 'rounded-lg w-full')}
+						>
+							Detalhes
+						</Link>
 						<button
 							type="button"
 							onClick={() => setConfirmingCancel(true)}
@@ -255,32 +273,12 @@ function WalkCard({
 							)}
 						>
 							<X className="w-3.5 h-3.5" />
-							Cancelar busca
+							Cancelar
 						</button>
-					) : (
-						<div className="grid grid-cols-2 gap-2">
-							<Link
-								href={`/walks/${walk.id}`}
-								className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), 'rounded-lg w-full')}
-							>
-								Detalhes
-							</Link>
-							<button
-								type="button"
-								onClick={() => setConfirmingCancel(true)}
-								className={cn(
-									buttonVariants({ variant: 'outline', size: 'lg' }),
-									'rounded-lg w-full gap-1.5 text-destructive border-destructive/30 hover:bg-destructive/5 hover:border-destructive/50 cursor-pointer',
-								)}
-							>
-								<X className="w-3.5 h-3.5" />
-								Cancelar
-							</button>
-						</div>
-					)
+					</div>
 				)}
 
-				{isPending && confirmingCancel && (
+				{(isSearching || isPending) && confirmingCancel && (
 					<div className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 space-y-2.5">
 						<div className="flex items-center gap-2 text-sm text-destructive">
 							<AlertCircle className="w-4 h-4 shrink-0" />
@@ -299,7 +297,7 @@ function WalkCard({
 							</button>
 							<button
 								type="button"
-								onClick={() => onCancel(walk.id, walk.isLocal ?? false)}
+								onClick={() => onCancel(walk.id)}
 								className={cn(
 									buttonVariants({ variant: 'destructive', size: 'sm' }),
 									'rounded-lg cursor-pointer',
@@ -319,7 +317,7 @@ function WalkCard({
 						>
 							Detalhes
 						</Link>
-						{walk.hasReview ? (
+						{hasReview ? (
 							<Link
 								href={`/walks/${walk.id}/review`}
 								className={cn(
@@ -347,20 +345,17 @@ function WalkCard({
 
 				{isCancelled && (
 					<div className="grid grid-cols-2 gap-2">
-						{!walk.isLocal && (
-							<Link
-								href={`/walks/${walk.id}`}
-								className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), 'rounded-lg w-full')}
-							>
-								Detalhes
-							</Link>
-						)}
+						<Link
+							href={`/walks/${walk.id}`}
+							className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), 'rounded-lg w-full')}
+						>
+							Detalhes
+						</Link>
 						<Link
 							href={`/walks/new?walker=${walk.walkerId}`}
 							className={cn(
 								buttonVariants({ variant: 'secondary', size: 'lg' }),
 								'rounded-lg w-full',
-								walk.isLocal && 'col-span-2',
 							)}
 						>
 							Repetir passeio
@@ -410,7 +405,7 @@ function WalksEmptyState({ filtered = false }: { filtered?: boolean }) {
 // ── Filters ────────────────────────────────────────────────────────────────
 type FilterValue = 'todos' | 'pendentes' | 'em_andamento' | 'concluidos' | 'cancelados';
 
-const FILTERS: { value: FilterValue; label: string; match: (w: EnrichedWalk) => boolean }[] = [
+const FILTERS: { value: FilterValue; label: string; match: (w: WalkRecord) => boolean }[] = [
 	{ value: 'todos',        label: 'Todos',        match: () => true },
 	{ value: 'pendentes',    label: 'Agendados',    match: (w) => w.status === 'accepted' || w.status === 'pending' },
 	{ value: 'em_andamento', label: 'Em andamento', match: (w) => w.status === 'in_progress' },
@@ -420,27 +415,12 @@ const FILTERS: { value: FilterValue; label: string; match: (w: EnrichedWalk) => 
 
 // ── Main client component ──────────────────────────────────────────────────
 export function WalksClient() {
-	const localWalks       = useAppStore((state) => state.localWalks);
-	const cancelLocalWalk  = useAppStore((state) => state.cancelLocalWalk);
+	const { data: rawWalks = [], isLoading } = useWalks('client');
+	const { mutate: cancelWalk } = useCancelWalk();
 	const [activeFilter, setActiveFilter] = useState<FilterValue>('todos');
 	const [search, setSearch] = useState('');
 
-	const allWalks: EnrichedWalk[] = useMemo(() => {
-		const enrichedMock: EnrichedWalk[] = mockWalks.map((w) => ({
-			...w,
-			walkerName: getWalkerById(w.walkerId)?.name ?? 'Passeador',
-			hasReview: !!getReviewByWalkId(w.id),
-		}));
-		const enrichedLocal: EnrichedWalk[] = localWalks
-			.filter((w) => w.status !== 'cancelled')
-			.map((w) => ({
-				...w,
-				walkerName: 'Procurando passeador',
-				isLocal: true,
-				hasReview: false,
-			}));
-		return sortWalks([...enrichedLocal, ...enrichedMock]);
-	}, [localWalks]);
+	const allWalks = useMemo(() => sortWalks(rawWalks), [rawWalks]);
 
 	const filtered = useMemo(() => {
 		const filterFn = FILTERS.find((f) => f.value === activeFilter)?.match ?? (() => true);
@@ -450,7 +430,7 @@ export function WalksClient() {
 		return byStatus.filter(
 			(w) =>
 				w.petNames.some((n) => n.toLowerCase().includes(q)) ||
-				w.walkerName.toLowerCase().includes(q) ||
+				WalksApi.getWalkerNameById(w.walkerId).toLowerCase().includes(q) ||
 				w.startAddress.toLowerCase().includes(q),
 		);
 	}, [allWalks, activeFilter, search]);
@@ -460,13 +440,20 @@ export function WalksClient() {
 		[allWalks],
 	);
 
-	function handleCancel(id: string, isLocal: boolean) {
-		if (isLocal) {
-			cancelLocalWalk(id);
-			toast.success('Passeio cancelado.');
-		} else {
-			toast.info('Cancelamento enviado. Aguardando confirmação.');
-		}
+	function handleCancel(id: string) {
+		cancelWalk(id, {
+			onSuccess: () => toast.success('Passeio cancelado.'),
+		});
+	}
+
+	if (isLoading) {
+		return (
+			<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 pt-8">
+				{[1, 2, 3].map((i) => (
+					<div key={i} className="rounded-2xl border bg-card h-64 animate-pulse" />
+				))}
+			</div>
+		);
 	}
 
 	return (
@@ -530,16 +517,6 @@ export function WalksClient() {
 						);
 					})}
 
-					<Link
-						href="/walks/history"
-						className={cn(
-							buttonVariants({ variant: 'outline', size: 'sm' }),
-							'rounded-lg gap-1.5 ml-1',
-						)}
-					>
-						<History className="w-3.5 h-3.5" />
-						Histórico
-					</Link>
 				</div>
 
 				<div className="relative w-full sm:w-64">
@@ -565,7 +542,12 @@ export function WalksClient() {
 							style={{ animationDelay: `${i * 40}ms` }}
 							className="animate-in fade-in slide-in-from-bottom-2 duration-300"
 						>
-							<WalkCard walk={walk} onCancel={handleCancel} />
+							<WalkCard
+								walk={walk}
+								walkerName={WalksApi.getWalkerNameById(walk.walkerId)}
+								hasReview={false}
+								onCancel={handleCancel}
+							/>
 						</div>
 					))}
 				</div>

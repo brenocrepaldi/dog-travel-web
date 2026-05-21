@@ -23,8 +23,9 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { useAppStore } from "@/hooks/use-app-store";
-import type { WalkRequest } from "@/lib/mock-data";
+import { useWalkRequests } from "@/features/walks/hooks/use-walks";
+import { useAcceptWalk, useDeclineWalk } from "@/features/walks/hooks/use-walk-actions";
+import type { WalkRequest } from "@/types";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -95,9 +96,9 @@ export default function WalkerDashboardPage() {
   const greeting  = getGreeting();
   const router    = useRouter();
 
-  const walkerRequests      = useAppStore((s) => s.walkerRequests);
-  const declineWalkerRequest = useAppStore((s) => s.declineWalkerRequest);
-  const acceptWalkerRequest  = useAppStore((s) => s.acceptWalkerRequest);
+  const { data: walkerRequests = [] } = useWalkRequests();
+  const { mutate: acceptWalk } = useAcceptWalk();
+  const { mutate: declineWalk } = useDeclineWalk();
 
   const [available, setAvailable] = useState(false);
 
@@ -128,20 +129,29 @@ export default function WalkerDashboardPage() {
 
   function handleAccept(request: WalkRequest) {
     const walkerName = session?.user?.name ?? "Carlos Silva";
-    acceptWalkerRequest(request, walkerName);
-    toast.success("Passeio aceito!", {
-      description: `${request.clientName} foi notificado. Veja em Meus passeios.`,
-      action: {
-        label: "Ver passeios",
-        onClick: () => router.push("/walks"),
+    acceptWalk(
+      { request, walkerName },
+      {
+        onSuccess: () => {
+          toast.success("Passeio aceito!", {
+            description: `${request.clientName} foi notificado. Veja em Meus passeios.`,
+            action: {
+              label: "Ver passeios",
+              onClick: () => router.push("/walks"),
+            },
+          });
+        },
       },
-    });
+    );
   }
 
   function handleDecline(request: WalkRequest) {
-    declineWalkerRequest(request.id);
-    toast("Passeio recusado", {
-      description: `Pedido de ${request.clientName} devolvido para a fila.`,
+    declineWalk(request.id, {
+      onSuccess: () => {
+        toast("Passeio recusado", {
+          description: `Pedido de ${request.clientName} devolvido para a fila.`,
+        });
+      },
     });
   }
 

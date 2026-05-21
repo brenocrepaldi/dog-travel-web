@@ -6,8 +6,8 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { CheckCircle2, LogOut } from 'lucide-react';
 import { walks as mockWalks } from '@/lib/mock-data';
-import { useAppStore } from '@/hooks/use-app-store';
-import { DEFAULT_CLIENT_PETS } from '@/lib/pets';
+import { useDogs } from '@/features/dogs/hooks/use-dogs';
+import { useCreateWalk } from '@/features/walks/hooks/use-walk-actions';
 import { trackMetricEvent } from '@/lib/metrics';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -141,8 +141,8 @@ function StepIndicator({
 export function WalkRequestForm() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
-	const storedPets = useAppStore((state) => state.pets);
-	const addLocalWalk = useAppStore((state) => state.addLocalWalk);
+	const { data: pets = [] } = useDogs();
+	const { mutateAsync: createWalk } = useCreateWalk();
 	const [step,    setStep]    = useState(0);
 	const [maxStep, setMaxStep] = useState(0);
 	const [data, setData] = useState<WalkFormData>(INITIAL_DATA);
@@ -151,7 +151,6 @@ export function WalkRequestForm() {
 	const [showSuccess, setShowSuccess] = useState(false);
 	const [pixPayment, setPixPayment] = useState(false);
 	const hasPrefilledRepeat = useRef(false);
-	const pets = storedPets.length > 0 ? storedPets : DEFAULT_CLIENT_PETS;
 
 	useEffect(() => {
 		if (hasPrefilledRepeat.current) return;
@@ -258,7 +257,7 @@ export function WalkRequestForm() {
 			],
 		};
 
-		addLocalWalk(newWalk);
+		await createWalk(newWalk);
 
 		trackMetricEvent({
 			name: 'walk_request_submitted',

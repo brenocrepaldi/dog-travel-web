@@ -3,8 +3,7 @@
 import { Dog, Calendar, MapPin, CreditCard, Clock, BadgePercent } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { managedPaymentMethods } from "@/lib/mock-data";
-import { useAppStore } from "@/hooks/use-app-store";
-import { DEFAULT_CLIENT_PETS } from "@/lib/pets";
+import { useDogs } from "@/features/dogs/hooks/use-dogs";
 import type { WalkFormData } from "./walk-request-form";
 
 function fmt(val: number) {
@@ -43,8 +42,7 @@ function Row({
  * Updates in real-time as the user fills in each step.
  */
 export function WalkSummary({ data, currentStep }: Props) {
-  const storedPets = useAppStore((state) => state.pets);
-  const pets = storedPets.length > 0 ? storedPets : DEFAULT_CLIENT_PETS;
+  const { data: pets = [] } = useDogs();
   const petNames =
     data.selectedPetIds.length > 0
       ? data.selectedPetIds

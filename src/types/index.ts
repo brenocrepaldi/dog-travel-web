@@ -5,6 +5,114 @@
 // ─── User Roles ───────────────────────────────────────────────────────────────
 export type UserRole = "client" | "walker";
 
+// ─── Walk Domain (formerly in mock-data) ─────────────────────────────────────
+
+export interface WalkRequest {
+  id: string;
+  clientId: string;
+  clientName: string;
+  petNames: string[];
+  petIds: string[];
+  durationMinutes: number;
+  price: number;
+  scheduledAt: string;
+  scheduledLabel: string;
+  startAddress: string;
+  receivedMinutes: number;
+}
+
+export interface WalkParticipant {
+  id: string;
+  name: string;
+  role: "client" | "walker";
+}
+
+export interface WalkTimelineEvent {
+  id: string;
+  label: string;
+  at: string;
+  state: "done" | "current" | "pending";
+  note?: string;
+}
+
+export interface WalkRecord {
+  id: string;
+  walkerId: string;
+  clientName: string;
+  petNames: string[];
+  status: WalkStatus;
+  dateLabel: string;
+  scheduledAt: string;
+  durationMinutes: number;
+  price: number;
+  distanceKm: number;
+  startAddress: string;
+  endAddress?: string;
+  notes?: string;
+  paymentMethodId?: string;
+  participants: WalkParticipant[];
+  timeline: WalkTimelineEvent[];
+}
+
+export interface WalkReview {
+  walkId: string;
+  walkerId: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+}
+
+// ─── Walker Domain ────────────────────────────────────────────────────────────
+
+export interface WalkerCertification {
+  title: string;
+  verified: boolean;
+}
+
+export interface WalkerProfile {
+  id: string;
+  name: string;
+  rating: number;
+  reviews: number;
+  location: string;
+  serviceArea: string;
+  description: string;
+  tags: string[];
+  verified: boolean;
+  availability: string;
+  completedWalks: number;
+  trustChecks: {
+    identityVerified: boolean;
+    backgroundCheck: boolean;
+  };
+  certifications: WalkerCertification[];
+  supportedSizes: DogSize[];
+  behaviorExpertise: string[];
+}
+
+// ─── Payment Domain (extended) ────────────────────────────────────────────────
+
+export interface ManagedPaymentMethod {
+  id: string;
+  type: PaymentMethodType;
+  brand: string;
+  label: string;
+  holderName: string;
+  expiresAt: string;
+  isDefault: boolean;
+  status: "active" | "expired";
+}
+
+export interface PaymentHistoryItem {
+  id: string;
+  walkId: string;
+  date: string;
+  amount: number;
+  status: "paid" | "pending" | "failed";
+  methodId: string;
+  description: string;
+}
+
 // ─── User ─────────────────────────────────────────────────────────────────────
 export interface User {
   id: string;

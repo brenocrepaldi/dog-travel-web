@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
 	Edit2,
@@ -15,8 +15,8 @@ import {
 	ChevronDown,
 	ChevronUp,
 } from "lucide-react";
-import { useAppStore } from "@/hooks/use-app-store";
-import { DEFAULT_CLIENT_PETS, DOG_SIZE_LABEL } from "@/lib/pets";
+import { useDogs, useAddDog, useUpdateDog } from "@/features/dogs/hooks/use-dogs";
+import { DOG_SIZE_LABEL } from "@/lib/pets";
 import type { Pet } from "@/types";
 import { Button } from "@/components/ui/button";
 import { PetFormSheet, type PetDraft } from "./pet-form-sheet";
@@ -314,25 +314,18 @@ function PetCard({ pet, onEdit }: { pet: Pet; onEdit: (pet: Pet) => void }) {
 }
 
 export function PetsList() {
-	const pets = useAppStore((state) => state.pets);
-	const setPets = useAppStore((state) => state.setPets);
+	const { data: pets = [], isLoading } = useDogs();
+	const { mutate: addDog } = useAddDog();
+	const { mutate: updateDog } = useUpdateDog();
+
 	const [sheetOpen, setSheetOpen] = useState(false);
 	const [editingPet, setEditingPet] = useState<Pet | null>(null);
 	const [sheetVersion, setSheetVersion] = useState(0);
-	const [isLoading] = useState(false);
 
 	const router = useRouter();
 	const searchParams = useSearchParams();
 
-	const hasPets = pets.length > 0;
-	const list = hasPets ? pets : DEFAULT_CLIENT_PETS;
-
-	const nextPetId = useMemo(() => {
-		const numericIds = pets
-			.map((pet) => Number.parseInt(pet.id, 10))
-			.filter((id) => Number.isFinite(id));
-		return String((numericIds.length > 0 ? Math.max(...numericIds) : 0) + 1);
-	}, [pets]);
+	const list = pets;
 
 	const handleEdit = (pet: Pet) => {
 		setEditingPet(pet);
@@ -346,7 +339,6 @@ export function PetsList() {
 		setSheetOpen(true);
 	};
 
-	// Abre o sheet automaticamente quando há query params de navegação
 	useEffect(() => {
 		const editId = searchParams.get("edit");
 		const shouldAdd = searchParams.get("add") === "true";
@@ -366,30 +358,22 @@ export function PetsList() {
 	};
 
 	const handleSavePet = (savedPet: PetDraft) => {
-		if (!hasPets) setPets(DEFAULT_CLIENT_PETS);
-		const currentPets = hasPets ? pets : DEFAULT_CLIENT_PETS;
-
 		if (editingPet) {
-			setPets(
-				currentPets.map((pet) =>
-					pet.id === editingPet.id
-						? {
-							...pet,
-							name: savedPet.name,
-							breed: savedPet.breed,
-							age: savedPet.age,
-							size: savedPet.size,
-							notes: savedPet.behavior,
-							photoUrl: savedPet.photoUrl,
-						}
-						: pet
-				)
-			);
+			updateDog({
+				id: editingPet.id,
+				data: {
+					name: savedPet.name,
+					breed: savedPet.breed,
+					age: savedPet.age,
+					size: savedPet.size,
+					notes: savedPet.behavior,
+					photoUrl: savedPet.photoUrl,
+				},
+			});
 			return;
 		}
 
-		const newPet: Pet = {
-			id: nextPetId,
+		addDog({
 			ownerId: "client_1",
 			name: savedPet.name,
 			breed: savedPet.breed,
@@ -397,8 +381,7 @@ export function PetsList() {
 			size: savedPet.size,
 			notes: savedPet.behavior,
 			photoUrl: savedPet.photoUrl,
-		};
-		setPets([...currentPets, newPet]);
+		});
 	};
 
 	return (
@@ -406,7 +389,7 @@ export function PetsList() {
 			{/* Header da seção com contador e ação */}
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-3">
-					{hasPets && (
+					{list.length > 0 && (
 						<div className="flex items-center gap-2">
 							<span className="text-sm text-muted-foreground">
 								{list.length} {list.length === 1 ? "cão cadastrado" : "cães cadastrados"}

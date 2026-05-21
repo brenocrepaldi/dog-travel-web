@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { Plus, PawPrint, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAppStore } from "@/hooks/use-app-store";
-import { DEFAULT_CLIENT_PETS } from "@/lib/pets";
+import { useDogs } from "@/features/dogs/hooks/use-dogs";
 
 function PetAvatar({ name, photoUrl }: { name: string; photoUrl?: string }) {
   if (photoUrl) {
@@ -23,8 +22,7 @@ function PetAvatar({ name, photoUrl }: { name: string; photoUrl?: string }) {
 }
 
 export function DashboardDogs() {
-  const stored = useAppStore((s) => s.pets);
-  const pets   = stored.length > 0 ? stored : DEFAULT_CLIENT_PETS;
+  const { data: pets = [] } = useDogs();
 
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">

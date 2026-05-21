@@ -20,8 +20,7 @@ import { Separator } from "@/components/ui/separator";
 import { FlowActions } from "@/components/common/flow-actions";
 import { managedPaymentMethods } from "@/lib/mock-data";
 import { PIX_INSTANT_ID } from "../pix-constants";
-import { useAppStore } from "@/hooks/use-app-store";
-import { DEFAULT_CLIENT_PETS } from "@/lib/pets";
+import { useDogs } from "@/features/dogs/hooks/use-dogs";
 import type { WalkFormData } from "../walk-request-form";
 
 function fmt(val: number) {
@@ -62,8 +61,7 @@ interface Props {
 }
 
 export function StepConfirm({ data, onBack, onSubmit, submitting }: Props) {
-  const storedPets = useAppStore((state) => state.pets);
-  const pets       = storedPets.length > 0 ? storedPets : DEFAULT_CLIENT_PETS;
+  const { data: pets = [] } = useDogs();
 
   const selectedPets = data.selectedPetIds
     .map((id) => pets.find((pet) => pet.id === id))

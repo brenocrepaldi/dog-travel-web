@@ -15,10 +15,9 @@ import {
 	SlidersHorizontal,
 	Star,
 } from 'lucide-react';
-import { useAppStore } from '@/hooks/use-app-store';
+import { useDogs } from '@/features/dogs/hooks/use-dogs';
 import { cn } from '@/lib/utils';
-import type { DogSize } from '@/types';
-import type { WalkerProfile } from '@/lib/mock-data';
+import type { DogSize, WalkerProfile } from '@/types';
 import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -250,7 +249,7 @@ function inferBehaviorNeeds(notes: string | undefined) {
 // ─── Main Explorer ────────────────────────────────────────────────────────────
 
 export function WalkersExplorer({ walkers }: WalkersExplorerProps) {
-	const pets = useAppStore((state) => state.pets);
+	const { data: pets = [] } = useDogs();
 	const [query, setQuery] = useState('');
 	const [sizeFilter, setSizeFilter] = useState<DogSize | ''>('');
 	const [onlyWithTrustPack, setOnlyWithTrustPack] = useState(false);

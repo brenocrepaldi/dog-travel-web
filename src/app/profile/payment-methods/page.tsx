@@ -17,7 +17,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { managedPaymentMethods, type ManagedPaymentMethod } from "@/lib/mock-data";
+import { managedPaymentMethods } from "@/lib/mock-data";
+import type { ManagedPaymentMethod } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";

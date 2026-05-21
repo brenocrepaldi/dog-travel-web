@@ -1,12 +1,10 @@
 "use client";
 
 import { PawPrint } from "lucide-react";
-import { useAppStore } from "@/hooks/use-app-store";
-import { DEFAULT_CLIENT_PETS } from "@/lib/pets";
+import { useDogs } from "@/features/dogs/hooks/use-dogs";
 
 export function WalkPets({ petNames }: { petNames: string[] }) {
-  const stored = useAppStore((s) => s.pets);
-  const allPets = stored.length > 0 ? stored : DEFAULT_CLIENT_PETS;
+  const { data: allPets = [] } = useDogs();
 
   const pets = petNames.map((name) => ({
     name,

@@ -5,9 +5,10 @@ import Link from 'next/link';
 import { buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { getWalksByWalkerId, type WalkRecord } from '@/lib/mock-data';
-import { useAppStore } from '@/hooks/use-app-store';
+import { useSession } from 'next-auth/react';
+import { useWalks } from '@/features/walks/hooks/use-walks';
 import { cn } from '@/lib/utils';
+import type { WalkRecord } from '@/types';
 import {
 	CalendarDays,
 	Clock,
@@ -15,9 +16,6 @@ import {
 	MapPin,
 	Search,
 } from 'lucide-react';
-
-// ID do passeador mockado — em produção viria da sessão
-const MOCK_WALKER_ID = '1';
 
 // ── Status config ──────────────────────────────────────────────────────────
 const statusMap: Record<WalkRecord['status'], { label: string; dot: string; pill: string }> = {
@@ -178,25 +176,7 @@ function WalkerWalkCard({ walk }: { walk: WalkRecord }) {
 					</Link>
 				)}
 
-				{isAccepted && (
-					<Link
-						href={`/walks/${walk.id}`}
-						className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), 'rounded-lg w-full')}
-					>
-						Ver detalhes
-					</Link>
-				)}
-
-				{isCompleted && (
-					<Link
-						href={`/walks/${walk.id}`}
-						className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), 'rounded-lg w-full')}
-					>
-						Ver detalhes
-					</Link>
-				)}
-
-				{isCancelled && (
+				{(isAccepted || isCompleted || isCancelled) && (
 					<Link
 						href={`/walks/${walk.id}`}
 						className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), 'rounded-lg w-full')}
@@ -243,14 +223,14 @@ const FILTERS: { value: FilterValue; label: string; match: (w: WalkRecord) => bo
 
 // ── Main component ─────────────────────────────────────────────────────────
 export function WalkerWalksClient() {
-	const walkerAcceptedWalks = useAppStore((s) => s.walkerAcceptedWalks);
+	const { data: session } = useSession();
+	const walkerId = session?.user?.id ?? '1';
+
+	const { data: rawWalks = [], isLoading } = useWalks('walker', walkerId);
 	const [activeFilter, setActiveFilter] = useState<FilterValue>('todos');
 	const [search, setSearch] = useState('');
 
-	const allWalks: WalkRecord[] = useMemo(() => {
-		const mockWalks = getWalksByWalkerId(MOCK_WALKER_ID);
-		return sortWalks([...walkerAcceptedWalks, ...mockWalks]);
-	}, [walkerAcceptedWalks]);
+	const allWalks = useMemo(() => sortWalks(rawWalks), [rawWalks]);
 
 	const filtered = useMemo(() => {
 		const filterFn = FILTERS.find((f) => f.value === activeFilter)?.match ?? (() => true);
@@ -269,6 +249,16 @@ export function WalkerWalksClient() {
 		() => Object.fromEntries(FILTERS.map((f) => [f.value, allWalks.filter(f.match).length])),
 		[allWalks],
 	);
+
+	if (isLoading) {
+		return (
+			<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 pt-8">
+				{[1, 2, 3].map((i) => (
+					<div key={i} className="rounded-2xl border bg-card h-64 animate-pulse" />
+				))}
+			</div>
+		);
+	}
 
 	return (
 		<div className="space-y-8 pb-8">

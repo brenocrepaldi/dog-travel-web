@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { Separator } from "@/components/ui/separator";
-import { walkers } from "@/lib/mock-data";
+import { WalkersApi } from "@/features/walkers/api/walkers.api";
 import { WalkersExplorer } from "./_components/walkers-explorer";
 
 export const metadata: Metadata = { title: "Passeadores | DogTravel" };
 
-export default function WalkersPage() {
+export default async function WalkersPage() {
+  const walkers = await WalkersApi.list();
+
   return (
     <div className="flex flex-col gap-8 pb-8">
       <header className="space-y-1.5">

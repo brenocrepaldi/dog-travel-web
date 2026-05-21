@@ -1,9 +1,6 @@
 import axios from "axios";
+import { getSession } from "next-auth/react";
 
-/**
- * Axios instance pre-configured for the DogTravel API.
- * Base URL is set from the NEXT_PUBLIC_API_URL environment variable.
- */
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api",
   timeout: 10000,
@@ -12,12 +9,12 @@ const api = axios.create({
   },
 });
 
-// ─── Request interceptor ──────────────────────────────────────────────────────
 api.interceptors.request.use(
-  (config) => {
-    // Attach auth token from localStorage if available (client-side only)
+  async (config) => {
     if (typeof window !== "undefined") {
-      const token = localStorage.getItem("authToken");
+      const session = await getSession();
+      // When the real backend issues JWTs, expose them via session.accessToken
+      const token = (session as { accessToken?: string } | null)?.accessToken;
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -27,15 +24,11 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// ─── Response interceptor ─────────────────────────────────────────────────────
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.response?.status === 401) {
-      // Redirect to login on unauthorized
-      if (typeof window !== "undefined") {
-        window.location.href = "/login";
-      }
+    if (error.response?.status === 401 && typeof window !== "undefined") {
+      window.location.href = "/login";
     }
     return Promise.reject(error);
   }
