@@ -1,5 +1,19 @@
 import type { DogSize, PaymentMethodType, WalkStatus } from '@/types';
 
+export interface WalkRequest {
+	id: string;
+	clientId: string;
+	clientName: string;
+	petNames: string[];
+	petIds: string[];
+	durationMinutes: number;
+	price: number;
+	scheduledAt: string;
+	scheduledLabel: string;
+	startAddress: string;
+	receivedMinutes: number;
+}
+
 export interface WalkerCertification {
 	title: string;
 	verified: boolean;
@@ -87,6 +101,35 @@ export interface WalkReview {
 	comment: string;
 	createdAt: string;
 }
+
+export const walkRequests: WalkRequest[] = [
+	{
+		id: 'req-1',
+		clientId: 'client_2',
+		clientName: 'Ana Silva',
+		petNames: ['Rex'],
+		petIds: ['pet_2'],
+		durationMinutes: 30,
+		price: 44,
+		scheduledAt: '2026-05-21T15:00:00-03:00',
+		scheduledLabel: 'Hoje às 15:00',
+		startAddress: 'Rua das Flores, 120 - São Paulo',
+		receivedMinutes: 3,
+	},
+	{
+		id: 'req-2',
+		clientId: 'client_3',
+		clientName: 'Julia Mendes',
+		petNames: ['Mel', 'Bob'],
+		petIds: ['pet_3', 'pet_4'],
+		durationMinutes: 45,
+		price: 58,
+		scheduledAt: '2026-05-22T09:00:00-03:00',
+		scheduledLabel: 'Amanhã às 09:00',
+		startAddress: 'Av. Paulista, 900 - São Paulo',
+		receivedMinutes: 11,
+	},
+];
 
 export const walkers: WalkerProfile[] = [
 	{
@@ -301,6 +344,56 @@ export const walks: WalkRecord[] = [
 			{ id: 't4', label: 'Passeio concluido', at: '10:50', state: 'pending' },
 		],
 	},
+	// Passeios do passeador Carlos Silva (walkerId '1') — perspectiva do passeador
+	{
+		id: '5',
+		walkerId: '1',
+		clientName: 'Fernanda Costa',
+		petNames: ['Thor'],
+		status: 'accepted',
+		dateLabel: 'Amanhã · 10:00',
+		scheduledAt: '2026-05-22T10:00:00-03:00',
+		durationMinutes: 60,
+		price: 64,
+		distanceKm: 0,
+		startAddress: 'Rua Haddock Lobo, 595 - Sao Paulo',
+		paymentMethodId: 'pm_1',
+		participants: [
+			{ id: 'client_4', name: 'Fernanda Costa', role: 'client' },
+			{ id: '1', name: 'Carlos Silva', role: 'walker' },
+		],
+		timeline: [
+			{ id: 't1', label: 'Pedido aceito', at: '09:20', state: 'done' },
+			{ id: 't2', label: 'Aguardando passeio', at: '10:00', state: 'current' },
+			{ id: 't3', label: 'Passeio em andamento', at: '10:05', state: 'pending' },
+			{ id: 't4', label: 'Passeio concluido', at: '11:05', state: 'pending' },
+		],
+	},
+	{
+		id: '6',
+		walkerId: '1',
+		clientName: 'Roberto Lima',
+		petNames: ['Bolt', 'Nina'],
+		status: 'completed',
+		dateLabel: '19 Mai · 07:30',
+		scheduledAt: '2026-05-19T07:30:00-03:00',
+		durationMinutes: 45,
+		price: 52,
+		distanceKm: 2.2,
+		startAddress: 'Al. Santos, 800 - Sao Paulo',
+		endAddress: 'Parque Trianon',
+		paymentMethodId: 'pm_1',
+		participants: [
+			{ id: 'client_5', name: 'Roberto Lima', role: 'client' },
+			{ id: '1', name: 'Carlos Silva', role: 'walker' },
+		],
+		timeline: [
+			{ id: 't1', label: 'Pedido aceito', at: '07:10', state: 'done' },
+			{ id: 't2', label: 'Passeador chegou ao local', at: '07:28', state: 'done' },
+			{ id: 't3', label: 'Passeio em andamento', at: '07:35', state: 'done' },
+			{ id: 't4', label: 'Passeio concluido', at: '08:20', state: 'done' },
+		],
+	},
 ];
 
 export const managedPaymentMethods: ManagedPaymentMethod[] = [
@@ -386,4 +479,8 @@ export function getWalkById(walkId: string) {
 
 export function getReviewByWalkId(walkId: string) {
 	return walkReviews.find((review) => review.walkId === walkId);
+}
+
+export function getWalksByWalkerId(walkerId: string) {
+	return walks.filter((walk) => walk.walkerId === walkerId);
 }

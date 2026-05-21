@@ -1,7 +1,8 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { User, Pet, Walk, ChatMessage } from "@/types";
-import type { WalkRecord } from "@/lib/mock-data";
+import type { WalkRecord, WalkRequest } from "@/lib/mock-data";
+import { walkRequests as initialWalkRequests } from "@/lib/mock-data";
 
 // ─── Auth Slice ───────────────────────────────────────────────────────────────
 interface AuthSlice {
@@ -56,6 +57,14 @@ interface PaymentSlice {
   clearPendingPayment: () => void;
 }
 
+// ─── Walker Slice ─────────────────────────────────────────────────────────────
+interface WalkerSlice {
+  walkerRequests: WalkRequest[];
+  declineWalkerRequest: (id: string) => void;
+  walkerAcceptedWalks: WalkRecord[];
+  acceptWalkerRequest: (request: WalkRequest, walkerName: string) => void;
+}
+
 // ─── UI Slice ─────────────────────────────────────────────────────────────────
 export interface AppNotification {
   id: string;
@@ -75,7 +84,7 @@ interface UISlice {
 }
 
 // ─── Combined Store ───────────────────────────────────────────────────────────
-type AppStore = AuthSlice & PetsSlice & LocalWalksSlice & WalkSlice & ChatSlice & PaymentSlice & UISlice;
+type AppStore = AuthSlice & PetsSlice & LocalWalksSlice & WalkSlice & ChatSlice & PaymentSlice & WalkerSlice & UISlice;
 
 export const useAppStore = create<AppStore>()(
   persist(
@@ -121,6 +130,45 @@ export const useAppStore = create<AppStore>()(
       setPendingPayment: (payment) => set({ pendingPayment: payment }),
       clearPendingPayment: () => set({ pendingPayment: null }),
 
+      // Walker — requests reset on each load (simulates fresh API data); accepted walks are persisted
+      walkerRequests: initialWalkRequests,
+      declineWalkerRequest: (id) =>
+        set((state) => ({
+          walkerRequests: state.walkerRequests.filter((r) => r.id !== id),
+        })),
+      walkerAcceptedWalks: [],
+      acceptWalkerRequest: (request, walkerName) =>
+        set((state) => {
+          const now = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+          const newWalk: WalkRecord = {
+            id: `accepted-${request.id}`,
+            walkerId: '1',
+            clientName: request.clientName,
+            petNames: request.petNames,
+            status: 'accepted',
+            dateLabel: request.scheduledLabel,
+            scheduledAt: request.scheduledAt,
+            durationMinutes: request.durationMinutes,
+            price: request.price,
+            distanceKm: 0,
+            startAddress: request.startAddress,
+            participants: [
+              { id: request.clientId, name: request.clientName, role: 'client' },
+              { id: '1', name: walkerName, role: 'walker' },
+            ],
+            timeline: [
+              { id: 't1', label: 'Pedido aceito', at: now, state: 'done' },
+              { id: 't2', label: 'Aguardando passeio', at: request.scheduledLabel, state: 'current' },
+              { id: 't3', label: 'Passeio em andamento', at: '--', state: 'pending' },
+              { id: 't4', label: 'Passeio concluido', at: '--', state: 'pending' },
+            ],
+          };
+          return {
+            walkerRequests: state.walkerRequests.filter((r) => r.id !== request.id),
+            walkerAcceptedWalks: [newWalk, ...state.walkerAcceptedWalks],
+          };
+        }),
+
       // UI
       isSidebarOpen: true,
       setIsSidebarOpen: (open) => set({ isSidebarOpen: open }),
@@ -144,8 +192,12 @@ export const useAppStore = create<AppStore>()(
     }),
     {
       name: "dogtravel-storage",
-      // Persist user, pets, and locally-submitted walks
-      partialize: (state) => ({ user: state.user, pets: state.pets, localWalks: state.localWalks }),
+      partialize: (state) => ({
+        user: state.user,
+        pets: state.pets,
+        localWalks: state.localWalks,
+        walkerAcceptedWalks: state.walkerAcceptedWalks,
+      }),
     }
   )
 );

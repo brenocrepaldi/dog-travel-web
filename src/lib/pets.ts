@@ -19,6 +19,30 @@ export const DEFAULT_CLIENT_PETS: Pet[] = [
     size: "small",
     notes: "Agitada, puxa a coleira nos primeiros 5 minutos.",
   },
+  {
+    id: "3",
+    ownerId: "client_4",
+    name: "Thor",
+    breed: "Labrador",
+    age: 2,
+    size: "large",
+  },
+  {
+    id: "4",
+    ownerId: "client_5",
+    name: "Bolt",
+    breed: "Border Collie",
+    age: 4,
+    size: "medium",
+  },
+  {
+    id: "5",
+    ownerId: "client_5",
+    name: "Nina",
+    breed: "Shih Tzu",
+    age: 6,
+    size: "small",
+  },
 ];
 
 export const DOG_SIZE_LABEL: Record<DogSize, string> = {

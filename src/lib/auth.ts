@@ -36,8 +36,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (parsed.data.email.includes("walker")) {
           return {
-            id: "2",
-            name: "Carlos Passeador",
+            id: "1",
+            name: "Carlos Silva",
             email: parsed.data.email,
             role: "walker",
           };
