@@ -147,15 +147,6 @@ export function ClientPayments() {
 
             <div className="flex-1 h-px bg-border/60" />
 
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2"
-              render={<Link href="/walks/history" />}
-            >
-              <History className="w-4 h-4" />
-              Histórico completo
-            </Button>
           </div>
 
 

@@ -136,15 +136,6 @@ export function WalkerPayments() {
 
             <div className="flex-1 h-px bg-border/60" />
 
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2"
-              render={<Link href="/walks/history" />}
-            >
-              <History className="w-4 h-4" />
-              Histórico completo
-            </Button>
           </div>
 
           <div className="rounded-2xl border border-border/60 bg-card overflow-hidden divide-y divide-border/50">
