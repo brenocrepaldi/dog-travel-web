@@ -23,6 +23,8 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useAppStore } from "@/hooks/use-app-store";
+import type { WalkRequest } from "@/lib/mock-data";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -79,31 +81,6 @@ function SectionHeader({
 
 type DocStatus = "idle" | "pending" | "verified";
 
-// ─── Mock data ───────────────────────────────────────────────────────────────
-
-const mockRequests = [
-  {
-    id: "req-1",
-    clientName: "Ana Silva",
-    petNames: ["Rex"],
-    durationMinutes: 30,
-    price: 44,
-    scheduledAt: "Hoje às 15:00",
-    location: "Rua das Flores, 120",
-    receivedMinutes: 3,
-  },
-  {
-    id: "req-2",
-    clientName: "Julia Mendes",
-    petNames: ["Mel", "Bob"],
-    durationMinutes: 45,
-    price: 58,
-    scheduledAt: "Amanhã às 09:00",
-    location: "Av. Paulista, 900",
-    receivedMinutes: 11,
-  },
-];
-
 const mockCompletedWalks = [
   { id: "w1", clientName: "Ana Silva",    petNames: ["Rex"],        date: "22 Mar", earnings: 37 },
   { id: "w2", clientName: "Julia Mendes", petNames: ["Mel"],        date: "21 Mar", earnings: 37 },
@@ -118,10 +95,13 @@ export default function WalkerDashboardPage() {
   const greeting  = getGreeting();
   const router    = useRouter();
 
+  const walkerRequests      = useAppStore((s) => s.walkerRequests);
+  const declineWalkerRequest = useAppStore((s) => s.declineWalkerRequest);
+  const acceptWalkerRequest  = useAppStore((s) => s.acceptWalkerRequest);
+
   const [available, setAvailable] = useState(false);
 
-  // Walker document status (mock — would come from API)
-  const [identityStatus] = useState<DocStatus>("idle");
+  const [identityStatus] = useState<DocStatus>("verified");
 
   const identityVerified = identityStatus === "verified";
   const activeWalk       = null;
@@ -146,15 +126,22 @@ export default function WalkerDashboardPage() {
     else      toast.warning("Você ficou indisponível");
   }
 
-  function handleAccept(id: string) {
+  function handleAccept(request: WalkRequest) {
+    const walkerName = session?.user?.name ?? "Carlos Silva";
+    acceptWalkerRequest(request, walkerName);
     toast.success("Passeio aceito!", {
-      description: `Pedido ${id} confirmado e cliente notificado.`,
+      description: `${request.clientName} foi notificado. Veja em Meus passeios.`,
+      action: {
+        label: "Ver passeios",
+        onClick: () => router.push("/walks"),
+      },
     });
   }
 
-  function handleDecline(id: string) {
+  function handleDecline(request: WalkRequest) {
+    declineWalkerRequest(request.id);
     toast("Passeio recusado", {
-      description: `Pedido ${id} devolvido para a fila.`,
+      description: `Pedido de ${request.clientName} devolvido para a fila.`,
     });
   }
 
@@ -179,7 +166,7 @@ export default function WalkerDashboardPage() {
             <p className="text-sm font-medium text-primary-foreground/65">{greeting}</p>
             <h1 className="mt-0.5 text-3xl font-bold tracking-tight">{firstName}!</h1>
             <p className="mt-1.5 text-sm text-primary-foreground/70">
-              {getHeroSubtitle(identityVerified, available, mockRequests.length)}
+              {getHeroSubtitle(identityVerified, available, walkerRequests.length)}
             </p>
 
             {/* ── Availability toggle ── */}
@@ -327,9 +314,9 @@ export default function WalkerDashboardPage() {
       <section className="space-y-3.5">
         <div className="flex items-center gap-2">
           <h2 className="text-sm font-semibold text-foreground">Pedidos recebidos</h2>
-          {available && mockRequests.length > 0 && (
+          {available && walkerRequests.length > 0 && (
             <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-bold text-primary-foreground">
-              {mockRequests.length}
+              {walkerRequests.length}
             </span>
           )}
         </div>
@@ -360,7 +347,7 @@ export default function WalkerDashboardPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {mockRequests.map((req) => (
+            {walkerRequests.map((req) => (
               <div key={req.id} className="rounded-xl border border-border/60 bg-card p-5">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 
@@ -374,7 +361,6 @@ export default function WalkerDashboardPage() {
                         <p className="truncate text-sm font-semibold text-foreground">
                           {req.clientName}
                         </p>
-                        {/* Urgência — tempo recebido */}
                         <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary/8 px-2 py-0.5 text-[10px] font-semibold text-primary">
                           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
                           {req.receivedMinutes < 2
@@ -386,10 +372,9 @@ export default function WalkerDashboardPage() {
                         {req.petNames.join(", ")}
                       </p>
                       <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1.5">
-                        {/* CORRIGIDO: horário usa Clock, não MapPin */}
                         <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
                           <Clock className="h-3.5 w-3.5 shrink-0" />
-                          {req.scheduledAt}
+                          {req.scheduledLabel}
                         </span>
                         <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
                           <PawPrint className="h-3.5 w-3.5 shrink-0" />
@@ -397,7 +382,7 @@ export default function WalkerDashboardPage() {
                         </span>
                         <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
                           <MapPin className="h-3.5 w-3.5 shrink-0" />
-                          {req.location}
+                          {req.startAddress}
                         </span>
                       </div>
                     </div>
@@ -413,7 +398,7 @@ export default function WalkerDashboardPage() {
                         size="sm"
                         variant="outline"
                         className="rounded-lg gap-1.5 border-destructive/30 text-destructive hover:border-destructive hover:bg-destructive/10"
-                        onClick={() => handleDecline(req.id)}
+                        onClick={() => handleDecline(req)}
                       >
                         <XCircle className="h-3.5 w-3.5" />
                         Recusar
@@ -421,7 +406,7 @@ export default function WalkerDashboardPage() {
                       <Button
                         size="sm"
                         className="rounded-lg gap-1.5 bg-emerald-600 text-white hover:bg-emerald-700"
-                        onClick={() => handleAccept(req.id)}
+                        onClick={() => handleAccept(req)}
                       >
                         <CheckCircle2 className="h-3.5 w-3.5" />
                         Aceitar

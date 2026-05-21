@@ -6,6 +6,7 @@ import {
   BadgeCheck,
   Calendar,
   CheckCircle2,
+  Clock,
   CreditCard,
   FileText,
   MapPin,
@@ -16,6 +17,7 @@ import {
   ShieldCheck,
   Star,
   Timer,
+  TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
@@ -28,6 +30,7 @@ import {
   getReviewByWalkId,
   managedPaymentMethods,
 } from "@/lib/mock-data";
+import { auth } from "@/lib/auth";
 import { WalkRouteMapClient } from "./_components/walk-route-map-client";
 import { WalkPets } from "./_components/walk-pets";
 
@@ -37,7 +40,7 @@ function toMoney(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-function getInitials(name: string) {
+function initials(name: string) {
   return name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
 }
 
@@ -60,6 +63,8 @@ export default async function WalkDetailPage({
   const walk = getWalkById(id);
   if (!walk) notFound();
 
+  const session       = await auth();
+  const isWalker      = session?.user?.role === "walker";
   const walker        = getWalkerById(walk.walkerId);
   const paymentMethod = managedPaymentMethods.find((m) => m.id === walk.paymentMethodId);
   const review        = getReviewByWalkId(id);
@@ -68,20 +73,18 @@ export default async function WalkDetailPage({
   const isInProgress = walk.status === "in_progress";
   const isCompleted  = walk.status === "completed";
   const isCancelled  = walk.status === "cancelled";
+  const isAccepted   = walk.status === "accepted";
   const hasRoute     = walk.distanceKm > 0;
 
   return (
     <div className="space-y-6 pb-8">
 
-      {/* ── Header ───────────────────────────────────────────────────────────── */}
+      {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-1">
           <Link
             href="/walks"
-            className={cn(
-              buttonVariants({ variant: "ghost", size: "sm" }),
-              "-ml-2 text-muted-foreground hover:text-foreground"
-            )}
+            className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "-ml-2 text-muted-foreground hover:text-foreground")}
           >
             <ArrowLeft className="mr-1.5 h-4 w-4" />
             Meus passeios
@@ -91,44 +94,66 @@ export default async function WalkDetailPage({
             <Badge variant={statusCfg.variant}>{statusCfg.label}</Badge>
           </div>
           <p className="text-sm text-muted-foreground">
-            {walk.petNames.join(" & ")} · {walk.dateLabel}
+            {isWalker
+              ? `${walk.clientName} · ${walk.dateLabel}`
+              : `${walk.petNames.join(" & ")} · ${walk.dateLabel}`}
           </p>
         </div>
 
         <div className="flex shrink-0 flex-wrap gap-2">
-          {isInProgress && (
+          {isWalker ? (
             <>
-              <Link href={`/walks/${walk.id}/chat`} className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
-                <MessageSquare className="mr-1.5 h-4 w-4" />
-                Chat
-              </Link>
-              <Link href={`/walks/${walk.id}/tracking`} className={cn(buttonVariants({ variant: "default", size: "sm" }))}>
-                <Navigation className="mr-1.5 h-4 w-4" />
-                Acompanhar
-              </Link>
+              {(isInProgress || isAccepted) && (
+                <Link href={`/walks/${walk.id}/chat`} className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
+                  <MessageSquare className="mr-1.5 h-4 w-4" />
+                  Chat com cliente
+                </Link>
+              )}
+              {isInProgress && (
+                <Link href={`/walks/${walk.id}/tracking`} className={cn(buttonVariants({ variant: "default", size: "sm" }))}>
+                  <Navigation className="mr-1.5 h-4 w-4" />
+                  Acompanhar
+                </Link>
+              )}
             </>
-          )}
-          {isCompleted && !review && (
-            <Link href={`/walks/${walk.id}/review`} className={cn(buttonVariants({ variant: "default", size: "sm" }))}>
-              <Star className="mr-1.5 h-4 w-4" />
-              Avaliar passeio
-            </Link>
-          )}
-          {isCancelled && (
-            <Link href="/walks/new" className={cn(buttonVariants({ variant: "default", size: "sm" }))}>
-              Solicitar novo passeio
-            </Link>
-          )}
-          {(walk.status === "accepted" || walk.status === "pending") && (
-            <Link href={`/walks/${walk.id}/chat`} className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
-              <MessageSquare className="mr-1.5 h-4 w-4" />
-              Abrir chat
-            </Link>
+          ) : (
+            <>
+              {isInProgress && (
+                <>
+                  <Link href={`/walks/${walk.id}/chat`} className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
+                    <MessageSquare className="mr-1.5 h-4 w-4" />
+                    Chat
+                  </Link>
+                  <Link href={`/walks/${walk.id}/tracking`} className={cn(buttonVariants({ variant: "default", size: "sm" }))}>
+                    <Navigation className="mr-1.5 h-4 w-4" />
+                    Acompanhar
+                  </Link>
+                </>
+              )}
+              {isCompleted && !review && (
+                <Link href={`/walks/${walk.id}/review`} className={cn(buttonVariants({ variant: "default", size: "sm" }))}>
+                  <Star className="mr-1.5 h-4 w-4" />
+                  Avaliar passeio
+                </Link>
+              )}
+              {isCancelled && (
+                <Link href="/walks/new" className={cn(buttonVariants({ variant: "default", size: "sm" }))}>
+                  Solicitar novo passeio
+                </Link>
+              )}
+              {(isAccepted || walk.status === "pending") && (
+                <Link href={`/walks/${walk.id}/chat`} className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
+                  <MessageSquare className="mr-1.5 h-4 w-4" />
+                  Abrir chat
+                </Link>
+              )}
+            </>
           )}
         </div>
       </div>
 
-      {/* ── Status banners ────────────────────────────────────────────────────── */}
+      {/* ── Banners ────────────────────────────────────────────────────────── */}
+
       {isInProgress && (
         <div className="flex items-center justify-between gap-4 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.08] px-5 py-4">
           <div className="flex items-center gap-3">
@@ -139,7 +164,9 @@ export default async function WalkDetailPage({
             <div>
               <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">Passeio em andamento agora</p>
               <p className="mt-0.5 text-xs text-emerald-600/70 dark:text-emerald-400/70">
-                {walk.petNames.join(" & ")} está{walk.petNames.length > 1 ? "o" : ""} com {walker?.name ?? "o passeador"}
+                {isWalker
+                  ? `Você está passeando com ${walk.petNames.join(" & ")} · cliente ${walk.clientName}`
+                  : `${walk.petNames.join(" & ")} está${walk.petNames.length > 1 ? "o" : ""} com ${walker?.name ?? "o passeador"}`}
               </p>
             </div>
           </div>
@@ -148,12 +175,13 @@ export default async function WalkDetailPage({
             className={cn(buttonVariants({ variant: "outline", size: "sm" }), "shrink-0 border-emerald-500/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/10")}
           >
             <Navigation className="mr-1.5 h-3.5 w-3.5" />
-            Acompanhar ao vivo
+            Acompanhar
           </Link>
         </div>
       )}
 
-      {isCompleted && !review && (
+      {/* Concluído — cliente */}
+      {!isWalker && isCompleted && !review && (
         <div className="flex items-center justify-between gap-4 rounded-xl border border-amber-500/20 bg-amber-500/[0.08] px-5 py-4">
           <div className="flex items-center gap-3">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/10">
@@ -175,7 +203,7 @@ export default async function WalkDetailPage({
         </div>
       )}
 
-      {isCompleted && review && (
+      {!isWalker && isCompleted && review && (
         <div className="flex items-start gap-4 rounded-xl border border-border bg-muted/30 px-5 py-4">
           <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/10">
             <Star className="h-4 w-4 text-amber-500" />
@@ -194,6 +222,37 @@ export default async function WalkDetailPage({
         </div>
       )}
 
+      {/* Concluído — passeador: mostra ganho + avaliação recebida */}
+      {isWalker && isCompleted && (
+        <div className="flex items-center justify-between gap-4 rounded-xl border border-emerald-500/20 bg-gradient-to-r from-emerald-500/[0.10] to-emerald-500/[0.03] px-5 py-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 ring-1 ring-emerald-500/20">
+              <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+                Passeio concluído com sucesso
+              </p>
+              <p className="mt-0.5 text-xs text-emerald-600/70 dark:text-emerald-400/70">
+                {toMoney(walk.price)} creditado
+                {hasRoute ? ` · ${walk.distanceKm.toFixed(1)} km percorridos` : ""}
+                {` · ${walk.durationMinutes} min`}
+              </p>
+            </div>
+          </div>
+          {review && (
+            <div className="shrink-0 flex flex-col items-end gap-1">
+              <div className="flex items-center gap-0.5">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star key={i} className={cn("h-3.5 w-3.5", i < review.rating ? "fill-amber-400 text-amber-400" : "fill-muted text-muted-foreground/30")} />
+                ))}
+              </div>
+              <p className="text-[10px] text-emerald-600/60 dark:text-emerald-400/60">avaliação do cliente</p>
+            </div>
+          )}
+        </div>
+      )}
+
       {isCancelled && (
         <div className="rounded-xl border border-border bg-muted/40 px-5 py-4">
           <p className="text-sm text-muted-foreground">
@@ -203,180 +262,104 @@ export default async function WalkDetailPage({
         </div>
       )}
 
-      {/* ════════════════════════════════════════════════════════════════════════
-          LAYOUT A — passeio com trajeto GPS: mapa em destaque
-      ════════════════════════════════════════════════════════════════════════ */}
+      {/* ════════════════════════════════════════════════════════════════════
+          LAYOUT A — com trajeto GPS
+      ════════════════════════════════════════════════════════════════════ */}
       {hasRoute ? (
-        <>
-          {/* Grid principal: esquerda (mapa + info) | direita (passeador + pagamento) */}
-          <div className="grid gap-5 lg:grid-cols-3">
-
-            {/* Coluna esquerda — Mapa e Informações */}
-            <div className="space-y-5 lg:col-span-2">
-
-              {/* Mapa */}
-              <Card className="overflow-hidden py-0 gap-0">
-                <div className="flex items-center justify-between border-b border-border/60 px-5 py-3.5">
-                  <div>
-                    <h2 className="text-sm font-semibold text-foreground">Trajeto percorrido</h2>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {walk.distanceKm.toFixed(1)} km · {walk.startAddress}
-                      {walk.endAddress ? ` → ${walk.endAddress}` : ""}
-                    </p>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-4 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1.5">
-                      <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-                      Início
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <span className="h-2.5 w-2.5 rounded-full bg-indigo-500" />
-                      Fim
-                    </span>
-                  </div>
-                </div>
-                <div className="relative h-[280px] sm:h-[340px]">
-                  <WalkRouteMapClient walkId={walk.id} />
-                </div>
-              </Card>
-
-              {/* Informações */}
-              <Card className="overflow-hidden py-0 gap-0">
-                <div className="border-b border-border/60 px-5 py-3.5">
-                  <h2 className="text-sm font-semibold text-foreground">Informações</h2>
-                </div>
-                <CardContent className="divide-y divide-border/60 p-0">
-                  <InfoRow icon={Calendar} label="Data e horário" value={walk.dateLabel} />
-                  <InfoRow icon={Timer}    label="Duração"        value={`${walk.durationMinutes} minutos`} />
-                  <InfoRow icon={Route}    label="Distância"      value={`${walk.distanceKm.toFixed(1)} km`} />
-                  <InfoRow icon={MapPin}   label="Saída"          value={walk.startAddress} />
-                  {walk.endAddress && <InfoRow icon={MapPin} label="Destino" value={walk.endAddress} />}
-                  {walk.petNames.length > 0 && (
-                    <div className="flex items-start gap-3 px-5 py-4">
-                      <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted">
-                        <PawPrint className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Cães</p>
-                        <div className="mt-3">
-                          <WalkPets petNames={walk.petNames} />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {walk.notes && !isCancelled && (
-                    <div className="flex items-start gap-3 px-5 py-4">
-                      <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted">
-                        <FileText className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Observações</p>
-                        <p className="mt-0.5 text-sm text-foreground">{walk.notes}</p>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Linha do tempo */}
-              <TimelineCard timeline={walk.timeline} />
-
-            </div>
-
-            {/* Coluna direita — Passeador e Pagamento */}
-            <div className="space-y-5">
-
-              {/* Passeador */}
-              {walker && (
-                <Card className="overflow-hidden py-0 gap-0">
-                  <div className="border-b border-border/60 px-5 py-3.5">
-                    <h2 className="text-sm font-semibold text-foreground">Passeador</h2>
-                  </div>
-                  <CardContent className="p-5 space-y-4">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-sm font-bold text-primary">
-                        {getInitials(walker.name)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <p className="truncate font-semibold text-foreground">{walker.name}</p>
-                          {walker.verified && <BadgeCheck className="h-4 w-4 shrink-0 text-primary" />}
-                        </div>
-                        <div className="mt-1 flex items-center gap-1.5">
-                          <div className="flex items-center gap-0.5">
-                            {Array.from({ length: 5 }).map((_, i) => (
-                              <Star key={i} className={cn("h-3 w-3", i < Math.round(walker.rating) ? "fill-amber-400 text-amber-400" : "fill-muted text-muted-foreground/30")} />
-                            ))}
-                          </div>
-                          <span className="text-xs text-muted-foreground">
-                            {walker.rating.toFixed(1)} · {walker.reviews} aval.
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      {walker.trustChecks.identityVerified && (
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
-                          Identidade verificada
-                        </div>
-                      )}
-                      {walker.trustChecks.backgroundCheck && (
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
-                          Antecedentes verificados
-                        </div>
-                      )}
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-primary" />
-                        {walker.completedWalks} passeios concluídos
-                      </div>
-                    </div>
-                    <Separator className="opacity-60" />
-                    <Link href={`/walkers/${walker.id}`} className={cn(buttonVariants({ variant: "outline", size: "sm" }), "w-full")}>
-                      Ver perfil completo
-                    </Link>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Pagamento */}
-              <Card className="overflow-hidden py-0 gap-0">
-                <div className="border-b border-border/60 px-5 py-3.5">
-                  <h2 className="text-sm font-semibold text-foreground">Pagamento</h2>
-                </div>
-                <CardContent className="p-5 space-y-4">
-                  <div className="flex items-center justify-between rounded-xl border border-primary/20 bg-primary/5 px-4 py-3.5">
-                    <span className="text-sm font-semibold text-foreground">Total</span>
-                    <span className="text-xl font-bold text-primary">{toMoney(walk.price)}</span>
-                  </div>
-                  {paymentMethod && (
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted">
-                        <CreditCard className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Forma de pagamento</p>
-                        <p className="mt-0.5 text-sm font-medium text-foreground">
-                          {paymentMethod.brand} {paymentMethod.label}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-            </div>
-          </div>
-
-        </>
-      ) : (
-        /* ════════════════════════════════════════════════════════════════════
-           LAYOUT B — sem trajeto GPS: layout clássico em duas colunas
-        ════════════════════════════════════════════════════════════════════ */
         <div className="grid gap-5 lg:grid-cols-3">
 
-          {/* Left */}
+          <div className="space-y-5 lg:col-span-2">
+            <Card className="overflow-hidden py-0 gap-0">
+              <div className="flex items-center justify-between border-b border-border/60 px-5 py-3.5">
+                <div>
+                  <h2 className="text-sm font-semibold text-foreground">Trajeto percorrido</h2>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {walk.distanceKm.toFixed(1)} km · {walk.startAddress}
+                    {walk.endAddress ? ` → ${walk.endAddress}` : ""}
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-4 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                    Início
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-full bg-indigo-500" />
+                    Fim
+                  </span>
+                </div>
+              </div>
+              <div className="relative h-[280px] sm:h-[340px]">
+                <WalkRouteMapClient walkId={walk.id} />
+              </div>
+            </Card>
+
+            <Card className="overflow-hidden py-0 gap-0">
+              <div className="border-b border-border/60 px-5 py-3.5">
+                <h2 className="text-sm font-semibold text-foreground">Informações</h2>
+              </div>
+              <CardContent className="divide-y divide-border/60 p-0">
+                <InfoRow icon={Calendar} label="Data e horário" value={walk.dateLabel} />
+                <InfoRow icon={Timer}    label="Duração"        value={`${walk.durationMinutes} minutos`} />
+                <InfoRow icon={Route}    label="Distância"      value={`${walk.distanceKm.toFixed(1)} km`} />
+                <InfoRow icon={MapPin}   label="Saída"          value={walk.startAddress} />
+                {walk.endAddress && <InfoRow icon={MapPin} label="Destino" value={walk.endAddress} />}
+                {walk.petNames.length > 0 && (
+                  <div className="flex items-start gap-3 px-5 py-4">
+                    <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted">
+                      <PawPrint className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Cães</p>
+                      <div className="mt-3">
+                        <WalkPets petNames={walk.petNames} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {walk.notes && !isCancelled && (
+                  <div className="flex items-start gap-3 px-5 py-4">
+                    <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted">
+                      <FileText className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Observações</p>
+                      <p className="mt-0.5 text-sm text-foreground">{walk.notes}</p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <TimelineCard timeline={walk.timeline} />
+          </div>
+
+          <div className="space-y-5">
+            {isWalker ? (
+              <ClientCard
+                walkId={walk.id}
+                clientName={walk.clientName}
+                petNames={walk.petNames}
+                address={walk.startAddress}
+                showChat={isInProgress || isAccepted}
+              />
+            ) : (
+              walker && <WalkerCard walker={walker} compact />
+            )}
+
+            {isWalker
+              ? <EarningCard price={walk.price} status={walk.status as WalkStatus} />
+              : <PaymentCard price={walk.price} paymentMethod={paymentMethod} />
+            }
+          </div>
+        </div>
+
+      ) : (
+        /* ════════════════════════════════════════════════════════════════
+           LAYOUT B — sem trajeto GPS
+        ════════════════════════════════════════════════════════════════ */
+        <div className="grid gap-5 lg:grid-cols-3">
+
           <div className="space-y-5 lg:col-span-2">
             <Card className="overflow-hidden py-0 gap-0">
               <div className="border-b border-border/60 px-5 py-4">
@@ -403,99 +386,33 @@ export default async function WalkDetailPage({
             <TimelineCard timeline={walk.timeline} />
           </div>
 
-          {/* Right */}
           <div className="space-y-5">
-            {walker && (
-              <Card className="overflow-hidden py-0 gap-0">
-                <div className="border-b border-border/60 px-5 py-4">
-                  <h2 className="text-sm font-semibold text-foreground">Passeador</h2>
-                </div>
-                <CardContent className="p-5 space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-sm font-bold text-primary">
-                      {getInitials(walker.name)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <p className="truncate font-semibold text-foreground">{walker.name}</p>
-                        {walker.verified && <BadgeCheck className="h-4 w-4 shrink-0 text-primary" />}
-                      </div>
-                      <div className="mt-1 flex items-center gap-1.5">
-                        <div className="flex items-center gap-0.5">
-                          {Array.from({ length: 5 }).map((_, i) => (
-                            <Star key={i} className={cn("h-3 w-3", i < Math.round(walker.rating) ? "fill-amber-400 text-amber-400" : "fill-muted text-muted-foreground/30")} />
-                          ))}
-                        </div>
-                        <span className="text-xs text-muted-foreground">{walker.rating.toFixed(1)} · {walker.reviews} aval.</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    {walker.trustChecks.identityVerified && (
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
-                        Identidade verificada
-                      </div>
-                    )}
-                    {walker.trustChecks.backgroundCheck && (
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
-                        Antecedentes verificados
-                      </div>
-                    )}
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-primary" />
-                      {walker.completedWalks} passeios concluídos
-                    </div>
-                  </div>
-                  <Separator className="opacity-60" />
-                  <Link href={`/walkers/${walker.id}`} className={cn(buttonVariants({ variant: "outline", size: "sm" }), "w-full")}>
-                    Ver perfil completo
-                  </Link>
-                </CardContent>
-              </Card>
+            {isWalker ? (
+              <ClientCard
+                walkId={walk.id}
+                clientName={walk.clientName}
+                petNames={walk.petNames}
+                address={walk.startAddress}
+                showChat={isInProgress || isAccepted}
+              />
+            ) : (
+              walker && <WalkerCard walker={walker} />
             )}
 
+            {/* Cães — sempre visível no layout sem rota */}
             <Card className="overflow-hidden py-0 gap-0">
               <div className="border-b border-border/60 px-5 py-4">
                 <h2 className="text-sm font-semibold text-foreground">Cães</h2>
               </div>
               <CardContent className="p-5">
-                <div className="flex flex-wrap gap-3">
-                  {walk.petNames.map((name) => (
-                    <div key={name} className="flex items-center gap-2.5">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500/10">
-                        <PawPrint className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                      </div>
-                      <span className="text-sm font-medium text-foreground">{name}</span>
-                    </div>
-                  ))}
-                </div>
+                <WalkPets petNames={walk.petNames} />
               </CardContent>
             </Card>
 
-            <Card className="overflow-hidden py-0 gap-0">
-              <div className="border-b border-border/60 px-5 py-4">
-                <h2 className="text-sm font-semibold text-foreground">Pagamento</h2>
-              </div>
-              <CardContent className="p-5 space-y-4">
-                <div className="flex items-center justify-between rounded-xl border border-primary/20 bg-primary/5 px-4 py-3.5">
-                  <span className="text-sm font-semibold text-foreground">Total</span>
-                  <span className="text-xl font-bold text-primary">{toMoney(walk.price)}</span>
-                </div>
-                {paymentMethod && (
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted">
-                      <CreditCard className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Forma de pagamento</p>
-                      <p className="mt-0.5 text-sm font-medium text-foreground">{paymentMethod.brand} {paymentMethod.label}</p>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            {isWalker
+              ? <EarningCard price={walk.price} status={walk.status as WalkStatus} />
+              : <PaymentCard price={walk.price} paymentMethod={paymentMethod} />
+            }
           </div>
         </div>
       )}
@@ -503,7 +420,7 @@ export default async function WalkDetailPage({
   );
 }
 
-// ── Shared sub-components ────────────────────────────────────────────────────
+// ── Sub-components compartilhados ─────────────────────────────────────────────
 
 function TimelineCard({
   timeline,
@@ -524,7 +441,7 @@ function TimelineCard({
                   "relative z-10 mt-0.5 h-3 w-3 shrink-0 rounded-full ring-2 ring-background",
                   event.state === "done"    && "bg-emerald-500",
                   event.state === "current" && "bg-primary",
-                  event.state === "pending" && "bg-muted-foreground/25"
+                  event.state === "pending" && "bg-muted-foreground/25",
                 )}
               >
                 {event.state === "current" && (
@@ -567,14 +484,261 @@ function InfoRow({ icon: Icon, label, value }: { icon: React.ElementType; label:
   );
 }
 
-function CompactDetail({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
+// ── Card do passeador — perspectiva do cliente ────────────────────────────────
+
+type WalkerProfileShape = {
+  id: string;
+  name: string;
+  rating: number;
+  reviews: number;
+  verified: boolean;
+  completedWalks: number;
+  trustChecks: { identityVerified: boolean; backgroundCheck: boolean };
+};
+
+function WalkerCard({ walker, compact = false }: { walker: WalkerProfileShape; compact?: boolean }) {
   return (
-    <div className="flex items-start gap-2.5">
-      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-      <div className="min-w-0 flex-1">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
-        <p className="mt-0.5 text-sm font-medium text-foreground">{value}</p>
+    <Card className="overflow-hidden py-0 gap-0">
+      <div className="border-b border-border/60 px-5 py-3.5">
+        <h2 className="text-sm font-semibold text-foreground">Passeador</h2>
       </div>
-    </div>
+      <CardContent className="p-5 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className={cn(
+            "flex shrink-0 items-center justify-center rounded-xl bg-primary/10 text-sm font-bold text-primary",
+            compact ? "h-12 w-12" : "h-14 w-14",
+          )}>
+            {initials(walker.name)}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5">
+              <p className="truncate font-semibold text-foreground">{walker.name}</p>
+              {walker.verified && <BadgeCheck className="h-4 w-4 shrink-0 text-primary" />}
+            </div>
+            <div className="mt-1 flex items-center gap-1.5">
+              <div className="flex items-center gap-0.5">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star key={i} className={cn("h-3 w-3", i < Math.round(walker.rating) ? "fill-amber-400 text-amber-400" : "fill-muted text-muted-foreground/30")} />
+                ))}
+              </div>
+              <span className="text-xs text-muted-foreground">
+                {walker.rating.toFixed(1)} · {walker.reviews} aval.
+              </span>
+            </div>
+          </div>
+        </div>
+        <div className="space-y-1.5">
+          {walker.trustChecks.identityVerified && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
+              Identidade verificada
+            </div>
+          )}
+          {walker.trustChecks.backgroundCheck && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
+              Antecedentes verificados
+            </div>
+          )}
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-primary" />
+            {walker.completedWalks} passeios concluídos
+          </div>
+        </div>
+        <Separator className="opacity-60" />
+        <Link href={`/walkers/${walker.id}`} className={cn(buttonVariants({ variant: "outline", size: "sm" }), "w-full")}>
+          Ver perfil completo
+        </Link>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ── Card do cliente — perspectiva do passeador ────────────────────────────────
+
+function ClientCard({
+  walkId,
+  clientName,
+  petNames,
+  address,
+  showChat,
+}: {
+  walkId: string;
+  clientName: string;
+  petNames: string[];
+  address: string;
+  showChat: boolean;
+}) {
+  return (
+    <Card className="overflow-hidden py-0 gap-0">
+      <div className="border-b border-border/60 px-5 py-3.5">
+        <h2 className="text-sm font-semibold text-foreground">Cliente</h2>
+      </div>
+      <CardContent className="p-5 space-y-4">
+
+        {/* Avatar + nome — espelha exatamente o WalkerCard */}
+        <div className="flex items-center gap-3">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-sm font-bold text-primary">
+            {initials(clientName)}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-foreground truncate">{clientName}</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {petNames.length} {petNames.length === 1 ? "cão" : "cães"} neste passeio
+            </p>
+          </div>
+        </div>
+
+        {/* Indicadores — espelha os trust checks do WalkerCard */}
+        <div className="space-y-1.5">
+          {petNames.map((name) => (
+            <div key={name} className="flex items-center gap-2 text-xs text-muted-foreground">
+              <PawPrint className="h-3.5 w-3.5 shrink-0 text-amber-500" />
+              <span className="font-medium text-foreground">{name}</span>
+            </div>
+          ))}
+          <div className="flex items-start gap-2 text-xs text-muted-foreground">
+            <MapPin className="mt-px h-3.5 w-3.5 shrink-0" />
+            <span className="leading-relaxed">{address}</span>
+          </div>
+        </div>
+
+        <Separator className="opacity-60" />
+
+        {/* Rodapé — sempre presente, espelha "Ver perfil" do WalkerCard */}
+        {showChat ? (
+          <Link
+            href={`/walks/${walkId}/chat`}
+            className={cn(buttonVariants({ variant: "outline", size: "sm" }), "w-full gap-1.5")}
+          >
+            <MessageSquare className="h-3.5 w-3.5" />
+            Abrir chat com cliente
+          </Link>
+        ) : (
+          <p className="text-center text-[11px] text-muted-foreground/60">
+            Chat disponível apenas durante o passeio
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ── Card de pagamento — perspectiva do cliente ────────────────────────────────
+
+function PaymentCard({
+  price,
+  paymentMethod,
+}: {
+  price: number;
+  paymentMethod?: { brand: string; label: string };
+}) {
+  return (
+    <Card className="overflow-hidden py-0 gap-0">
+      <div className="border-b border-border/60 px-5 py-3.5">
+        <h2 className="text-sm font-semibold text-foreground">Pagamento</h2>
+      </div>
+      <CardContent className="p-5 space-y-4">
+        <div className="flex items-center justify-between rounded-xl border border-primary/20 bg-primary/5 px-4 py-3.5">
+          <span className="text-sm font-semibold text-foreground">Total</span>
+          <span className="text-xl font-bold text-primary">{toMoney(price)}</span>
+        </div>
+        {paymentMethod && (
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted">
+              <CreditCard className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Forma de pagamento</p>
+              <p className="mt-0.5 text-sm font-medium text-foreground">
+                {paymentMethod.brand} {paymentMethod.label}
+              </p>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ── Card de ganho — perspectiva do passeador ──────────────────────────────────
+
+function EarningCard({ price, status }: { price: number; status: WalkStatus }) {
+  const isConfirmed = status === "completed";
+  const isActive    = status === "in_progress";
+  const isPending   = status === "accepted" || status === "pending";
+  const isCancelled = status === "cancelled";
+
+  return (
+    <Card className="overflow-hidden py-0 gap-0">
+      <div className="border-b border-border/60 px-5 py-3.5">
+        <h2 className="text-sm font-semibold text-foreground">Ganho</h2>
+      </div>
+      <CardContent className="p-5 space-y-4">
+
+        {/* Valor principal */}
+        <div className={cn(
+          "rounded-xl border px-5 py-4 space-y-0.5",
+          isConfirmed ? "border-emerald-500/20 bg-emerald-500/[0.07]" :
+          isActive    ? "border-primary/20    bg-primary/[0.05]"      :
+          isCancelled ? "border-border/60     bg-muted/40"            :
+                        "border-border/60     bg-muted/30",
+        )}>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            {isConfirmed ? "Valor recebido" : isCancelled ? "Valor previsto" : "Seu ganho"}
+          </p>
+          <p className={cn(
+            "text-3xl font-bold tracking-tight",
+            isConfirmed ? "text-emerald-600 dark:text-emerald-400" :
+            isActive    ? "text-primary"                            :
+                          "text-foreground",
+          )}>
+            {toMoney(price)}
+          </p>
+          <div className="flex items-center gap-1.5 pt-0.5">
+            <TrendingUp className={cn(
+              "h-3 w-3",
+              isConfirmed ? "text-emerald-500" : "text-muted-foreground",
+            )} />
+            <p className="text-[11px] text-muted-foreground">valor bruto do passeio</p>
+          </div>
+        </div>
+
+        {/* Chip de status */}
+        {isConfirmed && (
+          <div className="flex items-center gap-2.5 rounded-lg border border-emerald-500/15 bg-emerald-500/[0.07] px-3.5 py-2.5">
+            <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+            <div>
+              <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">Pagamento confirmado</p>
+              <p className="text-[11px] text-emerald-600/70 dark:text-emerald-400/70">Creditado na sua conta</p>
+            </div>
+          </div>
+        )}
+
+        {isActive && (
+          <div className="flex items-center gap-2.5 rounded-lg border border-primary/15 bg-primary/[0.06] px-3.5 py-2.5">
+            <span className="relative flex h-2 w-2 shrink-0">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+            </span>
+            <p className="text-xs font-semibold text-primary">Passeio em andamento</p>
+          </div>
+        )}
+
+        {isPending && (
+          <div className="flex items-center gap-2.5 rounded-lg border border-border/60 bg-muted/40 px-3.5 py-2.5">
+            <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <p className="text-xs text-muted-foreground">Creditado ao concluir o passeio</p>
+          </div>
+        )}
+
+        {isCancelled && (
+          <div className="flex items-center gap-2.5 rounded-lg border border-border/60 bg-muted/40 px-3.5 py-2.5">
+            <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <p className="text-xs text-muted-foreground">Cancelado — sem cobrança ao cliente</p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
