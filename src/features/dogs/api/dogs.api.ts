@@ -1,8 +1,7 @@
-import { DEFAULT_CLIENT_PETS } from "@/lib/pets";
+import { pets } from "@/lib/mock-data";
 import type { Pet } from "@/types";
 
-// Module-level store initialized with mock client pets
-let dogsStore: Pet[] = DEFAULT_CLIENT_PETS.filter((p) => p.ownerId === "client_1");
+let dogsStore: Pet[] = pets.filter((p) => p.ownerId === "client_1");
 
 export const DogsApi = {
   list: async (): Promise<Pet[]> => {

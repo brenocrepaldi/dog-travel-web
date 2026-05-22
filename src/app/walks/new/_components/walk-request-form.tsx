@@ -26,7 +26,7 @@ import { StepPrice } from './steps/step-price';
 import { StepPayment } from './steps/step-payment';
 import { StepConfirm } from './steps/step-confirm';
 import { StepPixPayment } from './steps/step-pix-payment';
-import { PIX_INSTANT_ID } from './pix-constants';
+import { PIX_INSTANT_ID } from '@/lib/mock-data';
 
 // ─── Form state shape ──────────────────────────────────────────────────────
 export interface WalkFormData {

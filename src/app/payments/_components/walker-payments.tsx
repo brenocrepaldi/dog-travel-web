@@ -16,12 +16,7 @@ import {
   Wallet,
   ChevronRight,
 } from "lucide-react";
-
-const MOCK_EARNINGS = [
-  { id: 1, walkId: "1", date: "22/03/2026", client: "Ana Silva", pets: "Rex", duration: "30 min", amount: "R$ 37,00" },
-  { id: 2, walkId: "2", date: "21/03/2026", client: "Julia M.", pets: "Mel", duration: "45 min", amount: "R$ 44,00" },
-  { id: 3, walkId: "3", date: "15/03/2026", client: "Roberto K.", pets: "Thor", duration: "60 min", amount: "R$ 52,00" },
-];
+import { walkerEarnings } from "@/lib/mock-data";
 
 function AvailableBalanceSidebar() {
   return (
@@ -60,7 +55,7 @@ function AvailableBalanceSidebar() {
   );
 }
 
-function EarningRow({ item }: { item: (typeof MOCK_EARNINGS)[number] }) {
+function EarningRow({ item }: { item: (typeof walkerEarnings)[number] }) {
   const initials = item.client
     .split(" ")
     .map((n) => n[0])
@@ -139,7 +134,7 @@ export function WalkerPayments() {
           </div>
 
           <div className="rounded-2xl border border-border/60 bg-card overflow-hidden divide-y divide-border/50">
-            {MOCK_EARNINGS.map((item) => (
+            {walkerEarnings.map((item) => (
               <EarningRow key={item.id} item={item} />
             ))}
           </div>

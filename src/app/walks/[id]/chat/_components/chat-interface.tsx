@@ -6,22 +6,12 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { initialChatMessages } from "@/lib/mock-data";
 
-interface Message {
-  id: string;
-  senderId: string;
-  text: string;
-  timestamp: string;
-}
-
-const INIT_MESSAGES: Message[] = [
-  { id: "1", senderId: "2", text: "Olá! Cheguei no local.", timestamp: "14:30" },
-  { id: "2", senderId: "1", text: "Que ótimo! O Rex já está na porta.", timestamp: "14:31" },
-  { id: "3", senderId: "2", text: "Já estou com ele. Vamos passear!", timestamp: "14:35" },
-];
+type Message = (typeof initialChatMessages)[number];
 
 export function ChatInterface({ walkId, currentUserId }: { walkId: string; currentUserId: string }) {
-  const [messages, setMessages] = useState<Message[]>(INIT_MESSAGES);
+  const [messages, setMessages] = useState<Message[]>(initialChatMessages);
   const [input, setInput] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
 

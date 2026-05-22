@@ -18,8 +18,7 @@ import {
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { FlowActions } from "@/components/common/flow-actions";
-import { managedPaymentMethods } from "@/lib/mock-data";
-import { PIX_INSTANT_ID } from "../pix-constants";
+import { managedPaymentMethods, PIX_INSTANT_ID } from "@/lib/mock-data";
 import { useDogs } from "@/features/dogs/hooks/use-dogs";
 import type { WalkFormData } from "../walk-request-form";
 

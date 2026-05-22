@@ -4,6 +4,12 @@ import { useEffect, useState } from "react";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { FlowActions } from "@/components/common/flow-actions";
 import type { WalkFormData } from "../walk-request-form";
+import {
+  DURATION_BASE_PRICE,
+  EXTRA_PET_FEE,
+  PLATFORM_AND_SAFETY_FEE_RATE,
+  FIRST_RIDE_DISCOUNT_RATE,
+} from "@/lib/mock-data";
 
 interface Props {
   data: WalkFormData;
@@ -11,16 +17,6 @@ interface Props {
   onNext: () => void;
   onBack: () => void;
 }
-
-const DURATION_BASE_PRICE: Record<number, number> = {
-  15: 12,
-  30: 18,
-  45: 24,
-  60: 27,
-};
-const EXTRA_PET_FEE                = 4;
-const PLATFORM_AND_SAFETY_FEE_RATE = 0.08;
-const FIRST_RIDE_DISCOUNT_RATE     = 0.15;
 
 function calcEstimate(durationMinutes: number, petCount: number, isFirstRide: boolean) {
   const durationBase          = DURATION_BASE_PRICE[durationMinutes] ?? 18;

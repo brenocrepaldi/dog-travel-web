@@ -15,10 +15,9 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { managedPaymentMethods } from "@/lib/mock-data";
+import { managedPaymentMethods, PIX_INSTANT_ID } from "@/lib/mock-data";
 import type { ManagedPaymentMethod } from "@/types";
 import { toast } from "sonner";
-import { PIX_INSTANT_ID } from "../pix-constants";
 import type { WalkFormData } from "../walk-request-form";
 
 // ─── Constants ──────────────────────────────────────────────────────────────

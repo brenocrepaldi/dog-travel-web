@@ -239,6 +239,17 @@ export interface PriceBreakdown {
   currency: string;
 }
 
+// ─── Document Verification ───────────────────────────────────────────────────
+
+export type DocStatus = "idle" | "pending" | "verified";
+
+export interface WalkerCertDocument {
+  id: string;
+  title: string;
+  fileName: string;
+  status: DocStatus;
+}
+
 // ─── Earnings ─────────────────────────────────────────────────────────────────
 export interface EarningsSummary {
   totalEarned: number;

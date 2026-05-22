@@ -25,7 +25,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useWalkRequests } from "@/features/walks/hooks/use-walks";
 import { useAcceptWalk, useDeclineWalk } from "@/features/walks/hooks/use-walk-actions";
-import type { WalkRequest } from "@/types";
+import type { WalkRequest, DocStatus } from "@/types";
+import { walkerDashboardWalks } from "@/lib/mock-data";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -78,15 +79,6 @@ function SectionHeader({
   );
 }
 
-// ─── Types ───────────────────────────────────────────────────────────────────
-
-type DocStatus = "idle" | "pending" | "verified";
-
-const mockCompletedWalks = [
-  { id: "w1", clientName: "Ana Silva",    petNames: ["Rex"],        date: "22 Mar", earnings: 37 },
-  { id: "w2", clientName: "Julia Mendes", petNames: ["Mel"],        date: "21 Mar", earnings: 37 },
-  { id: "w3", clientName: "Carla Pinto",  petNames: ["Rex", "Bob"], date: "19 Mar", earnings: 48 },
-];
 
 // ─── Main component ──────────────────────────────────────────────────────────
 
@@ -107,7 +99,7 @@ export default function WalkerDashboardPage() {
   const identityVerified = identityStatus === "verified";
   const activeWalk       = null;
 
-  const totalEarnings = mockCompletedWalks.reduce((acc, w) => acc + w.earnings, 0);
+  const totalEarnings = walkerDashboardWalks.reduce((acc, w) => acc + w.earnings, 0);
 
   // ── Handlers ──
   function handleAvailabilityClick() {
@@ -435,7 +427,7 @@ export default function WalkerDashboardPage() {
         <SectionHeader title="Últimos passeios" href="/walks" linkLabel="Ver todos" />
         <Card className="overflow-hidden py-0 gap-0">
           <div className="divide-y divide-border/50">
-            {mockCompletedWalks.map((walk) => (
+            {walkerDashboardWalks.map((walk) => (
               <div
                 key={walk.id}
                 className="group flex items-center gap-4 px-5 py-4 transition-colors duration-150 hover:bg-muted/30"
@@ -466,7 +458,7 @@ export default function WalkerDashboardPage() {
           {/* Subtotal */}
           <div className="flex items-center justify-between border-t border-border/50 bg-muted/20 px-5 py-3">
             <span className="text-xs text-muted-foreground">
-              Total dos últimos {mockCompletedWalks.length} passeios
+              Total dos últimos {walkerDashboardWalks.length} passeios
             </span>
             <span className="text-sm font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
               +R$ {totalEarnings.toFixed(2).replace(".", ",")}

@@ -19,6 +19,8 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import type { DocStatus, WalkerCertDocument } from "@/types";
+import { walkerCertificates } from "@/lib/mock-data";
 import {
   Dialog,
   DialogContent,
@@ -30,33 +32,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 
-// ─── Types ─────────────────────────────────────────────────────────────────
-
-type DocStatus = "idle" | "pending" | "verified";
-
-interface CertEntry {
-  id: string;
-  title: string;
-  fileName: string;
-  status: DocStatus;
-}
-
-// ─── Mock initial certs ─────────────────────────────────────────────────────
-
-const INITIAL_CERTS: CertEntry[] = [
-  {
-    id: "c1",
-    title: "Adestramento Positivo",
-    fileName: "cert_adestramento.pdf",
-    status: "verified",
-  },
-  {
-    id: "c2",
-    title: "Primeiros Socorros com Pets",
-    fileName: "primeiros_socorros_2024.jpg",
-    status: "pending",
-  },
-];
+type CertEntry = WalkerCertDocument;
 
 // ─── Status config ──────────────────────────────────────────────────────────
 
@@ -262,7 +238,7 @@ export function WalkerDocuments() {
   const [bgStatus, setBgStatus] = useState<DocStatus>("idle");
 
   // Certifications
-  const [certs, setCerts] = useState<CertEntry[]>(INITIAL_CERTS);
+  const [certs, setCerts] = useState<CertEntry[]>(walkerCertificates);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [certTitle, setCertTitle] = useState("");
   const [certFile, setCertFile] = useState<File | null>(null);

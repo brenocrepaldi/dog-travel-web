@@ -9,14 +9,7 @@ import { buttonVariants } from '@/components/ui/button';
 import { Phone, MessageSquare, Compass } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-
-// ─── Mock Data ─────────────────────────────────────────────────────────────
-const MOCK_ROUTE: [number, number][] = [
-	[-46.633308, -23.55052], // Start (longitude, latitude)
-	[-46.634, -23.551],
-	[-46.6345, -23.5515],
-	[-46.635, -23.552], // Current pos (index 3)
-];
+import { liveTrackingRoute } from '@/lib/mock-data';
 
 export default function MapTracker({ walkId }: { walkId: string }) {
 	const [currentPosIdx, setCurrentPosIdx] = useState(3);
@@ -24,13 +17,13 @@ export default function MapTracker({ walkId }: { walkId: string }) {
 	// Simulate live movement
 	useEffect(() => {
 		const interval = setInterval(() => {
-			setCurrentPosIdx((current) => (current + 1) % MOCK_ROUTE.length);
+			setCurrentPosIdx((current) => (current + 1) % liveTrackingRoute.length);
 		}, 5000);
 		return () => clearInterval(interval);
 	}, []);
 
-	const [lng, lat] = MOCK_ROUTE[currentPosIdx];
-	const walkedPath = MOCK_ROUTE.slice(0, currentPosIdx + 1);
+	const [lng, lat] = liveTrackingRoute[currentPosIdx];
+	const walkedPath = liveTrackingRoute.slice(0, currentPosIdx + 1);
 
 	// GeoJSON for the route line
 	const routeFeatures = {

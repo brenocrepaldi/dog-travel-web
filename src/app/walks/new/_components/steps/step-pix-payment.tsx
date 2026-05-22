@@ -5,7 +5,7 @@ import { CheckCircle2, Copy, Smartphone, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { PIX_MOCK_KEY } from "../pix-constants";
+import { PIX_MOCK_KEY } from "@/lib/mock-data";
 import type { WalkFormData } from "../walk-request-form";
 
 // ── Mock QR Code (SVG) ──────────────────────────────────────────────────────

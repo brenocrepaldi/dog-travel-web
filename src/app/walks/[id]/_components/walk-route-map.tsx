@@ -1,32 +1,10 @@
 "use client";
 
 import Map, { Marker, Layer, Source } from "react-map-gl/mapbox";
-
-// Mock route coordinates (São Paulo) keyed by walk ID.
-// In production these would come from the GPS trail stored per walk.
-const MOCK_ROUTES: Record<string, [number, number][]> = {
-  "1": [
-    [-46.6333, -23.5505],
-    [-46.6340, -23.5512],
-    [-46.6348, -23.5518],
-    [-46.6356, -23.5526],
-    [-46.6365, -23.5535],
-    [-46.6374, -23.5545],
-    [-46.6383, -23.5556],
-  ],
-  "2": [
-    [-46.6536, -23.5651],
-    [-46.6543, -23.5663],
-    [-46.6550, -23.5676],
-    [-46.6557, -23.5691],
-    [-46.6563, -23.5706],
-    [-46.6569, -23.5720],
-    [-46.6574, -23.5745],
-  ],
-};
+import { walkRoutes } from "@/lib/mock-data";
 
 export default function WalkRouteMap({ walkId }: { walkId: string }) {
-  const route = MOCK_ROUTES[walkId];
+  const route = walkRoutes[walkId];
   if (!route) return null;
 
   const lngs   = route.map(([lng]) => lng);

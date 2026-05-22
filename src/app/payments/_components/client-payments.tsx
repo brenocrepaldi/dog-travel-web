@@ -17,12 +17,7 @@ import {
   ChevronRight,
   ArrowLeft,
 } from "lucide-react";
-
-const MOCK_HISTORY = [
-  { id: 1, walkId: "1", date: "22/03/2026", walker: "João Silva", pets: "Rex", duration: "30 min", amount: "R$ 44,00", status: "Pago" },
-  { id: 2, walkId: "2", date: "18/03/2026", walker: "João Silva", pets: "Rex", duration: "30 min", amount: "R$ 44,00", status: "Pago" },
-  { id: 3, walkId: "3", date: "10/03/2026", walker: "João Silva", pets: "Rex + Mel", duration: "45 min", amount: "R$ 53,00", status: "Pago" },
-];
+import { clientPaymentHistory } from "@/lib/mock-data";
 
 function PaymentMethodsSidebar() {
   return (
@@ -70,11 +65,10 @@ function PaymentMethodsSidebar() {
   );
 }
 
-// Linha do histórico
 function TransactionRow({
   item,
 }: {
-  item: (typeof MOCK_HISTORY)[number];
+  item: (typeof clientPaymentHistory)[number];
 }) {
   return (
     <Link href={`/walks/${item.walkId}`}>
@@ -151,7 +145,7 @@ export function ClientPayments() {
 
 
           <div className="rounded-2xl border border-border/60 bg-card overflow-hidden divide-y divide-border/50">
-            {MOCK_HISTORY.map((item) => (
+            {clientPaymentHistory.map((item) => (
               <TransactionRow key={item.id} item={item} />
             ))}
           </div>

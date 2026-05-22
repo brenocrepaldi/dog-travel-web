@@ -8,6 +8,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { DashboardDogs } from "./dashboard-dogs";
+import { clientDashboardWalks } from "@/lib/mock-data";
 
 export const metadata: Metadata = { title: "Dashboard | DogTravel" };
 
@@ -21,12 +22,6 @@ function getGreeting() {
 function getInitials(name: string) {
   return name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
 }
-
-const mockWalks = [
-  { id: "1", walkerName: "Carlos Silva",  petNames: ["Rex"],        status: "completed" as const, date: "22 Mar · 14:30", price: "R$ 44,00" },
-  { id: "2", walkerName: "Ana Lima",      petNames: ["Rex", "Mel"], status: "completed" as const, date: "18 Mar · 09:00", price: "R$ 53,00" },
-  { id: "3", walkerName: "Pedro Santos",  petNames: ["Mel"],        status: "cancelled" as const, date: "10 Mar · 16:00", price: "R$ 44,00" },
-];
 
 const statusConfig = {
   pending:     { label: "Aguardando",   className: "bg-amber-500/10 text-amber-700 border-amber-500/20 dark:text-amber-400" },
@@ -157,7 +152,7 @@ export default async function ClientDashboardPage() {
 
         <Card className="overflow-hidden py-0 gap-0">
           <div className="divide-y divide-border/50">
-            {mockWalks.map((walk) => {
+            {clientDashboardWalks.map((walk) => {
               const s = statusConfig[walk.status];
               const isCancelled = walk.status === "cancelled";
 
