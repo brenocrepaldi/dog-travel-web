@@ -34,4 +34,6 @@ api.interceptors.response.use(
   }
 );
 
+export const isApiConfigured = !!process.env.NEXT_PUBLIC_API_URL;
+
 export default api;
