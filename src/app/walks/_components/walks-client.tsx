@@ -6,7 +6,6 @@ import { toast } from 'sonner';
 import { buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { WalksApi } from '@/features/walks/api/walks.api';
 import { useWalks } from '@/features/walks/hooks/use-walks';
 import { useCancelWalk } from '@/features/walks/hooks/use-walk-actions';
 import { cn } from '@/lib/utils';
@@ -22,6 +21,7 @@ import {
 	Star,
 	X,
 } from 'lucide-react';
+import { useReview } from '@/features/reviews/hooks/use-reviews';
 
 // ── Status config ──────────────────────────────────────────────────────────
 const statusMap: Record<WalkRecord['status'], { label: string; dot: string; pill: string }> = {
@@ -103,13 +103,9 @@ function sortWalks(walks: WalkRecord[]): WalkRecord[] {
 // ── WalkCard ───────────────────────────────────────────────────────────────
 function WalkCard({
 	walk,
-	walkerName,
-	hasReview,
 	onCancel,
 }: {
 	walk: WalkRecord;
-	walkerName: string;
-	hasReview: boolean;
 	onCancel: (id: string) => void;
 }) {
 	const isSearching = walk.status === 'pending';
@@ -119,6 +115,10 @@ function WalkCard({
 	const isCancelled = walk.status === 'cancelled';
 
 	const [confirmingCancel, setConfirmingCancel] = useState(false);
+
+	const walkerName = walk.participants.find((p) => p.role === 'walker')?.name ?? 'Passeador';
+	const { data: review } = useReview(walk.id, isCompleted);
+	const hasReview = review != null;
 
 	const walkerInitials = walkerName
 		.split(' ')
@@ -438,7 +438,7 @@ export function WalksClient() {
 		return byStatus.filter(
 			(w) =>
 				w.petNames.some((n) => n.toLowerCase().includes(q)) ||
-				WalksApi.getWalkerNameById(w.walkerId).toLowerCase().includes(q) ||
+				(w.participants.find((p) => p.role === 'walker')?.name ?? '').toLowerCase().includes(q) ||
 				w.startAddress.toLowerCase().includes(q),
 		);
 	}, [allWalks, activeFilter, search]);
@@ -552,8 +552,6 @@ export function WalksClient() {
 						>
 							<WalkCard
 								walk={walk}
-								walkerName={WalksApi.getWalkerNameById(walk.walkerId)}
-								hasReview={false}
 								onCancel={handleCancel}
 							/>
 						</div>

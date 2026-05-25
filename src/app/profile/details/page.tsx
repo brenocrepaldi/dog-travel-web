@@ -32,7 +32,7 @@ export default async function ProfileDetailsPage() {
       </div>
 
       {/* Profile form */}
-      <ProfileInfo user={session.user} />
+      <ProfileInfo />
 
       {/* Security footer */}
       <div className="rounded-2xl border border-primary/15 bg-primary/5 px-5 py-4 flex items-start gap-3">

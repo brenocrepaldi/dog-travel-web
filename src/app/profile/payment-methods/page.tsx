@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useState } from 'react';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import {
   AlertTriangle,
   ArrowLeft,
@@ -14,149 +14,142 @@ import {
   Trash2,
   WalletCards,
   X,
-} from "lucide-react";
-import { toast } from "sonner";
-import { cn } from "@/lib/utils";
-import { managedPaymentMethods } from "@/lib/mock-data";
-import type { ManagedPaymentMethod } from "@/types";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+} from 'lucide-react';
+import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+import type { ManagedPaymentMethod } from '@/types';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import {
+  usePaymentMethods,
+  useAddPaymentMethod,
+  useRemovePaymentMethod,
+  useSetDefaultMethod,
+} from '@/features/payments/hooks/use-payments';
 
-// ─── Constants ──────────────────────────────────────────────────────────────
-
-type LoadState = "loading" | "ready" | "error";
+// ─── Constants ────────────────────────────────────────────────────────────────
 
 interface MethodFormState {
-  type:       "credit_card" | "debit_card" | "pix";
-  brand:      string;
+  type: 'credit_card' | 'debit_card' | 'pix';
+  brand: string;
   holderName: string;
-  expiresAt:  string;
-  value:      string;
+  expiresAt: string;
+  value: string;
 }
 
 const INITIAL_FORM: MethodFormState = {
-  type:       "credit_card",
-  brand:      "Visa",
-  holderName: "",
-  expiresAt:  "",
-  value:      "",
+  type: 'credit_card',
+  brand: 'Visa',
+  holderName: '',
+  expiresAt: '',
+  value: '',
 };
 
 const METHOD_ICON = {
   credit_card: CreditCard,
-  debit_card:  CreditCard,
-  pix:         Smartphone,
+  debit_card: CreditCard,
+  pix: Smartphone,
 } as const;
 
-const TYPE_OPTIONS: { value: MethodFormState["type"]; label: string; icon: typeof CreditCard }[] = [
-  { value: "credit_card", label: "Crédito",  icon: CreditCard  },
-  { value: "debit_card",  label: "Débito",   icon: CreditCard  },
-  { value: "pix",         label: "PIX",      icon: Smartphone  },
-];
+const TYPE_OPTIONS: { value: MethodFormState['type']; label: string; icon: typeof CreditCard }[] =
+  [
+    { value: 'credit_card', label: 'Crédito', icon: CreditCard },
+    { value: 'debit_card', label: 'Débito', icon: CreditCard },
+    { value: 'pix', label: 'PIX', icon: Smartphone },
+  ];
 
-// ─── Page ────────────────────────────────────────────────────────────────────
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function PaymentMethodsPage() {
   const searchParams = useSearchParams();
-  const [loadState,    setLoadState]    = useState<LoadState>("loading");
-  const [methods,      setMethods]      = useState<ManagedPaymentMethod[]>([]);
-  const [showAddForm,  setShowAddForm]  = useState(false);
-  const [saving,       setSaving]       = useState(false);
-  const [form,         setForm]         = useState<MethodFormState>(INITIAL_FORM);
+  const [showAddForm, setShowAddForm] = useState(
+    () => searchParams.get('action') === 'add',
+  );
+  const [form, setForm] = useState<MethodFormState>(INITIAL_FORM);
 
-  useEffect(() => {
-    if (searchParams.get("action") === "add") setShowAddForm(true);
-  }, [searchParams]);
-
-  useEffect(() => {
-    let mounted = true;
-    const timer = setTimeout(() => {
-      if (!mounted) return;
-      if (searchParams.get("state") === "error") { setLoadState("error"); return; }
-      setMethods(structuredClone(managedPaymentMethods));
-      setLoadState("ready");
-    }, 650);
-    return () => { mounted = false; clearTimeout(timer); };
-  }, [searchParams]);
+  const { data: methods = [], isLoading, isError, refetch } = usePaymentMethods();
+  const { mutate: addMethod, isPending: isAdding } = useAddPaymentMethod();
+  const { mutate: removeMethod, isPending: isRemoving } = useRemovePaymentMethod();
+  const { mutate: setDefault, isPending: isSettingDefault } = useSetDefaultMethod();
 
   function cancelForm() {
     setForm(INITIAL_FORM);
     setShowAddForm(false);
   }
 
-  function switchType(type: MethodFormState["type"]) {
+  function switchType(type: MethodFormState['type']) {
     setForm((c) => ({
       ...c,
       type,
-      value: "",
-      brand: type === "pix" ? "PIX" : c.type === "pix" ? "Visa" : c.brand,
+      value: '',
+      brand: type === 'pix' ? 'PIX' : c.type === 'pix' ? 'Visa' : c.brand,
     }));
   }
 
   function handleSetDefault(methodId: string) {
-    setMethods((current) => current.map((m) => ({ ...m, isDefault: m.id === methodId })));
-    toast.success("Método padrão atualizado.");
+    setDefault(methodId, {
+      onSuccess: () => toast.success('Método padrão atualizado.'),
+      onError: () => toast.error('Erro ao definir método padrão.'),
+    });
   }
 
   function handleRemove(methodId: string) {
-    setMethods((current) => {
-      const target   = current.find((m) => m.id === methodId);
-      const filtered = current.filter((m) => m.id !== methodId);
-      if (!target) return current;
-      if (target.isDefault && filtered.length > 0) filtered[0] = { ...filtered[0], isDefault: true };
-      return filtered;
+    removeMethod(methodId, {
+      onSuccess: () => toast.success('Método removido.'),
+      onError: () => toast.error('Erro ao remover método.'),
     });
-    toast.success("Método removido.");
   }
 
-  async function handleAddMethod() {
-    if (form.type !== "pix" && !form.brand.trim()) {
-      toast.error("Informe a bandeira do cartão."); return;
+  function handleAddMethod() {
+    if (form.type !== 'pix' && !form.brand.trim()) {
+      toast.error('Informe a bandeira do cartão.');
+      return;
     }
     if (!form.holderName.trim()) {
-      toast.error("Informe o nome do titular."); return;
+      toast.error('Informe o nome do titular.');
+      return;
     }
     if (!form.value.trim()) {
-      toast.error(form.type === "pix" ? "Informe a chave PIX." : "Informe os últimos 4 dígitos."); return;
+      toast.error(form.type === 'pix' ? 'Informe a chave PIX.' : 'Informe os últimos 4 dígitos.');
+      return;
     }
-    if (form.type !== "pix" && !/^\d{4}$/.test(form.value.trim())) {
-      toast.error("Digite exatamente 4 dígitos para o cartão."); return;
+    if (form.type !== 'pix' && !/^\d{4}$/.test(form.value.trim())) {
+      toast.error('Digite exatamente 4 dígitos para o cartão.');
+      return;
     }
 
-    setSaving(true);
-    try {
-      await new Promise((r) => setTimeout(r, 450));
-      const label = form.type === "pix" ? form.value.trim() : `**** ${form.value.trim()}`;
-      setMethods((current) => [
-        ...current,
-        {
-          id:         `pm_${Date.now()}`,
-          type:       form.type,
-          brand:      form.brand,
-          label,
-          holderName: form.holderName.trim(),
-          expiresAt:  form.type === "pix" ? "--" : form.expiresAt || "12/29",
-          isDefault:  current.length === 0,
-          status:     "active",
+    const label = form.type === 'pix' ? form.value.trim() : `**** ${form.value.trim()}`;
+    addMethod(
+      {
+        type: form.type,
+        brand: form.brand,
+        label,
+        holderName: form.holderName.trim(),
+        expiresAt: form.type === 'pix' ? '--' : form.expiresAt || '12/29',
+        isDefault: methods.length === 0,
+        status: 'active',
+      },
+      {
+        onSuccess: () => {
+          cancelForm();
+          toast.success('Método adicionado com sucesso.');
         },
-      ]);
-      cancelForm();
-      toast.success("Método adicionado com sucesso.");
-    } finally {
-      setSaving(false);
-    }
+        onError: () => toast.error('Erro ao adicionar método.'),
+      },
+    );
   }
 
-  const isCard = form.type !== "pix";
+  const isCard = form.type !== 'pix';
+  const isMutating = isAdding || isRemoving || isSettingDefault;
 
   // ── Render helpers ──────────────────────────────────────────────────────────
 
   function renderList() {
-    if (loadState === "loading") {
+    if (isLoading) {
       return (
         <div className="flex items-center justify-center gap-3 py-16 text-muted-foreground">
           <Loader2 className="h-5 w-5 animate-spin" />
@@ -165,7 +158,7 @@ export default function PaymentMethodsPage() {
       );
     }
 
-    if (loadState === "error") {
+    if (isError) {
       return (
         <div className="flex flex-col items-center gap-4 py-16 text-center">
           <div className="w-12 h-12 rounded-2xl bg-destructive/10 flex items-center justify-center">
@@ -177,10 +170,7 @@ export default function PaymentMethodsPage() {
               Não foi possível carregar seus métodos de pagamento.
             </p>
           </div>
-          <Button variant="outline" size="sm" onClick={() => {
-            setLoadState("loading");
-            setTimeout(() => { setMethods(structuredClone(managedPaymentMethods)); setLoadState("ready"); }, 450);
-          }}>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
             Tentar novamente
           </Button>
         </div>
@@ -199,7 +189,11 @@ export default function PaymentMethodsPage() {
               Adicione um cartão ou chave PIX para agilizar seus pagamentos.
             </p>
           </div>
-          <Button size="sm" onClick={() => setShowAddForm(true)} className="gap-2 cursor-pointer">
+          <Button
+            size="sm"
+            onClick={() => setShowAddForm(true)}
+            className="gap-2 cursor-pointer"
+          >
             <Plus className="h-4 w-4" />
             Adicionar método
           </Button>
@@ -209,16 +203,13 @@ export default function PaymentMethodsPage() {
 
     return (
       <div className="divide-y divide-border/60">
-        {methods.map((method) => {
+        {methods.map((method: ManagedPaymentMethod) => {
           const Icon = METHOD_ICON[method.type];
           return (
             <div key={method.id} className="flex items-center gap-4 py-4 first:pt-0 last:pb-0">
-              {/* Icon */}
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                 <Icon className="h-5 w-5 text-primary" />
               </div>
-
-              {/* Info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="text-sm font-semibold text-foreground">
@@ -229,23 +220,22 @@ export default function PaymentMethodsPage() {
                       Padrão
                     </Badge>
                   )}
-                  {method.status === "expired" && (
+                  {method.status === 'expired' && (
                     <Badge variant="warning">Expirado</Badge>
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {method.holderName}
-                  {method.type !== "pix" && ` · expira ${method.expiresAt}`}
+                  {method.type !== 'pix' && ` · expira ${method.expiresAt}`}
                 </p>
               </div>
-
-              {/* Actions */}
               <div className="flex items-center gap-1 shrink-0">
                 {!method.isDefault && (
                   <Button
                     variant="ghost"
                     size="sm"
                     className="h-8 px-3 text-xs cursor-pointer"
+                    disabled={isMutating}
                     onClick={() => handleSetDefault(method.id)}
                   >
                     Definir padrão
@@ -255,6 +245,7 @@ export default function PaymentMethodsPage() {
                   variant="ghost"
                   size="icon-sm"
                   className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer"
+                  disabled={isMutating}
                   onClick={() => handleRemove(method.id)}
                   aria-label="Remover método"
                 >
@@ -282,12 +273,14 @@ export default function PaymentMethodsPage() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1 min-w-0">
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Métodos de pagamento</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            Métodos de pagamento
+          </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             Gerencie seus cartões e chaves PIX.
           </p>
         </div>
-        {!showAddForm && loadState === "ready" && (
+        {!showAddForm && !isLoading && !isError && (
           <Button
             size="sm"
             className="gap-2 shrink-0 cursor-pointer"
@@ -304,7 +297,6 @@ export default function PaymentMethodsPage() {
         <Card className="overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="h-1 w-full bg-gradient-to-r from-primary/60 via-primary to-primary/40" />
           <CardContent className="p-5 space-y-5">
-            {/* Form header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
@@ -338,10 +330,10 @@ export default function PaymentMethodsPage() {
                     type="button"
                     onClick={() => switchType(value)}
                     className={cn(
-                      "flex flex-col items-center gap-1.5 rounded-xl border px-3 py-3 transition-all duration-150 cursor-pointer",
+                      'flex flex-col items-center gap-1.5 rounded-xl border px-3 py-3 transition-all duration-150 cursor-pointer',
                       form.type === value
-                        ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                        : "border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground",
+                        ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                        : 'border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground',
                     )}
                   >
                     <Icon className="h-4 w-4" />
@@ -387,12 +379,12 @@ export default function PaymentMethodsPage() {
             )}
 
             {/* Holder + expiry */}
-            <div className={cn("grid gap-3", isCard ? "grid-cols-2" : "grid-cols-1")}>
+            <div className={cn('grid gap-3', isCard ? 'grid-cols-2' : 'grid-cols-1')}>
               <div className="space-y-1.5">
                 <Label className="text-sm font-medium">Titular</Label>
                 <Input
                   value={form.holderName}
-                  placeholder={isCard ? "Nome no cartão" : "Nome completo"}
+                  placeholder={isCard ? 'Nome no cartão' : 'Nome completo'}
                   onChange={(e) => setForm((c) => ({ ...c, holderName: e.target.value }))}
                 />
               </div>
@@ -415,6 +407,7 @@ export default function PaymentMethodsPage() {
                 type="button"
                 className="cursor-pointer"
                 onClick={cancelForm}
+                disabled={isAdding}
               >
                 Cancelar
               </Button>
@@ -422,12 +415,14 @@ export default function PaymentMethodsPage() {
                 type="button"
                 className="cursor-pointer gap-2"
                 onClick={handleAddMethod}
-                disabled={saving}
+                disabled={isAdding}
               >
-                {saving
-                  ? <Loader2 className="h-4 w-4 animate-spin" />
-                  : <Check className="h-4 w-4" />}
-                {saving ? "Salvando..." : "Salvar método"}
+                {isAdding ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Check className="h-4 w-4" />
+                )}
+                {isAdding ? 'Salvando...' : 'Salvar método'}
               </Button>
             </div>
           </CardContent>
@@ -437,11 +432,8 @@ export default function PaymentMethodsPage() {
       {/* Methods list */}
       <Card className="overflow-hidden">
         <div className="h-1 w-full bg-gradient-to-r from-primary/60 via-primary to-primary/40" />
-        <CardContent className="p-5">
-          {renderList()}
-        </CardContent>
+        <CardContent className="p-5">{renderList()}</CardContent>
       </Card>
-
     </div>
   );
 }
