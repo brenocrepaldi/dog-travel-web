@@ -25,6 +25,7 @@ export interface WalkParticipant {
   id: string;
   name: string;
   role: "client" | "walker";
+  phone?: string;
 }
 
 export interface WalkTimelineEvent {
@@ -251,6 +252,53 @@ export interface WalkerCertDocument {
   title: string;
   fileName: string;
   status: DocStatus;
+}
+
+// ─── Document Verification Status (full, from API) ───────────────────────────
+export interface DocumentsStatus {
+  identity: DocStatus;
+  background: DocStatus;
+  certificates: WalkerCertDocument[];
+}
+
+// ─── Dashboard Stats ──────────────────────────────────────────────────────────
+export interface ClientStats {
+  totalWalks: number;
+  rating: number;
+  totalReviews: number;
+}
+
+export interface WalkerStats {
+  totalWalks: number;
+  walksThisMonth: number;
+  rating: number;
+  totalReviews: number;
+  earningsToday: number;
+  earningsMonth: number;
+}
+
+// ─── Walk Location (GPS) ──────────────────────────────────────────────────────
+export interface WalkLocation {
+  walkId: string;
+  lat: number;
+  lng: number;
+  updatedAt: string;
+}
+
+// ─── Auth DTOs ────────────────────────────────────────────────────────────────
+export interface RegisterDto {
+  name: string;
+  email: string;
+  cpf: string;
+  phone: string;
+  password: string;
+  role: UserRole;
+}
+
+export interface LoginResponseDto {
+  accessToken: string;
+  refreshToken?: string;
+  user: User;
 }
 
 // ─── Earnings ─────────────────────────────────────────────────────────────────

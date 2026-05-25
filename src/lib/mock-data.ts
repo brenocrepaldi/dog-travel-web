@@ -8,6 +8,10 @@ import type {
 	PaymentHistoryItem,
 	WalkReview,
 	WalkerCertDocument,
+	ClientStats,
+	WalkerStats,
+	DocumentsStatus,
+	WalkLocation,
 } from '@/types';
 
 export const pets: Pet[] = [
@@ -495,6 +499,49 @@ export const walkerDashboardWalks: Array<{
 	{ id: 'w2', clientName: 'Julia Mendes', petNames: ['Mel'],        date: '21 Mar', earnings: 37 },
 	{ id: 'w3', clientName: 'Carla Pinto',  petNames: ['Rex', 'Bob'], date: '19 Mar', earnings: 48 },
 ];
+
+// ─── Dashboard Stats ──────────────────────────────────────────────────────────
+export const clientStats: ClientStats = {
+	totalWalks: 23,
+	rating: 4.9,
+	totalReviews: 18,
+};
+
+export const walkerStats: WalkerStats = {
+	totalWalks: 47,
+	walksThisMonth: 12,
+	rating: 4.8,
+	totalReviews: 124,
+	earningsToday: 74,
+	earningsMonth: 840,
+};
+
+// ─── Document Status (per authenticated walker) ───────────────────────────────
+export const documentStatus: DocumentsStatus = {
+	identity: 'idle',
+	background: 'idle',
+	certificates: walkerCertificates,
+};
+
+// ─── Walker Availability ──────────────────────────────────────────────────────
+export const walkerAvailability: Record<string, boolean> = { '1': false };
+
+// ─── Walk Locations (GPS, per walk ID) ───────────────────────────────────────
+export const walkLocations: Record<string, WalkLocation> = {
+	'1': { walkId: '1', lat: -23.55052, lng: -46.633308, updatedAt: new Date().toISOString() },
+	'5': { walkId: '5', lat: -23.5598,  lng: -46.6580,  updatedAt: new Date().toISOString() },
+};
+
+// ─── Chat Messages (per walk ID) ─────────────────────────────────────────────
+export const chatMessagesByWalk: Record<string, Array<{ id: string; senderId: string; text: string; sentAt: string; read: boolean }>> = {
+	'1': [
+		{ id: '1', senderId: '2', text: 'Olá! Cheguei no local.',          sentAt: '2026-05-21T14:30:00-03:00', read: true  },
+		{ id: '2', senderId: '1', text: 'Que ótimo! O Rex já está na porta.', sentAt: '2026-05-21T14:31:00-03:00', read: true  },
+		{ id: '3', senderId: '2', text: 'Já estou com ele. Vamos passear!', sentAt: '2026-05-21T14:35:00-03:00', read: false },
+	],
+};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 export function getWalkerById(walkerId: string) {
 	return walkers.find((walker) => walker.id === walkerId);

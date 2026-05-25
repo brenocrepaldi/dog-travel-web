@@ -1,6 +1,9 @@
-import { walkers } from "@/lib/mock-data";
+import { walkers, walkerAvailability } from "@/lib/mock-data";
 import type { WalkerProfile } from "@/types";
 import api, { isApiConfigured } from "@/services/api";
+
+// Module-level mutable store for availability
+const availabilityStore: Record<string, boolean> = { ...walkerAvailability };
 
 export interface WalkerFilters {
   query?: string;
@@ -31,5 +34,20 @@ export const WalkersApi = {
       return walkers.find((w) => w.id === id);
     }
     return api.get<WalkerProfile>(`/walkers/${id}`).then((r) => r.data);
+  },
+
+  getAvailability: async (walkerId: string): Promise<boolean> => {
+    if (!isApiConfigured) {
+      return availabilityStore[walkerId] ?? false;
+    }
+    return api
+      .get<{ available: boolean }>(`/walkers/${walkerId}/availability`)
+      .then((r) => r.data.available);
+  },
+
+  updateAvailability: async (walkerId: string, available: boolean): Promise<void> => {
+    availabilityStore[walkerId] = available;
+    if (!isApiConfigured) return;
+    await api.patch(`/walkers/${walkerId}/availability`, { available });
   },
 };

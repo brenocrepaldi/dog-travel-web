@@ -1,7 +1,6 @@
 import {
   walks as seedWalks,
   walkRequests as seedWalkRequests,
-  walkers,
 } from "@/lib/mock-data";
 import type { WalkRecord, WalkRequest, UserRole } from "@/types";
 import api, { isApiConfigured } from "@/services/api";
@@ -45,19 +44,10 @@ export const WalksApi = {
     return api.get<WalkRequest[]>("/walk-requests").then((r) => r.data);
   },
 
-  // Synchronous helper — always reads from walkers array (no async API boundary)
-  getWalkerNameById: (walkerId: string): string => {
-    return walkers.find((w) => w.id === walkerId)?.name ?? "Passeador";
-  },
-
+  // Delegates to ReviewsApi — kept here for backwards-compat call sites
   hasReview: async (walkId: string): Promise<boolean> => {
-    if (!isApiConfigured) {
-      const { walkReviews } = await import("@/lib/mock-data");
-      return walkReviews.some((r) => r.walkId === walkId);
-    }
-    return api
-      .get<{ exists: boolean }>(`/walks/${walkId}/review`)
-      .then((r) => r.data.exists);
+    const { ReviewsApi } = await import("@/features/reviews/api/reviews.api");
+    return ReviewsApi.getByWalkId(walkId).then((r) => r !== null);
   },
 
   // ─── Mutations ──────────────────────────────────────────────────────────────
