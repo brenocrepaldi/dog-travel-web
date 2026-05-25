@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { WalkerDocuments } from "./_components/walker-documents";
 
 export const metadata: Metadata = {
-  title: "Documentos Profissionais | DogTravel",
+  title: "Perfil Profissional | DogTravel",
 };
 
 export default async function WalkerDocumentsPage() {
@@ -32,10 +32,10 @@ export default async function WalkerDocumentsPage() {
           </Link>
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              Documentos Profissionais
+              Perfil Profissional
             </h1>
             <p className="mt-0.5 text-sm text-muted-foreground">
-              Gerencie sua identidade, antecedentes e certificações.
+              Complete os requisitos obrigatórios e destaque suas credenciais.
             </p>
           </div>
         </div>

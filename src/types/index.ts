@@ -245,7 +245,7 @@ export interface PriceBreakdown {
 
 // ─── Document Verification ───────────────────────────────────────────────────
 
-export type DocStatus = "idle" | "pending" | "verified";
+export type DocStatus = "idle" | "pending" | "verified" | "rejected";
 
 export interface WalkerCertDocument {
   id: string;
