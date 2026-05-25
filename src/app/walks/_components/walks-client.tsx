@@ -230,16 +230,24 @@ function WalkCard({
 			{/* Actions */}
 			<div className="px-5 pb-5">
 				{isActive && (
-					<Link
-						href={`/walks/${walk.id}/tracking`}
-						className={cn(
-							buttonVariants({ size: 'lg' }),
-							'w-full rounded-lg gap-2 bg-emerald-500 hover:bg-emerald-600 text-white border-0',
-						)}
-					>
-						<MapPin className="w-3.5 h-3.5" />
-						Acompanhar ao vivo
-					</Link>
+					<div className="grid grid-cols-2 gap-2">
+						<Link
+							href={`/walks/${walk.id}`}
+							className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), 'rounded-lg w-full')}
+						>
+							Detalhes
+						</Link>
+						<Link
+							href={`/walks/${walk.id}/tracking`}
+							className={cn(
+								buttonVariants({ size: 'lg' }),
+								'rounded-lg gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white border-0',
+							)}
+						>
+							<MapPin className="w-3.5 h-3.5" />
+							Acompanhar
+						</Link>
+					</div>
 				)}
 
 				{isSearching && !confirmingCancel && (

@@ -43,3 +43,14 @@ export function useDeclineWalk() {
     },
   });
 }
+
+export function useStartWalk() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ walkId, code }: { walkId: string; code: string }) =>
+      WalksApi.start(walkId, code),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["walks"] });
+    },
+  });
+}

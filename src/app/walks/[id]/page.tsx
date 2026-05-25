@@ -33,6 +33,8 @@ import {
 import { auth } from "@/lib/auth";
 import { WalkRouteMapClient } from "./_components/walk-route-map-client";
 import { WalkPets } from "./_components/walk-pets";
+import { WalkStartSection } from "./_components/walk-start-section";
+import { ClientCodeBanner } from "./_components/client-code-banner";
 
 export const metadata: Metadata = { title: "Detalhe do Passeio | DogTravel" };
 
@@ -217,7 +219,7 @@ export default async function WalkDetailPage({
                 ))}
               </div>
             </div>
-            {review.comment && <p className="mt-0.5 text-sm text-muted-foreground">"{review.comment}"</p>}
+            {review.comment && <p className="mt-0.5 text-sm text-muted-foreground">&quot;{review.comment}&quot;</p>}
           </div>
         </div>
       )}
@@ -260,6 +262,21 @@ export default async function WalkDetailPage({
             {walk.notes ? ` — ${walk.notes}` : "."}
           </p>
         </div>
+      )}
+
+      {/* Walker — botão de iniciar passeio */}
+      {isWalker && isAccepted && (
+        <WalkStartSection
+          walkId={walk.id}
+          scheduledAt={walk.scheduledAt}
+          startLat={walk.startLat}
+          startLng={walk.startLng}
+        />
+      )}
+
+      {/* Cliente — código de início do passeio */}
+      {!isWalker && isAccepted && walk.startCode && (
+        <ClientCodeBanner code={walk.startCode} />
       )}
 
       {/* ════════════════════════════════════════════════════════════════════
@@ -331,7 +348,7 @@ export default async function WalkDetailPage({
               </CardContent>
             </Card>
 
-            <TimelineCard timeline={walk.timeline} />
+            <TimelineCard timeline={walk.timeline} isLive={isWalker && isInProgress} />
           </div>
 
           <div className="space-y-5">
@@ -383,7 +400,7 @@ export default async function WalkDetailPage({
               </CardContent>
             </Card>
 
-            <TimelineCard timeline={walk.timeline} />
+            <TimelineCard timeline={walk.timeline} isLive={isWalker && isInProgress} />
           </div>
 
           <div className="space-y-5">
@@ -424,13 +441,27 @@ export default async function WalkDetailPage({
 
 function TimelineCard({
   timeline,
+  isLive = false,
 }: {
   timeline: Array<{ id: string; label: string; at: string; state: string; note?: string }>;
+  isLive?: boolean;
 }) {
   return (
-    <Card className="overflow-hidden py-0 gap-0">
-      <div className="border-b border-border/60 px-5 py-4">
+    <Card className={cn("overflow-hidden py-0 gap-0", isLive && "ring-1 ring-emerald-500/25")}>
+      {isLive && (
+        <div className="h-0.5 w-full bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-400" />
+      )}
+      <div className="border-b border-border/60 px-5 py-4 flex items-center justify-between gap-3">
         <h2 className="text-sm font-semibold text-foreground">Linha do tempo</h2>
+        {isLive && (
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
+            <span className="relative flex h-1.5 w-1.5 shrink-0">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            </span>
+            Ao vivo
+          </span>
+        )}
       </div>
       <CardContent className="px-5 py-5">
         {timeline.map((event, i) => (

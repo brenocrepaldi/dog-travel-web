@@ -52,6 +52,9 @@ export interface WalkRecord {
   paymentMethodId?: string;
   participants: WalkParticipant[];
   timeline: WalkTimelineEvent[];
+  startCode?: string;
+  startLat?: number;
+  startLng?: number;
 }
 
 export interface WalkReview {

@@ -10,6 +10,10 @@ import api, { isApiConfigured } from "@/services/api";
 let walksStore: WalkRecord[] = [...seedWalks];
 let walkRequestsStore: WalkRequest[] = [...seedWalkRequests];
 
+function randomCode() {
+  return String(Math.floor(1000 + Math.random() * 9000));
+}
+
 // ─── Read ─────────────────────────────────────────────────────────────────────
 
 export const WalksApi = {
@@ -77,6 +81,40 @@ export const WalksApi = {
     await api.patch(`/walks/${id}/cancel`);
   },
 
+  start: async (walkId: string, code: string): Promise<WalkRecord> => {
+    if (!isApiConfigured) {
+      const walk = walksStore.find((w) => w.id === walkId);
+      if (!walk) throw new Error("WALK_NOT_FOUND");
+      if (walk.startCode !== code) throw new Error("INVALID_CODE");
+
+      const now = new Date().toLocaleTimeString("pt-BR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+
+      const currentIdx     = walk.timeline.findIndex((t) => t.state === "current");
+      const firstPendingIdx = walk.timeline.findIndex((t) => t.state === "pending");
+
+      walksStore = walksStore.map((w) => {
+        if (w.id !== walkId) return w;
+        return {
+          ...w,
+          status: "in_progress" as const,
+          timeline: w.timeline.map((t, i) => {
+            if (i === currentIdx)      return { ...t, state: "done" as const };
+            if (i === firstPendingIdx) return { ...t, state: "current" as const, at: now };
+            return t;
+          }),
+        };
+      });
+
+      return walksStore.find((w) => w.id === walkId)!;
+    }
+    return api
+      .patch<WalkRecord>(`/walks/${walkId}/start`, { code })
+      .then((r) => r.data);
+  },
+
   accept: async (request: WalkRequest, walkerName: string): Promise<WalkRecord> => {
     if (!isApiConfigured) {
       walkRequestsStore = walkRequestsStore.filter((r) => r.id !== request.id);
@@ -97,6 +135,7 @@ export const WalksApi = {
         price: request.price,
         distanceKm: 0,
         startAddress: request.startAddress,
+        startCode: randomCode(),
         participants: [
           { id: request.clientId, name: request.clientName, role: "client" },
           { id: "1", name: walkerName, role: "walker" },
