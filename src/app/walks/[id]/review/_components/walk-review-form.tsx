@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { MessageSquare, Star } from "lucide-react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/common/page-header";
 import { FlowActions } from "@/components/common/flow-actions";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { useSubmitReview } from "@/features/reviews/hooks/use-reviews";
 import type { WalkReview } from "@/types";
 
 interface WalkReviewFormProps {
@@ -27,23 +29,34 @@ export function WalkReviewForm({
   petNames,
   existingReview,
 }: WalkReviewFormProps) {
+  const router = useRouter();
   const [rating, setRating] = useState(existingReview?.rating ?? 0);
   const [comment, setComment] = useState(existingReview?.comment ?? "");
   const [editing, setEditing] = useState(!existingReview);
-  const [saving, setSaving] = useState(false);
 
-  async function handleSave() {
+  const { mutate: submitReview, isPending } = useSubmitReview(walkId);
+
+  function handleSave() {
     if (rating < 1) {
       toast.error("Selecione uma nota de 1 a 5 estrelas.");
       return;
     }
 
-    setSaving(true);
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    setSaving(false);
-    setEditing(false);
-
-    toast.success(existingReview ? "Avaliacao atualizada com sucesso." : "Avaliacao enviada com sucesso.");
+    submitReview(
+      { rating, comment, isUpdate: Boolean(existingReview) },
+      {
+        onSuccess: () => {
+          setEditing(false);
+          toast.success(
+            existingReview ? "Avaliacao atualizada com sucesso." : "Avaliacao enviada com sucesso."
+          );
+          if (!existingReview) router.push(`/walks/${walkId}`);
+        },
+        onError: () => {
+          toast.error("Erro ao salvar avaliacao. Tente novamente.");
+        },
+      }
+    );
   }
 
   return (
@@ -130,11 +143,11 @@ export function WalkReviewForm({
             <FlowActions
               showBack
               backHref={`/walks/${walkId}`}
-              cancelHref="/walks/history"
+              cancelHref="/walks"
               primaryLabel="Concluir avaliacao"
               onPrimary={handleSave}
-              primaryDisabled={saving || rating < 1}
-              primaryLoading={saving}
+              primaryDisabled={isPending || rating < 1}
+              primaryLoading={isPending}
               primaryVariant="success"
             />
           )}

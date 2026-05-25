@@ -22,7 +22,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { WalkerHero, walkerGradient, walkerInitials } from '@/components/walkers/walker-hero';
 import { TrustItemCard } from '@/components/walkers/trust-item-card';
-import { getWalkerById } from '@/lib/mock-data';
+import { WalkersApi } from '@/features/walkers/api/walkers.api';
 import type { DogSize } from '@/types';
 import { Separator } from '@/components/ui/separator';
 
@@ -136,7 +136,7 @@ function SidebarTrustRow({ verified, label }: { verified: boolean; label: string
 
 export default async function WalkerDetailPage({ params }: { params: Promise<{ id: string }> }) {
 	const { id } = await params;
-	const walker = getWalkerById(id);
+	const walker = await WalkersApi.getById(id);
 
 	if (!walker) notFound();
 

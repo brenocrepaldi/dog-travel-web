@@ -1,28 +1,41 @@
-import type { Metadata } from "next";
+"use client";
+
+import { use } from "react";
 import { notFound } from "next/navigation";
-import { getReviewByWalkId, getWalkById, getWalkerById } from "@/lib/mock-data";
+import { useWalkById } from "@/features/walks/hooks/use-walks";
+import { useWalkerById } from "@/features/walkers/hooks/use-walkers";
+import { useReview } from "@/features/reviews/hooks/use-reviews";
 import { WalkReviewForm } from "./_components/walk-review-form";
+import { Skeleton } from "@/components/ui/skeleton";
 
-export const metadata: Metadata = { title: "Avaliacao do Passeio | DogTravel" };
-
-export default async function WalkReviewPage({
+export default function WalkReviewPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = await params;
-  const walk = getWalkById(id);
+  const { id } = use(params);
+  const { data: walk, isLoading: walkLoading } = useWalkById(id);
+  const { data: walker, isLoading: walkerLoading } = useWalkerById(walk?.walkerId ?? "");
+  const { data: existingReview, isLoading: reviewLoading } = useReview(id);
 
-  if (!walk) {
-    notFound();
+  const isLoading = walkLoading || walkerLoading || reviewLoading;
+
+  if (isLoading) {
+    return (
+      <div className="space-y-8 pb-8">
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-64" />
+        </div>
+        <Skeleton className="h-40 w-full rounded-2xl" />
+        <Skeleton className="h-64 w-full rounded-2xl" />
+      </div>
+    );
   }
 
-  const walker = getWalkerById(walk.walkerId);
-  if (!walker) {
+  if (!walk || !walker) {
     notFound();
   }
-
-  const existingReview = getReviewByWalkId(walk.id);
 
   return (
     <WalkReviewForm
@@ -30,7 +43,7 @@ export default async function WalkReviewPage({
       walkDate={walk.dateLabel}
       walkerName={walker.name}
       petNames={walk.petNames}
-      existingReview={existingReview}
+      existingReview={existingReview ?? undefined}
     />
   );
 }

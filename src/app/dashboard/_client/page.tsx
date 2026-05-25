@@ -1,14 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
-import {
-  Plus, MapPin, ClipboardList, Dog,
-  CreditCard, ChevronRight, PawPrint,
-} from "lucide-react";
+import { Plus, ClipboardList, Dog, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Card } from "@/components/ui/card";
+import { PawPrint } from "lucide-react";
 import { DashboardDogs } from "./dashboard-dogs";
-import { clientDashboardWalks } from "@/lib/mock-data";
+import { DashboardRecentWalks } from "./dashboard-recent-walks";
+import { DashboardHeroStats } from "./dashboard-hero-stats";
+import { DashboardActiveWalk } from "./dashboard-active-walk";
 
 export const metadata: Metadata = { title: "Dashboard | DogTravel" };
 
@@ -19,18 +18,6 @@ function getGreeting() {
   return "Boa noite";
 }
 
-function getInitials(name: string) {
-  return name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
-}
-
-const statusConfig = {
-  pending:     { label: "Aguardando",   className: "bg-amber-500/10 text-amber-700 border-amber-500/20 dark:text-amber-400" },
-  accepted:    { label: "Confirmado",   className: "bg-blue-500/10 text-blue-700 border-blue-500/20 dark:text-blue-400" },
-  in_progress: { label: "Em andamento", className: "bg-primary/10 text-primary border-primary/20" },
-  completed:   { label: "Concluído",    className: "bg-emerald-500/10 text-emerald-700 border-emerald-500/20 dark:text-emerald-400" },
-  cancelled:   { label: "Cancelado",    className: "bg-muted text-muted-foreground border-border/60" },
-};
-
 function SectionHeader({ title, href, linkLabel }: { title: string; href: string; linkLabel: string }) {
   return (
     <div className="flex items-center justify-between">
@@ -39,7 +26,7 @@ function SectionHeader({ title, href, linkLabel }: { title: string; href: string
         href={href}
         className="flex items-center gap-0.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
       >
-        {linkLabel} <ChevronRight className="h-3.5 w-3.5" />
+        {linkLabel}
       </Link>
     </div>
   );
@@ -50,25 +37,20 @@ export default async function ClientDashboardPage() {
   const firstName = session?.user?.name?.split(" ")[0] ?? "Cliente";
   const greeting  = getGreeting();
 
-  const activeWalk = null;
-
   return (
     <div className="space-y-7 pb-8">
 
-      {/* ── Hero ───────────────────────────────────────────────────────────── */}
+      {/* ── Hero ── */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-primary to-primary/80 px-6 py-8 md:px-8 text-primary-foreground">
         <div className="pointer-events-none absolute -right-12 -top-12 h-52 w-52 rounded-full bg-white/5" />
         <div className="pointer-events-none absolute -bottom-16 right-8 h-72 w-72 rounded-full bg-white/[0.03]" />
         <PawPrint className="pointer-events-none absolute bottom-3 right-5 h-32 w-32 text-white/[0.07]" />
 
         <div className="relative flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-          {/* Greeting */}
           <div>
             <p className="text-sm font-medium text-primary-foreground/65">{greeting}</p>
             <h1 className="mt-0.5 text-3xl font-bold tracking-tight">{firstName}!</h1>
-            <p className="mt-1.5 text-sm text-primary-foreground/70">
-              Pronto para o próximo passeio?
-            </p>
+            <p className="mt-1.5 text-sm text-primary-foreground/70">Pronto para o próximo passeio?</p>
             <Link
               href="/walks/new"
               className="mt-5 inline-flex items-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-primary shadow-sm transition-colors hover:bg-white/90"
@@ -77,50 +59,16 @@ export default async function ClientDashboardPage() {
               Solicitar passeio
             </Link>
           </div>
-
-          {/* Mini stats — encapsulados num container sutil */}
-          <div className="flex gap-px overflow-hidden rounded-xl border border-white/10 bg-white/10 sm:flex-col sm:gap-0">
-            <div className="flex-1 px-5 py-3 text-center sm:text-right">
-              <p className="text-2xl font-bold leading-none">23</p>
-              <p className="mt-0.5 text-xs text-primary-foreground/60">passeios</p>
-            </div>
-            <div className="w-px bg-white/10 sm:h-px sm:w-auto" />
-            <div className="flex-1 px-5 py-3 text-center sm:text-right">
-              <p className="text-2xl font-bold leading-none">4.9 ★</p>
-              <p className="mt-0.5 text-xs text-primary-foreground/60">avaliação</p>
-            </div>
-          </div>
+          <DashboardHeroStats />
         </div>
       </div>
 
-      {/* ── Active walk banner ─────────────────────────────────────────────── */}
-      {activeWalk && (
-        <div className="flex items-center justify-between gap-4 rounded-2xl border border-emerald-500/25 bg-emerald-500/8 px-5 py-4">
-          <div className="flex items-center gap-3">
-            <span className="relative flex h-3 w-3 shrink-0">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
-              <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-500" />
-            </span>
-            <div>
-              <p className="text-sm font-semibold text-foreground">Passeio em andamento</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Rex está sendo passeado · 12 min restantes</p>
-            </div>
-          </div>
-          <Link
-            href="/walks/1/tracking"
-            className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-500/20 dark:text-emerald-400"
-          >
-            <MapPin className="h-3.5 w-3.5" />
-            Acompanhar
-          </Link>
-        </div>
-      )}
+      {/* ── Active walk banner (API-driven) ── */}
+      <DashboardActiveWalk />
 
-      {/* ── Quick actions ──────────────────────────────────────────────────── */}
+      {/* ── Quick actions ── */}
       <section className="space-y-3.5">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Acesso rápido
-        </h2>
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Acesso rápido</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {([
             { href: "/walks/new",        icon: Plus,          label: "Solicitar passeio", bg: "bg-primary/10",     fg: "text-primary"                          },
@@ -140,61 +88,16 @@ export default async function ClientDashboardPage() {
         </div>
       </section>
 
-      {/* ── My dogs — antes dos passeios, pets são a estrela ───────────────── */}
+      {/* ── My dogs ── */}
       <section className="space-y-3.5">
         <SectionHeader title="Meus cães" href="/dogs" linkLabel="Gerenciar" />
         <DashboardDogs />
       </section>
 
-      {/* ── Recent walks ───────────────────────────────────────────────────── */}
+      {/* ── Recent walks (API-driven) ── */}
       <section className="space-y-3.5">
         <SectionHeader title="Últimos passeios" href="/walks" linkLabel="Ver todos" />
-
-        <Card className="overflow-hidden py-0 gap-0">
-          <div className="divide-y divide-border/50">
-            {clientDashboardWalks.map((walk) => {
-              const s = statusConfig[walk.status];
-              const isCancelled = walk.status === "cancelled";
-
-              return (
-                <Link key={walk.id} href={`/walks/${walk.id}`}>
-                  <div className={cn(
-                    "group flex items-center gap-4 px-5 py-4 transition-colors duration-150 hover:bg-muted/30",
-                    isCancelled && "opacity-50"
-                  )}>
-                    <div className={cn(
-                      "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xs font-bold transition-transform duration-150 group-hover:scale-105",
-                      isCancelled ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary"
-                    )}>
-                      {getInitials(walk.walkerName)}
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <p className="truncate text-sm font-semibold text-foreground">{walk.walkerName}</p>
-                      <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                        {walk.petNames.join(" & ")} · {walk.date}
-                      </p>
-                    </div>
-
-                    <div className="flex shrink-0 items-center gap-3">
-                      <span className={cn(
-                        "hidden sm:inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-medium",
-                        s.className
-                      )}>
-                        {s.label}
-                      </span>
-                      {!isCancelled && (
-                        <span className="text-sm font-bold tabular-nums text-foreground">
-                          {walk.price}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </Card>
+        <DashboardRecentWalks />
       </section>
 
     </div>

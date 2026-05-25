@@ -9,6 +9,7 @@ import {
   ExternalLink,
   FileCheck2,
   FileText,
+  Loader2,
   Plus,
   ShieldCheck,
   Trash2,
@@ -20,7 +21,13 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { DocStatus, WalkerCertDocument } from "@/types";
-import { walkerCertificates } from "@/lib/mock-data";
+import {
+  useDocuments,
+  useUploadIdentity,
+  useUploadBackground,
+  useAddCertificate,
+  useRemoveCertificate,
+} from "@/features/documents/hooks/use-documents";
 import {
   Dialog,
   DialogContent,
@@ -31,15 +38,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-
-type CertEntry = WalkerCertDocument;
+import { Skeleton } from "@/components/ui/skeleton";
 
 // ─── Status config ──────────────────────────────────────────────────────────
 
-const STATUS: Record<
-  DocStatus,
-  { label: string; icon: React.ElementType; cls: string }
-> = {
+const STATUS: Record<DocStatus, { label: string; icon: React.ElementType; cls: string }> = {
   idle: {
     label: "Não enviado",
     icon: AlertCircle,
@@ -57,17 +60,10 @@ const STATUS: Record<
   },
 };
 
-// ─── StatusBadge ────────────────────────────────────────────────────────────
-
 function StatusBadge({ status }: { status: DocStatus }) {
   const { label, cls, icon: Icon } = STATUS[status];
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold",
-        cls,
-      )}
-    >
+    <span className={cn("inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold", cls)}>
       <Icon className="h-3 w-3 shrink-0" />
       {label}
     </span>
@@ -96,9 +92,7 @@ function UploadZone({
 
   return (
     <div className="space-y-2">
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-        {label}
-      </p>
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
       <input
         ref={ref}
         id={inputId}
@@ -106,10 +100,7 @@ function UploadZone({
         accept={accept}
         className="sr-only"
         disabled={disabled}
-        onChange={(e) => {
-          onFile(e.target.files?.[0] ?? null);
-          e.target.value = "";
-        }}
+        onChange={(e) => { onFile(e.target.files?.[0] ?? null); e.target.value = ""; }}
       />
       {file ? (
         <div className="flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/[0.03] px-4 py-3">
@@ -163,21 +154,10 @@ function UploadZone({
 // ─── DocCardHeader ──────────────────────────────────────────────────────────
 
 function DocCardHeader({
-  icon: Icon,
-  iconBg,
-  iconColor,
-  barClass,
-  title,
-  description,
-  status,
+  icon: Icon, iconBg, iconColor, barClass, title, description, status,
 }: {
-  icon: React.ElementType;
-  iconBg: string;
-  iconColor: string;
-  barClass: string;
-  title: string;
-  description: string;
-  status: DocStatus;
+  icon: React.ElementType; iconBg: string; iconColor: string;
+  barClass: string; title: string; description: string; status: DocStatus;
 }) {
   return (
     <>
@@ -185,12 +165,7 @@ function DocCardHeader({
       <CardHeader className="pb-4 pt-5">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div
-              className={cn(
-                "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
-                iconBg,
-              )}
-            >
+            <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-xl", iconBg)}>
               <Icon className={cn("h-4 w-4", iconColor)} />
             </div>
             <div>
@@ -204,8 +179,6 @@ function DocCardHeader({
     </>
   );
 }
-
-// ─── Status info banners ────────────────────────────────────────────────────
 
 function PendingBanner({ message }: { message: string }) {
   return (
@@ -225,55 +198,114 @@ function VerifiedBanner({ message }: { message: string }) {
   );
 }
 
+// ─── CertRow ────────────────────────────────────────────────────────────────
+
+function CertRow({ cert, onRemove, isRemoving }: {
+  cert: WalkerCertDocument;
+  onRemove: (id: string) => void;
+  isRemoving: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-4 rounded-xl border border-border/60 bg-card px-4 py-3.5 transition-colors hover:bg-accent/20">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+        <Award className="h-4 w-4 text-primary" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-semibold text-foreground">{cert.title}</p>
+        <p className="mt-0.5 flex items-center gap-1 truncate text-[11px] text-muted-foreground">
+          <FileText className="h-3 w-3 shrink-0" />
+          {cert.fileName}
+        </p>
+      </div>
+      <div className="flex shrink-0 items-center gap-2">
+        <StatusBadge status={cert.status} />
+        {cert.status !== "verified" && (
+          <button
+            type="button"
+            aria-label={`Remover ${cert.title}`}
+            disabled={isRemoving}
+            onClick={() => onRemove(cert.id)}
+            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg text-muted-foreground/50 transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+          >
+            {isRemoving ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Trash2 className="h-3.5 w-3.5" />
+            )}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main component ─────────────────────────────────────────────────────────
 
 export function WalkerDocuments() {
-  // Identity
+  const { data: docStatus, isLoading } = useDocuments();
+  const { mutate: uploadIdentity, isPending: uploadingIdentity } = useUploadIdentity();
+  const { mutate: uploadBackground, isPending: uploadingBackground } = useUploadBackground();
+  const { mutate: addCert, isPending: addingCert } = useAddCertificate();
+  const { mutate: removeCert, isPending: removingCert } = useRemoveCertificate();
+
+  // Local file state
   const [identityDoc, setIdentityDoc] = useState<File | null>(null);
   const [identitySelfie, setIdentitySelfie] = useState<File | null>(null);
-  const [identityStatus, setIdentityStatus] = useState<DocStatus>("idle");
-
-  // Background check
   const [bgDoc, setBgDoc] = useState<File | null>(null);
-  const [bgStatus, setBgStatus] = useState<DocStatus>("idle");
-
-  // Certifications
-  const [certs, setCerts] = useState<CertEntry[]>(walkerCertificates);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [certTitle, setCertTitle] = useState("");
   const [certFile, setCertFile] = useState<File | null>(null);
 
+  const identityStatus = docStatus?.identity ?? "idle";
+  const bgStatus = docStatus?.background ?? "idle";
+  const certs = docStatus?.certificates ?? [];
+
   function submitIdentity() {
-    setIdentityStatus("pending");
-    setIdentityDoc(null);
-    setIdentitySelfie(null);
-    toast.success("Documentos enviados!", {
-      description: "Verificação em até 3 dias úteis.",
-    });
+    if (!identityDoc || !identitySelfie) return;
+    uploadIdentity(
+      { doc: identityDoc, selfie: identitySelfie },
+      {
+        onSuccess: () => {
+          setIdentityDoc(null);
+          setIdentitySelfie(null);
+          toast.success("Documentos enviados!", { description: "Verificação em até 3 dias úteis." });
+        },
+        onError: () => toast.error("Erro ao enviar documentos. Tente novamente."),
+      }
+    );
   }
 
   function submitBackground() {
-    setBgStatus("pending");
-    setBgDoc(null);
-    toast.success("Certidão enviada!", {
-      description: "Verificação em até 5 dias úteis.",
+    if (!bgDoc) return;
+    uploadBackground(bgDoc, {
+      onSuccess: () => {
+        setBgDoc(null);
+        toast.success("Certidão enviada!", { description: "Verificação em até 5 dias úteis." });
+      },
+      onError: () => toast.error("Erro ao enviar certidão. Tente novamente."),
     });
   }
 
-  function addCert() {
+  function handleAddCert() {
     if (!certTitle.trim() || !certFile) return;
-    const entry: CertEntry = {
-      id: crypto.randomUUID(),
-      title: certTitle.trim(),
-      fileName: certFile.name,
-      status: "pending",
-    };
-    setCerts((prev) => [...prev, entry]);
-    setCertTitle("");
-    setCertFile(null);
-    setDialogOpen(false);
-    toast.success("Certificação adicionada!", {
-      description: "Aguardando verificação da equipe DogTravel.",
+    addCert(
+      { title: certTitle.trim(), file: certFile },
+      {
+        onSuccess: () => {
+          setCertTitle("");
+          setCertFile(null);
+          setDialogOpen(false);
+          toast.success("Certificação adicionada!", { description: "Aguardando verificação da equipe DogTravel." });
+        },
+        onError: () => toast.error("Erro ao adicionar certificação."),
+      }
+    );
+  }
+
+  function handleRemoveCert(id: string) {
+    removeCert(id, {
+      onSuccess: () => toast("Certificação removida."),
+      onError: () => toast.error("Erro ao remover certificação."),
     });
   }
 
@@ -283,16 +315,21 @@ export function WalkerDocuments() {
     setCertFile(null);
   }
 
-  function removeCert(id: string) {
-    setCerts((prev) => prev.filter((c) => c.id !== id));
-    toast("Certificação removida.");
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-64 w-full rounded-2xl" />
+        <Skeleton className="h-48 w-full rounded-2xl" />
+        <Skeleton className="h-48 w-full rounded-2xl" />
+      </div>
+    );
   }
 
   return (
     <>
       <div className="space-y-6">
 
-        {/* ── Verificação de identidade ──────────────────────────────────────── */}
+        {/* ── Verificação de identidade ────────────────────────────────────── */}
         <Card className="overflow-hidden py-0 gap-0">
           <DocCardHeader
             icon={ShieldCheck}
@@ -313,6 +350,7 @@ export function WalkerDocuments() {
                     hint="RG, CNH ou passaporte · PDF ou imagem · máx. 5 MB"
                     file={identityDoc}
                     onFile={setIdentityDoc}
+                    disabled={uploadingIdentity}
                   />
                   <UploadZone
                     label="Selfie com o documento"
@@ -320,16 +358,21 @@ export function WalkerDocuments() {
                     accept=".jpg,.jpeg,.png"
                     file={identitySelfie}
                     onFile={setIdentitySelfie}
+                    disabled={uploadingIdentity}
                   />
                 </div>
                 <Button
                   size="sm"
                   className="rounded-lg gap-1.5 shadow-sm"
-                  disabled={!identityDoc || !identitySelfie}
+                  disabled={!identityDoc || !identitySelfie || uploadingIdentity}
                   onClick={submitIdentity}
                 >
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  Enviar para análise
+                  {uploadingIdentity ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                  )}
+                  {uploadingIdentity ? "Enviando..." : "Enviar para análise"}
                 </Button>
               </>
             )}
@@ -342,7 +385,7 @@ export function WalkerDocuments() {
           </CardContent>
         </Card>
 
-        {/* ── Antecedentes criminais ─────────────────────────────────────────── */}
+        {/* ── Antecedentes criminais ───────────────────────────────────────── */}
         <Card className="overflow-hidden py-0 gap-0">
           <DocCardHeader
             icon={FileCheck2}
@@ -359,9 +402,7 @@ export function WalkerDocuments() {
               <FileCheck2 className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
               <div className="space-y-1.5 text-xs leading-relaxed text-muted-foreground">
                 <p>
-                  A certidão de antecedentes criminais pode ser emitida gratuitamente
-                  pelo portal do governo federal. O documento deve ter sido emitido nos
-                  últimos 90 dias.
+                  A certidão de antecedentes criminais pode ser emitida gratuitamente pelo portal do governo federal. O documento deve ter sido emitido nos últimos 90 dias.
                 </p>
                 <a
                   href="https://www.gov.br/pt-br/servicos/emitir-certidao-de-antecedentes-criminais"
@@ -381,15 +422,20 @@ export function WalkerDocuments() {
                   hint="PDF ou imagem · emitida nos últimos 90 dias · máx. 5 MB"
                   file={bgDoc}
                   onFile={setBgDoc}
+                  disabled={uploadingBackground}
                 />
                 <Button
                   size="sm"
                   className="rounded-lg gap-1.5 shadow-sm"
-                  disabled={!bgDoc}
+                  disabled={!bgDoc || uploadingBackground}
                   onClick={submitBackground}
                 >
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  Enviar para análise
+                  {uploadingBackground ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                  )}
+                  {uploadingBackground ? "Enviando..." : "Enviar para análise"}
                 </Button>
               </>
             )}
@@ -402,7 +448,7 @@ export function WalkerDocuments() {
           </CardContent>
         </Card>
 
-        {/* ── Certificações e credenciais ────────────────────────────────────── */}
+        {/* ── Certificações e credenciais ──────────────────────────────────── */}
         <Card className="overflow-hidden py-0 gap-0">
           <div className="h-1 w-full bg-gradient-to-r from-primary/60 via-primary to-primary/40" />
           <CardHeader className="pb-4 pt-5">
@@ -412,20 +458,11 @@ export function WalkerDocuments() {
                   <Award className="h-4 w-4 text-primary" />
                 </div>
                 <div>
-                  <CardTitle className="text-sm font-semibold">
-                    Certificações e Credenciais
-                  </CardTitle>
-                  <CardDescription className="mt-0.5 text-xs">
-                    Cursos, formações e treinamentos profissionais
-                  </CardDescription>
+                  <CardTitle className="text-sm font-semibold">Certificações e Credenciais</CardTitle>
+                  <CardDescription className="mt-0.5 text-xs">Cursos, formações e treinamentos profissionais</CardDescription>
                 </div>
               </div>
-              <Button
-                size="sm"
-                variant="outline"
-                className="rounded-lg gap-1.5 shrink-0"
-                onClick={() => setDialogOpen(true)}
-              >
+              <Button size="sm" variant="outline" className="rounded-lg gap-1.5 shrink-0" onClick={() => setDialogOpen(true)}>
                 <Plus className="h-3.5 w-3.5" />
                 Adicionar
               </Button>
@@ -439,19 +476,12 @@ export function WalkerDocuments() {
                   <Award className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-foreground">
-                    Nenhuma certificação adicionada
-                  </p>
+                  <p className="text-sm font-semibold text-foreground">Nenhuma certificação adicionada</p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
                     Adicione cursos e formações para fortalecer seu perfil profissional.
                   </p>
                 </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="mt-1 rounded-lg gap-1.5"
-                  onClick={() => setDialogOpen(true)}
-                >
+                <Button size="sm" variant="outline" className="mt-1 rounded-lg gap-1.5" onClick={() => setDialogOpen(true)}>
                   <Plus className="h-3.5 w-3.5" />
                   Adicionar certificação
                 </Button>
@@ -459,55 +489,27 @@ export function WalkerDocuments() {
             ) : (
               <div className="space-y-3">
                 {certs.map((cert) => (
-                  <div
+                  <CertRow
                     key={cert.id}
-                    className="flex items-center gap-4 rounded-xl border border-border/60 bg-card px-4 py-3.5 transition-colors hover:bg-accent/20"
-                  >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                      <Award className="h-4 w-4 text-primary" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-foreground">
-                        {cert.title}
-                      </p>
-                      <p className="mt-0.5 flex items-center gap-1 truncate text-[11px] text-muted-foreground">
-                        <FileText className="h-3 w-3 shrink-0" />
-                        {cert.fileName}
-                      </p>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-2">
-                      <StatusBadge status={cert.status} />
-                      {cert.status !== "verified" && (
-                        <button
-                          type="button"
-                          aria-label={`Remover ${cert.title}`}
-                          onClick={() => removeCert(cert.id)}
-                          className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg text-muted-foreground/50 transition-colors hover:bg-destructive/10 hover:text-destructive"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
+                    cert={cert}
+                    onRemove={handleRemoveCert}
+                    isRemoving={removingCert}
+                  />
                 ))}
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* ── Footer banner ──────────────────────────────────────────────────── */}
+        {/* ── Footer banner ────────────────────────────────────────────────── */}
         <div className="flex items-start gap-3 rounded-2xl border border-primary/15 bg-primary/5 px-5 py-4">
           <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10">
             <ShieldCheck className="h-4 w-4 text-primary" />
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-foreground">
-              Seus documentos estão seguros
-            </p>
+            <p className="text-sm font-semibold text-foreground">Seus documentos estão seguros</p>
             <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-              Todos os documentos são armazenados com criptografia de ponta a ponta.
-              As informações são utilizadas exclusivamente para verificação do perfil
-              profissional e nunca são compartilhadas com terceiros.
+              Todos os documentos são armazenados com criptografia de ponta a ponta. As informações são utilizadas exclusivamente para verificação do perfil profissional e nunca são compartilhadas com terceiros.
             </p>
           </div>
         </div>
@@ -540,9 +542,7 @@ export function WalkerDocuments() {
                 value={certTitle}
                 onChange={(e) => setCertTitle(e.target.value)}
                 className="rounded-lg"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") addCert();
-                }}
+                onKeyDown={(e) => { if (e.key === "Enter") handleAddCert(); }}
               />
             </div>
 
@@ -555,22 +555,17 @@ export function WalkerDocuments() {
           </div>
 
           <DialogFooter className="gap-2 sm:gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="rounded-lg"
-              onClick={closeCertDialog}
-            >
+            <Button variant="ghost" size="sm" className="rounded-lg" onClick={closeCertDialog}>
               Cancelar
             </Button>
             <Button
               size="sm"
               className="rounded-lg gap-1.5 shadow-sm"
-              disabled={!certTitle.trim() || !certFile}
-              onClick={addCert}
+              disabled={!certTitle.trim() || !certFile || addingCert}
+              onClick={handleAddCert}
             >
-              <Plus className="h-3.5 w-3.5" />
-              Adicionar
+              {addingCert ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
+              {addingCert ? "Adicionando..." : "Adicionar"}
             </Button>
           </DialogFooter>
         </DialogContent>

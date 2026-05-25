@@ -13,6 +13,8 @@ import { cn } from "@/lib/utils";
 import { maskCPF } from "@/lib/cpf";
 import { registerSchema, type RegisterFormValues } from "@/lib/validations/auth";
 import type { UserRole } from "@/types";
+import { AuthApi } from "@/features/auth/api/auth.api";
+import { signIn } from "next-auth/react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -109,15 +111,24 @@ function DataStep({
 
   async function onSubmit(data: RegisterFormValues) {
     try {
-      void data;
-      // TODO: call AuthService.register({ ...data, role }) when backend is ready
-      // For now, simulate registration success
-      await new Promise((resolve) => setTimeout(resolve, 1200));
+      await AuthApi.register({ ...data, role });
 
       toast.success("Conta criada com sucesso!", {
         description: "Bem-vindo ao DogTravel!",
       });
-      router.push("/login");
+
+      // Auto-login after registration
+      const result = await signIn("credentials", {
+        email: data.email,
+        password: data.password,
+        redirect: false,
+      });
+
+      if (result?.ok) {
+        router.push("/dashboard");
+      } else {
+        router.push("/login");
+      }
     } catch {
       toast.error("Erro ao criar conta", {
         description: "Tente novamente em instantes.",

@@ -1,53 +1,45 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Image as ImageIcon, ArrowLeft } from "lucide-react";
+import { Send, Image as ImageIcon, ArrowLeft, Loader2 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { initialChatMessages } from "@/lib/mock-data";
+import { useChat, useSendMessage } from "@/features/chat/hooks/use-chat";
+import { useWalkById } from "@/features/walks/hooks/use-walks";
 
-type Message = (typeof initialChatMessages)[number];
-
-export function ChatInterface({ walkId, currentUserId }: { walkId: string; currentUserId: string }) {
-  const [messages, setMessages] = useState<Message[]>(initialChatMessages);
+export function ChatInterface({
+  walkId,
+  currentUserId,
+}: {
+  walkId: string;
+  currentUserId: string;
+}) {
   const [input, setInput] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom
+  const { data: walk } = useWalkById(walkId);
+  const { data: messages = [], isLoading } = useChat(walkId);
+  const { mutate: send, isPending: isSending } = useSendMessage(walkId);
+
+  // Auto-scroll to bottom on new messages
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  const otherParticipant = walk?.participants.find((p) => p.id !== currentUserId);
+  const otherName = otherParticipant?.name ?? "Participante";
+  const otherInitial = otherName.charAt(0).toUpperCase();
+
   function handleSend(e: React.FormEvent) {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || isSending) return;
 
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      senderId: currentUserId,
-      text: input.trim(),
-      timestamp: new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
-    };
-
-    setMessages((prev) => [...prev, newMessage]);
-    setInput("");
-
-    // Simulate walker reply if we are the client
-    if (currentUserId === "1") {
-      setTimeout(() => {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: Date.now().toString() + "-reply",
-            senderId: "2", // Walker
-            text: "Certo! 👍",
-            timestamp: new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
-          },
-        ]);
-      }, 1500);
-    }
+    send(
+      { senderId: currentUserId, text: input.trim() },
+      { onSuccess: () => setInput("") }
+    );
   }
 
   return (
@@ -62,14 +54,12 @@ export function ChatInterface({ walkId, currentUserId }: { walkId: string; curre
         </Link>
         <div className="flex-1 flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-            {currentUserId === "1" ? "C" : "A"} {/* Carlos (walker) or Ana (client) */}
+            {otherInitial}
           </div>
           <div>
-            <h2 className="font-semibold text-foreground text-sm">
-              {currentUserId === "1" ? "Carlos Silva" : "Ana Lima"}
-            </h2>
+            <h2 className="font-semibold text-foreground text-sm">{otherName}</h2>
             <p className="text-xs text-green-500 font-medium tracking-tight">
-              Passeio em andamento
+              {walk?.status === "in_progress" ? "Passeio em andamento" : "Passeio"}
             </p>
           </div>
         </div>
@@ -77,8 +67,25 @@ export function ChatInterface({ walkId, currentUserId }: { walkId: string; curre
 
       {/* ─── Messages Area ─── */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/20">
+        {isLoading && (
+          <div className="flex justify-center py-8">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          </div>
+        )}
+
+        {!isLoading && messages.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <p className="text-sm text-muted-foreground">Nenhuma mensagem ainda.</p>
+            <p className="text-xs text-muted-foreground/60 mt-1">Inicie a conversa.</p>
+          </div>
+        )}
+
         {messages.map((msg) => {
           const isMe = msg.senderId === currentUserId;
+          const time = new Date(msg.sentAt).toLocaleTimeString("pt-BR", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
           return (
             <div
               key={msg.id}
@@ -97,9 +104,7 @@ export function ChatInterface({ walkId, currentUserId }: { walkId: string; curre
               >
                 {msg.text}
               </div>
-              <span className="text-[10px] text-muted-foreground mt-1 mx-1">
-                {msg.timestamp}
-              </span>
+              <span className="text-[10px] text-muted-foreground mt-1 mx-1">{time}</span>
             </div>
           );
         })}
@@ -124,15 +129,20 @@ export function ChatInterface({ walkId, currentUserId }: { walkId: string; curre
               placeholder="Digite sua mensagem..."
               className="resize-none pr-10 min-h-[44px] rounded-xl border-border focus-visible:ring-primary shadow-sm"
               autoComplete="off"
+              disabled={isSending}
             />
           </div>
           <Button
             type="submit"
             size="icon"
-            disabled={!input.trim()}
+            disabled={!input.trim() || isSending}
             className="shrink-0 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm disabled:opacity-50"
           >
-            <Send className="h-4 w-4" />
+            {isSending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
           </Button>
         </form>
       </div>
