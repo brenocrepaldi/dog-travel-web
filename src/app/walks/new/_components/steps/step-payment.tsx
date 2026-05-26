@@ -15,8 +15,8 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { managedPaymentMethods, PIX_INSTANT_ID } from "@/lib/mock-data";
-import type { ManagedPaymentMethod } from "@/types";
+import { PIX_INSTANT_ID } from "@/lib/mock-data";
+import { usePaymentMethods, useAddPaymentMethod } from "@/features/payments/hooks/use-payments";
 import { toast } from "sonner";
 import type { WalkFormData } from "../walk-request-form";
 
@@ -60,10 +60,10 @@ interface Props {
 }
 
 export function StepPayment({ data, updateData, onNext, onBack }: Props) {
-  const [methods,       setMethods]       = useState<ManagedPaymentMethod[]>(() => structuredClone(managedPaymentMethods));
+  const { data: methods = [] } = usePaymentMethods();
+  const { mutate: addMethod, isPending: saving } = useAddPaymentMethod();
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [form,          setForm]          = useState<MethodFormState>(INITIAL_FORM);
-  const [saving,        setSaving]        = useState(false);
 
   function closeDialog() {
     setForm(INITIAL_FORM);
@@ -79,7 +79,7 @@ export function StepPayment({ data, updateData, onNext, onBack }: Props) {
     }));
   }
 
-  async function handleAddMethod() {
+  function handleAddMethod() {
     if (form.type !== "pix" && !form.brand.trim()) {
       toast.error("Informe a bandeira do cartão.");
       return;
@@ -97,13 +97,9 @@ export function StepPayment({ data, updateData, onNext, onBack }: Props) {
       return;
     }
 
-    setSaving(true);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 400));
-
-      const label = form.type === "pix" ? form.value.trim() : `**** ${form.value.trim()}`;
-      const newMethod: ManagedPaymentMethod = {
-        id:         `pm_${Date.now()}`,
+    const label = form.type === "pix" ? form.value.trim() : `**** ${form.value.trim()}`;
+    addMethod(
+      {
         type:       form.type,
         brand:      form.brand,
         label,
@@ -111,15 +107,16 @@ export function StepPayment({ data, updateData, onNext, onBack }: Props) {
         expiresAt:  form.type === "pix" ? "--" : form.expiresAt || "12/29",
         isDefault:  methods.length === 0,
         status:     "active",
-      };
-
-      setMethods((current) => [...current, newMethod]);
-      updateData({ selectedMethodId: newMethod.id });
-      closeDialog();
-      toast.success("Método adicionado e selecionado.");
-    } finally {
-      setSaving(false);
-    }
+      },
+      {
+        onSuccess: (newMethod) => {
+          updateData({ selectedMethodId: newMethod.id });
+          closeDialog();
+          toast.success("Método adicionado e selecionado.");
+        },
+        onError: () => toast.error("Erro ao adicionar método. Tente novamente."),
+      },
+    );
   }
 
   const isCard = form.type !== "pix";

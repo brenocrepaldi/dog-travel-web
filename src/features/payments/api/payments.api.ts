@@ -2,7 +2,7 @@ import {
   managedPaymentMethods,
   paymentHistory,
 } from "@/lib/mock-data";
-import type { ManagedPaymentMethod, PaymentHistoryItem } from "@/types";
+import type { ManagedPaymentMethod, PaymentHistoryItem, EarningsParams } from "@/types";
 import api, { isApiConfigured } from "@/services/api";
 
 // Module-level mutable store — used only when API is not configured
@@ -16,11 +16,11 @@ export const PaymentsApi = {
     return api.get<ManagedPaymentMethod[]>("/payment-methods").then((r) => r.data);
   },
 
-  getHistory: async (): Promise<PaymentHistoryItem[]> => {
+  getHistory: async (params?: EarningsParams): Promise<PaymentHistoryItem[]> => {
     if (!isApiConfigured) {
       return [...paymentHistory];
     }
-    return api.get<PaymentHistoryItem[]>("/payment-history").then((r) => r.data);
+    return api.get<PaymentHistoryItem[]>("/payment-history", { params }).then((r) => r.data);
   },
 
   addMethod: async (method: Omit<ManagedPaymentMethod, "id">): Promise<ManagedPaymentMethod> => {

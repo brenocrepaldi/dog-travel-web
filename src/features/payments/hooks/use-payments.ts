@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PaymentsApi } from "../api/payments.api";
-import type { ManagedPaymentMethod } from "@/types";
+import type { EarningsParams, ManagedPaymentMethod } from "@/types";
 
 export function usePaymentMethods() {
   return useQuery({
@@ -9,10 +9,10 @@ export function usePaymentMethods() {
   });
 }
 
-export function usePaymentHistory() {
+export function usePaymentHistory(params?: EarningsParams) {
   return useQuery({
-    queryKey: ["payment-history"],
-    queryFn: PaymentsApi.getHistory,
+    queryKey: ["payment-history", params],
+    queryFn: () => PaymentsApi.getHistory(params),
   });
 }
 
