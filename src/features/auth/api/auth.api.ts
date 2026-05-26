@@ -27,4 +27,12 @@ export const AuthApi = {
     const res = await api.post<LoginResponseDto>("/auth/refresh", { refreshToken: token });
     return res.data;
   },
+
+  // Invalidates the server-side session. The Bearer accessToken in the
+  // Authorization header is sufficient — the server revokes the associated
+  // refresh token. Called before NextAuth's client-side signOut().
+  logout: async (): Promise<void> => {
+    if (!isApiConfigured) return;
+    await api.post("/auth/logout");
+  },
 };
