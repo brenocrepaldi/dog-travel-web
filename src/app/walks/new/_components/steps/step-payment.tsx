@@ -15,7 +15,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { PIX_INSTANT_ID } from "@/lib/mock-data";
+import { PIX_INSTANT_ID } from "@/config/pricing";
 import { usePaymentMethods, useAddPaymentMethod } from "@/features/payments/hooks/use-payments";
 import { toast } from "sonner";
 import type { WalkFormData } from "../walk-request-form";

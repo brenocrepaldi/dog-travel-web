@@ -2,8 +2,8 @@
 
 import { Dog, Calendar, MapPin, CreditCard, Clock, BadgePercent } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { managedPaymentMethods } from "@/lib/mock-data";
 import { useDogs } from "@/features/dogs/hooks/use-dogs";
+import { usePaymentMethods } from "@/features/payments/hooks/use-payments";
 import type { WalkFormData } from "./walk-request-form";
 
 function fmt(val: number) {
@@ -43,6 +43,7 @@ function Row({
  */
 export function WalkSummary({ data, currentStep }: Props) {
   const { data: pets = [] } = useDogs();
+  const { data: paymentMethods = [] } = usePaymentMethods();
   const petNames =
     data.selectedPetIds.length > 0
       ? data.selectedPetIds
@@ -68,7 +69,7 @@ export function WalkSummary({ data, currentStep }: Props) {
       : null;
 
   const method = data.selectedMethodId
-    ? managedPaymentMethods.find((paymentMethod) => paymentMethod.id === data.selectedMethodId)
+    ? paymentMethods.find((paymentMethod) => paymentMethod.id === data.selectedMethodId)
     : null;
 
   return (

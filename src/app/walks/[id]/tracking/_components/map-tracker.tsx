@@ -1,46 +1,24 @@
 'use client';
 
-import { useRef } from 'react';
 import Map, { Marker, Layer, Source } from 'react-map-gl/mapbox';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
-import { Phone, MessageSquare, Compass, Loader2 } from 'lucide-react';
+import { Phone, MessageSquare, Compass, Loader2, MapPin } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { useWalkLocation } from '@/features/tracking/hooks/use-tracking';
 import { useWalkById } from '@/features/walks/hooks/use-walks';
-import { liveTrackingRoute } from '@/lib/mock-data';
 
 export default function MapTracker({ walkId }: { walkId: string }) {
 	const { data: walk } = useWalkById(walkId);
 	const { data: location, isLoading } = useWalkLocation(walkId);
 
-	// Fallback coordinates from mock when real location not available
-	const fallbackRef = useRef(liveTrackingRoute[0]);
-	const [lng, lat] = location
-		? [location.lng, location.lat]
-		: fallbackRef.current;
-
 	const walkerParticipant = walk?.participants.find((p) => p.role === 'walker');
 	const walkerName = walkerParticipant?.name ?? 'Passeador';
 	const walkerPhone = walkerParticipant?.phone;
 	const petNames = walk?.petNames?.join(', ') ?? 'Pet';
-
-	// Build a simple path for the route line (just current point for live tracking)
-	const routeFeatures = {
-		type: 'FeatureCollection' as const,
-		features: location
-			? [
-					{
-						type: 'Feature' as const,
-						geometry: { type: 'LineString' as const, coordinates: [[lng, lat]] },
-						properties: {},
-					},
-				]
-			: [],
-	};
 
 	if (isLoading) {
 		return (
@@ -50,6 +28,30 @@ export default function MapTracker({ walkId }: { walkId: string }) {
 			</div>
 		);
 	}
+
+	if (!location) {
+		return (
+			<div className="flex-1 flex flex-col items-center justify-center bg-muted/20 h-full w-full gap-2">
+				<MapPin className="h-6 w-6 text-muted-foreground" />
+				<div className="text-muted-foreground text-sm font-medium text-center px-6">
+					Aguardando localização do passeador...
+				</div>
+			</div>
+		);
+	}
+
+	const { lng, lat } = location;
+
+	const routeFeatures = {
+		type: 'FeatureCollection' as const,
+		features: [
+			{
+				type: 'Feature' as const,
+				geometry: { type: 'LineString' as const, coordinates: [[lng, lat]] },
+				properties: {},
+			},
+		],
+	};
 
 	return (
 		<div className="relative w-full h-full flex-1">

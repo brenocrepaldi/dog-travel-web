@@ -396,23 +396,8 @@ export const walkReviews: WalkReview[] = [
 	},
 ];
 
-// ─── PIX Payment ─────────────────────────────────────────────────────────────
-// Sentinel ID for the instant PIX option — will be a real payment method ID from the API.
-export const PIX_INSTANT_ID = "pix_instant";
 // Mock PIX key shown to the client during checkout — will come from the payments API.
-export const PIX_MOCK_KEY   = "pagamentos@dogtravel.com.br";
-
-// ─── Pricing Rules ────────────────────────────────────────────────────────────
-// Walk pricing configuration — will come from a pricing/configuration API endpoint.
-export const DURATION_BASE_PRICE: Record<number, number> = {
-	15: 12,
-	30: 18,
-	45: 24,
-	60: 27,
-};
-export const EXTRA_PET_FEE                = 4;
-export const PLATFORM_AND_SAFETY_FEE_RATE = 0.08;
-export const FIRST_RIDE_DISCOUNT_RATE     = 0.15;
+export const PIX_MOCK_KEY = "pagamentos@dogtravel.com.br";
 
 // ─── Walk GPS Routes ──────────────────────────────────────────────────────────
 // Coordinates per walk ID — will come from the GPS trail stored per walk in the API.

@@ -53,8 +53,7 @@ export default async function ProfilePage() {
 	const session = await auth();
 	if (!session?.user) redirect('/login');
 
-	const { name, email, image } = session.user;
-	const role = (session.user as { role?: string })?.role ?? 'client';
+	const { name, email, image, role = 'client' } = session.user;
 	const initials = name ? getInitials(name) : '?';
 
 	return (

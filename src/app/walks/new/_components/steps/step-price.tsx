@@ -9,7 +9,7 @@ import {
   EXTRA_PET_FEE,
   PLATFORM_AND_SAFETY_FEE_RATE,
   FIRST_RIDE_DISCOUNT_RATE,
-} from "@/lib/mock-data";
+} from "@/config/pricing";
 
 interface Props {
   data: WalkFormData;

@@ -13,8 +13,7 @@ api.interceptors.request.use(
   async (config) => {
     if (typeof window !== "undefined") {
       const session = await getSession();
-      // When the real backend issues JWTs, expose them via session.accessToken
-      const token = (session as { accessToken?: string } | null)?.accessToken;
+      const token = session?.accessToken;
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }

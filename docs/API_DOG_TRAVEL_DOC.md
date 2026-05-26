@@ -511,13 +511,11 @@ The walk request is a 6-step wizard. Steps 1–5 collect data and step 6 submits
 | 1    | Seus cães           | `GET /dogs` (lists client's pets for selection)                                  |
 | 2    | Data e horário      | None (local form)                                                                |
 | 3    | Local de partida    | Nominatim reverse geocode + forward geocode (external — see Section 16)          |
-| 4    | Estimativa de preço | Client-side calculation (pricing rules from config)                              |
-| 5    | Forma de pagamento  | **⚠ Mock only** — reads `managedPaymentMethods` from `mock-data.ts` directly; does NOT call `GET /payment-methods`. "Add card" dialog is session-local only, no `POST /payment-methods` is called. |
+| 4    | Estimativa de preço | Client-side calculation (pricing rules from `src/config/pricing.ts`)             |
+| 5    | Forma de pagamento  | `GET /payment-methods` (saved methods) + `POST /payment-methods` ("Add card" dialog) |
 | 6    | Confirmar pedido    | `POST /walks`                                                                    |
 
-> **Note:** The `repeat` query param (`/walks/new?repeat=<walkId>`) prefills the form with data from a previous walk. In mock mode this reads from `mockWalks` in-memory; in real mode it would need a `GET /walks/{id}` call.
->
-> **⚠ Step 5 discrepancy:** The walk creation flow (`src/app/walks/new/_components/steps/step-payment.tsx`) uses hardcoded mock payment methods and does NOT call `GET /payment-methods`. The real implementation must be updated to fetch saved methods from the API in this step.
+> **Note:** The `repeat` query param (`/walks/new?repeat=<walkId>`) prefills the form with data from a previous walk via `GET /walks/{id}` (`useWalkById`). The confirmation step (step 6) resolves the selected payment method label via `GET /payment-methods`.
 
 ---
 
@@ -1526,7 +1524,7 @@ The "Meus Passeios" screen uses the same endpoints already documented in earlier
 **Client-side features:**
 - **Status filters:** Todos / Agendados / Em andamento / Concluídos / Cancelados (applied in-memory)
 - **Search:** By pet name, walker/client name, or address (applied in-memory)
-- **Repeat walk:** Client can repeat a cancelled walk via `/walks/new?repeat={walkId}` — the form prefills with the previous walk's data (pets, duration, date, address) by loading the original walk from the cached `GET /walks` response.
+- **Repeat walk:** Client can repeat a cancelled walk via `/walks/new?repeat={walkId}` — the form prefills with the previous walk's data (pets, duration, date, address) by calling `GET /walks/{id}` (`useWalkById(repeatWalkId)`).
 
 ---
 
@@ -2251,7 +2249,7 @@ The routes below are **not explicitly present** in any API module file (`*.api.t
 
 ### GET /config/pricing *(inferred)*
 
-**Description:** Returns the platform's current pricing configuration. The constants `DURATION_BASE_PRICE`, `EXTRA_PET_FEE`, `PLATFORM_AND_SAFETY_FEE_RATE`, and `FIRST_RIDE_DISCOUNT_RATE` are hard-coded in `mock-data.ts`. Moving them to an API endpoint would allow dynamic pricing without a frontend deploy.
+**Description:** Returns the platform's current pricing configuration. The constants `DURATION_BASE_PRICE`, `EXTRA_PET_FEE`, `PLATFORM_AND_SAFETY_FEE_RATE`, and `FIRST_RIDE_DISCOUNT_RATE` are defined in `src/config/pricing.ts` (moved from `mock-data.ts`). Moving them to an API endpoint would allow dynamic pricing without a frontend deploy.
 
 **Authentication:** Required (Bearer JWT)
 

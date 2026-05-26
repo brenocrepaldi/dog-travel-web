@@ -5,9 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { CheckCircle2, LogOut } from 'lucide-react';
-import { walks as mockWalks } from '@/lib/mock-data';
 import { useDogs } from '@/features/dogs/hooks/use-dogs';
 import { useCreateWalk } from '@/features/walks/hooks/use-walk-actions';
+import { useWalkById } from '@/features/walks/hooks/use-walks';
 import { trackMetricEvent } from '@/lib/metrics';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,7 +26,7 @@ import { StepPrice } from './steps/step-price';
 import { StepPayment } from './steps/step-payment';
 import { StepConfirm } from './steps/step-confirm';
 import { StepPixPayment } from './steps/step-pix-payment';
-import { PIX_INSTANT_ID } from '@/lib/mock-data';
+import { PIX_INSTANT_ID } from '@/config/pricing';
 
 // ─── Form state shape ──────────────────────────────────────────────────────
 export interface WalkFormData {
@@ -141,7 +141,9 @@ function StepIndicator({
 export function WalkRequestForm() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
+	const repeatWalkId = searchParams.get('repeat') ?? '';
 	const { data: pets = [] } = useDogs();
+	const { data: walkToRepeat } = useWalkById(repeatWalkId);
 	const { mutateAsync: createWalk } = useCreateWalk();
 	const [step,    setStep]    = useState(0);
 	const [maxStep, setMaxStep] = useState(0);
@@ -154,10 +156,7 @@ export function WalkRequestForm() {
 
 	useEffect(() => {
 		if (hasPrefilledRepeat.current) return;
-		const repeatWalkId = searchParams.get('repeat');
-		if (!repeatWalkId) return;
-		const walkToRepeat = mockWalks.find((walk) => walk.id === repeatWalkId);
-		if (!walkToRepeat) return;
+		if (!repeatWalkId || !walkToRepeat) return;
 		hasPrefilledRepeat.current = true;
 		const { date, time } = toDateAndTime(walkToRepeat.scheduledAt);
 		const selectedPetIds = walkToRepeat.petNames
@@ -180,7 +179,7 @@ export function WalkRequestForm() {
 			name: 'walk_repeat_prefill_used',
 			payload: { walkId: walkToRepeat.id },
 		});
-	}, [pets, searchParams]);
+	}, [walkToRepeat, pets, repeatWalkId]);
 
 	function updateData(partial: Partial<WalkFormData>) {
 		setData((prev) => ({ ...prev, ...partial }));

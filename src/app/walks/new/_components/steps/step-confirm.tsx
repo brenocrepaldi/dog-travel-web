@@ -18,8 +18,9 @@ import {
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { FlowActions } from "@/components/common/flow-actions";
-import { managedPaymentMethods, PIX_INSTANT_ID } from "@/lib/mock-data";
+import { PIX_INSTANT_ID } from "@/config/pricing";
 import { useDogs } from "@/features/dogs/hooks/use-dogs";
+import { usePaymentMethods } from "@/features/payments/hooks/use-payments";
 import type { WalkFormData } from "../walk-request-form";
 
 function fmt(val: number) {
@@ -61,6 +62,7 @@ interface Props {
 
 export function StepConfirm({ data, onBack, onSubmit, submitting }: Props) {
   const { data: pets = [] } = useDogs();
+  const { data: paymentMethods = [] } = usePaymentMethods();
 
   const selectedPets = data.selectedPetIds
     .map((id) => pets.find((pet) => pet.id === id))
@@ -71,7 +73,7 @@ export function StepConfirm({ data, onBack, onSubmit, submitting }: Props) {
       ? "PIX — QR Code após confirmação"
       : data.selectedMethodId
         ? (() => {
-            const m = managedPaymentMethods.find((method) => method.id === data.selectedMethodId);
+            const m = paymentMethods.find((method) => method.id === data.selectedMethodId);
             return m ? `${m.brand} ${m.label}` : "—";
           })()
         : "—";

@@ -1,11 +1,22 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import Map, { Marker, Layer, Source } from "react-map-gl/mapbox";
-import { walkRoutes } from "@/lib/mock-data";
+import { useWalkRoute } from "@/features/tracking/hooks/use-tracking";
 
 export default function WalkRouteMap({ walkId }: { walkId: string }) {
-  const route = walkRoutes[walkId];
-  if (!route) return null;
+  const { data: route, isLoading } = useWalkRoute(walkId);
+
+  if (isLoading) {
+    return (
+      <div className="flex h-full w-full flex-col items-center justify-center bg-muted/20">
+        <Loader2 className="h-5 w-5 animate-spin text-primary" />
+        <p className="mt-2 text-xs text-muted-foreground">Carregando rota...</p>
+      </div>
+    );
+  }
+
+  if (!route || route.length === 0) return null;
 
   const lngs   = route.map(([lng]) => lng);
   const lats   = route.map(([, lat]) => lat);
