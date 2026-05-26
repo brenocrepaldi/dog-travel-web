@@ -14,19 +14,30 @@ import {
   ChevronRight,
   Clock,
   FileCheck2,
+  Info,
   ShieldCheck,
+  XCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import type { DocStatus } from "@/types";
+import { useDocuments } from "@/features/documents/hooks/use-documents";
 
 // ─── Nav items per role ───────────────────────────────────────────────────────
+
 const clientNav = [
-  { href: "/dashboard",  icon: LayoutDashboard, label: "Dashboard"      },
-  { href: "/walks",      icon: ClipboardList,   label: "Meus passeios"  },
-  { href: "/walkers",    icon: PawPrint,         label: "Passeadores"   },
-  { href: "/dogs",       icon: Dog,              label: "Meus Cães"     },
-  { href: "/profile",    icon: User,             label: "Perfil"        },
+  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard"     },
+  { href: "/walks",     icon: ClipboardList,   label: "Meus passeios" },
+  { href: "/walkers",   icon: PawPrint,         label: "Passeadores"  },
+  { href: "/dogs",      icon: Dog,              label: "Meus Cães"    },
+  { href: "/profile",   icon: User,             label: "Perfil"       },
 ];
 
 const walkerNav = [
@@ -35,25 +46,227 @@ const walkerNav = [
   { href: "/profile",   icon: User,            label: "Perfil"        },
 ];
 
-// ─── Walker profile completion (mock — matches dashboard state) ───────────────
-type DocStatus = "idle" | "pending" | "verified";
+// ─── Step row ─────────────────────────────────────────────────────────────────
 
-interface CompletionStep {
+interface Step {
   icon: React.ElementType;
   label: string;
-  required: boolean;
   status: DocStatus;
   href: string;
 }
 
-const COMPLETION_STEPS: CompletionStep[] = [
-  { icon: ShieldCheck, label: "Identidade",     required: true,  status: "idle",    href: "/profile/documents" },
-  { icon: FileCheck2,  label: "Antecedentes",   required: false, status: "idle",    href: "/profile/documents" },
-  { icon: Award,       label: "Certificações",  required: false, status: "pending", href: "/profile/documents" },
-  { icon: User,        label: "Foto de perfil", required: false, status: "idle",    href: "/profile/details"   },
-];
+function StepRow({ icon: Icon, label, status }: Omit<Step, "href">) {
+  const isDone     = status === "verified";
+  const isPending  = status === "pending";
+  const isRejected = status === "rejected";
+
+  const bgCls =
+    isDone     ? "bg-emerald-500/10" :
+    isPending  ? "bg-amber-500/10"   :
+    isRejected ? "bg-red-500/10"     : "bg-muted";
+
+  const statusLabel =
+    isDone     ? "Verificado"  :
+    isPending  ? "Em análise"  :
+    isRejected ? "Recusado"    : "Não enviado";
+
+  const statusCls =
+    isDone     ? "text-emerald-600 dark:text-emerald-400" :
+    isPending  ? "text-amber-600 dark:text-amber-400"     :
+    isRejected ? "text-red-600 dark:text-red-400"         : "text-muted-foreground/60";
+
+  return (
+    <div className="flex items-center gap-2">
+      <div className={cn("flex h-5 w-5 shrink-0 items-center justify-center rounded-md", bgCls)}>
+        {isDone ? (
+          <CheckCircle2 className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+        ) : isPending ? (
+          <Clock className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+        ) : isRejected ? (
+          <XCircle className="h-3 w-3 text-red-600 dark:text-red-400" />
+        ) : (
+          <Icon className="h-3 w-3 text-muted-foreground" />
+        )}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className={cn("truncate text-[11px] font-medium leading-none", isDone ? "text-muted-foreground" : "text-foreground")}>
+          {label}
+        </p>
+        <p className={cn("mt-0.5 text-[10px] leading-none", statusCls)}>
+          {statusLabel}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ─── Walker onboarding widget ─────────────────────────────────────────────────
+
+function WalkerOnboarding({ userImage }: { userImage?: string | null }) {
+  const { data: docStatus } = useDocuments();
+
+  const hasPhoto = !!userImage;
+
+  const requiredSteps: Step[] = [
+    {
+      icon: User,
+      label: "Foto de perfil",
+      status: hasPhoto ? "verified" : "idle",
+      href: "/profile/details",
+    },
+    {
+      icon: ShieldCheck,
+      label: "Verificação de identidade",
+      status: docStatus?.identity ?? "idle",
+      href: "/profile/documents",
+    },
+    {
+      icon: FileCheck2,
+      label: "Antecedentes criminais",
+      status: docStatus?.background ?? "idle",
+      href: "/profile/documents",
+    },
+  ];
+
+  const certs = docStatus?.certificates ?? [];
+  const certStatus: DocStatus =
+    certs.some((c) => c.status === "verified") ? "verified"
+    : certs.length > 0 ? "pending"
+    : "idle";
+
+  const requiredCompleted = requiredSteps.filter((s) => s.status === "verified").length;
+  const canAcceptWalks    = requiredCompleted === requiredSteps.length;
+  const pct               = Math.round((requiredCompleted / requiredSteps.length) * 100);
+
+  if (canAcceptWalks) return null;
+
+  const hasRejected = requiredSteps.some((s) => s.status === "rejected");
+  const hasPending  = requiredSteps.some((s) => s.status === "pending");
+
+  const headerLabel    = hasRejected ? "Ação necessária"   : "Conclua os requisitos";
+  const accentColor    = hasRejected ? "text-red-700 dark:text-red-400" : "text-amber-700 dark:text-amber-400";
+  const accentGradient = hasRejected
+    ? "from-red-400/60 via-red-500 to-red-400/40"
+    : "from-amber-400/60 via-amber-500 to-amber-400/40";
+  const borderCls      = hasRejected ? "border-red-500/20" : "border-amber-500/20";
+  const barCls         = hasRejected
+    ? "bg-gradient-to-r from-red-500 to-red-400"
+    : "bg-gradient-to-r from-amber-500 to-amber-400";
+
+  const ctaHref =
+    requiredSteps.find((s) => s.status === "rejected")?.href ??
+    requiredSteps.find((s) => s.status === "idle")?.href ??
+    "/profile/documents";
+  const ctaLabel = hasRejected ? "Revisar documentos" : hasPending ? "Ver progresso" : "Completar perfil";
+
+  return (
+    <div className="px-3 pb-3">
+      <div className={cn("overflow-hidden rounded-xl border", borderCls)}>
+        {/* Accent bar */}
+        <div className={cn("h-0.5 w-full bg-gradient-to-r", accentGradient)} />
+
+        <div className="space-y-3 p-3">
+          {/* Header */}
+          <div className="flex items-center justify-between gap-2">
+            <p className={cn("text-[11px] font-semibold leading-none", accentColor)}>
+              {headerLabel}
+            </p>
+            <span className={cn("shrink-0 text-[10px] font-bold tabular-nums", accentColor)}>
+              {requiredCompleted}/{requiredSteps.length}
+            </span>
+          </div>
+
+          {/* Progress bar */}
+          <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
+            <div
+              className={cn("h-full rounded-full transition-all duration-700", barCls)}
+              style={{ width: `${pct > 0 ? Math.max(pct, 3) : 0}%` }}
+            />
+          </div>
+
+          {/* Required steps */}
+          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+            Obrigatórios
+          </p>
+
+          <div className="space-y-2.5">
+            {requiredSteps.map((step) => (
+              <StepRow key={step.label} icon={step.icon} label={step.label} status={step.status} />
+            ))}
+          </div>
+
+          {/* Optional — certifications */}
+          <div className="space-y-2 border-t border-border/40 pt-2.5">
+            <div className="flex items-center gap-1.5">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                Opcional
+              </p>
+              <TooltipProvider delayDuration={300}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-3 w-3 text-muted-foreground hover:text-zinc-900 cursor-pointer" />
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="max-w-[200px]">
+                    Perfis com certificações verificadas ganham mais visibilidade e conquistam a confiança dos tutores com mais facilidade.
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+
+            {/* Cert row — visually subdued */}
+            <div className="flex items-center gap-2">
+              <div
+                className={cn(
+                  "flex h-5 w-5 shrink-0 items-center justify-center rounded-md",
+                  certStatus === "verified" ? "bg-emerald-500/10" :
+                  certStatus === "pending"  ? "bg-amber-500/10"   : "bg-muted",
+                )}
+              >
+                {certStatus === "verified" ? (
+                  <CheckCircle2 className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                ) : certStatus === "pending" ? (
+                  <Clock className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+                ) : (
+                  <Award className="h-3 w-3 text-muted-foreground/50" />
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[11px] font-medium leading-none text-muted-foreground">
+                  Certificações
+                </p>
+                <p
+                  className={cn(
+                    "mt-0.5 text-[10px] leading-none",
+                    certStatus === "verified" ? "text-emerald-600 dark:text-emerald-400" :
+                    certStatus === "pending"  ? "text-amber-600 dark:text-amber-400"     : "text-muted-foreground/50",
+                  )}
+                >
+                  {certStatus === "verified" ? "Adicionado" :
+                   certStatus === "pending"  ? "Em análise" : "Adicionar para se destacar"}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* CTA */}
+          <Link
+            href={ctaHref}
+            className={cn(
+              "flex items-center gap-0.5 text-[11px] font-semibold transition-opacity hover:opacity-75",
+              accentColor,
+            )}
+          >
+            {ctaLabel}
+            <ChevronRight className="h-3 w-3" />
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ─── Sidebar ─────────────────────────────────────────────────────────────────
+
 export function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
@@ -68,14 +281,6 @@ export function Sidebar() {
   const activeHref = navItems
     .filter(({ href }) => pathname === href || pathname.startsWith(href + "/"))
     .sort((a, b) => b.href.length - a.href.length)[0]?.href ?? null;
-
-  // Walker completion state
-  const identityVerified = COMPLETION_STEPS[0].status === "verified";
-  const score = COMPLETION_STEPS.filter((s, i) =>
-    i === 0 ? s.status === "verified" : s.status !== "idle"
-  ).length;
-  const pct = Math.round((score / COMPLETION_STEPS.length) * 100);
-  const profileComplete = score === COMPLETION_STEPS.length;
 
   return (
     <aside className="hidden lg:flex flex-col w-60 shrink-0 border-r border-border bg-background h-screen sticky top-0">
@@ -116,138 +321,8 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Walker profile completion widget */}
-      {role === "walker" && !profileComplete && (
-        <div className="px-3 pb-3">
-          <div
-            className={cn(
-              "overflow-hidden rounded-xl border",
-              !identityVerified ? "border-amber-500/20" : "border-border/60",
-            )}
-          >
-            {/* Colored accent bar */}
-            <div
-              className={cn(
-                "h-0.5 w-full",
-                !identityVerified
-                  ? "bg-gradient-to-r from-amber-400/60 via-amber-500 to-amber-400/40"
-                  : "bg-gradient-to-r from-primary/60 via-primary to-primary/40",
-              )}
-            />
-
-            <div className="space-y-3 p-3">
-              {/* Header */}
-              <div className="flex items-center justify-between gap-2">
-                <p
-                  className={cn(
-                    "text-[11px] font-semibold leading-none",
-                    !identityVerified
-                      ? "text-amber-700 dark:text-amber-400"
-                      : "text-foreground",
-                  )}
-                >
-                  {!identityVerified ? "Ação necessária" : "Complete seu perfil"}
-                </p>
-                <span
-                  className={cn(
-                    "shrink-0 text-[10px] font-bold tabular-nums",
-                    !identityVerified
-                      ? "text-amber-600 dark:text-amber-400"
-                      : "text-muted-foreground",
-                  )}
-                >
-                  {pct}%
-                </span>
-              </div>
-
-              {/* Progress bar */}
-              <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
-                <div
-                  className={cn(
-                    "h-full rounded-full transition-all duration-700",
-                    !identityVerified
-                      ? "bg-gradient-to-r from-amber-500 to-amber-400"
-                      : "bg-gradient-to-r from-primary to-primary/70",
-                  )}
-                  style={{ width: `${Math.max(pct, 3)}%` }}
-                />
-              </div>
-
-              {/* Compact step list */}
-              <div className="space-y-2.5">
-                {COMPLETION_STEPS.map((step) => {
-                  const isDone    = step.status === "verified";
-                  const isPending = step.status === "pending";
-                  const isReq     = step.required && step.status === "idle";
-                  const Icon      = step.icon;
-
-                  const statusLabel =
-                    isDone    ? "Verificado"  :
-                    isPending ? "Em análise"  : "Não enviado";
-
-                  const statusColor =
-                    isDone    ? "text-emerald-600 dark:text-emerald-400"  :
-                    isPending ? "text-amber-600 dark:text-amber-400"      :
-                    isReq     ? "text-amber-700 dark:text-amber-400"      : "text-muted-foreground/60";
-
-                  return (
-                    <div key={step.label} className="flex items-center gap-2">
-                      <div
-                        className={cn(
-                          "flex h-5 w-5 shrink-0 items-center justify-center rounded-md",
-                          isDone    ? "bg-emerald-500/10" :
-                          isPending ? "bg-amber-500/10"   :
-                          isReq     ? "bg-amber-500/10"   : "bg-muted",
-                        )}
-                      >
-                        {isDone ? (
-                          <CheckCircle2 className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-                        ) : isPending ? (
-                          <Clock className="h-3 w-3 text-amber-600 dark:text-amber-400" />
-                        ) : (
-                          <Icon
-                            className={cn(
-                              "h-3 w-3",
-                              isReq ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground",
-                            )}
-                          />
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p
-                          className={cn(
-                            "truncate text-[11px] font-medium leading-none",
-                            isDone ? "text-muted-foreground" : "text-foreground",
-                          )}
-                        >
-                          {step.label}
-                        </p>
-                        <p className={cn("mt-0.5 text-[10px] leading-none", statusColor)}>
-                          {statusLabel}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* CTA */}
-              <Link
-                href="/profile/documents"
-                className={cn(
-                  "flex items-center gap-0.5 pt-0.5 text-[11px] font-semibold transition-opacity hover:opacity-75",
-                  !identityVerified
-                    ? "text-amber-700 dark:text-amber-400"
-                    : "text-primary",
-                )}
-              >
-                {!identityVerified ? "Verificar identidade" : "Ver progresso"}
-                <ChevronRight className="h-3 w-3" />
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Walker onboarding widget */}
+      {role === "walker" && <WalkerOnboarding userImage={session?.user?.image} />}
 
       <Separator />
 
