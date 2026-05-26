@@ -71,6 +71,34 @@ export const WalksApi = {
     await api.patch(`/walks/${id}/cancel`);
   },
 
+  complete: async (walkId: string): Promise<WalkRecord> => {
+    if (!isApiConfigured) {
+      const walk = walksStore.find((w) => w.id === walkId);
+      if (!walk) throw new Error("WALK_NOT_FOUND");
+
+      const now = new Date().toLocaleTimeString("pt-BR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+
+      walksStore = walksStore.map((w) => {
+        if (w.id !== walkId) return w;
+        return {
+          ...w,
+          status: "completed" as const,
+          timeline: w.timeline.map((t) => ({
+            ...t,
+            state: "done" as const,
+            at: t.state === "pending" ? now : t.at,
+          })),
+        };
+      });
+
+      return walksStore.find((w) => w.id === walkId)!;
+    }
+    return api.patch<WalkRecord>(`/walks/${walkId}/complete`).then((r) => r.data);
+  },
+
   start: async (walkId: string, code: string): Promise<WalkRecord> => {
     if (!isApiConfigured) {
       const walk = walksStore.find((w) => w.id === walkId);

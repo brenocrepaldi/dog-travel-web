@@ -54,3 +54,13 @@ export function useStartWalk() {
     },
   });
 }
+
+export function useCompleteWalk() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (walkId: string) => WalksApi.complete(walkId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["walks"] });
+    },
+  });
+}
