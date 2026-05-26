@@ -163,7 +163,7 @@ export const walks: WalkRecord[] = [
 		walkerId: '1',
 		clientName: 'Breno',
 		petNames: ['Rex'],
-		status: 'in_progress',
+		status: 'accepted',
 		dateLabel: 'Hoje · 14:30',
 		scheduledAt: '2026-04-14T14:30:00-03:00',
 		durationMinutes: 45,
@@ -172,6 +172,7 @@ export const walks: WalkRecord[] = [
 		startAddress: 'Rua das Flores, 120 - Sao Paulo',
 		endAddress: 'Parque Ibirapuera - Portao 3',
 		notes: 'Evitar areas com muito barulho no inicio.',
+		startCode: '1234',
 		paymentMethodId: 'pm_1',
 		participants: [
 			{ id: 'client_1', name: 'Breno', role: 'client' },
@@ -179,9 +180,9 @@ export const walks: WalkRecord[] = [
 		],
 		timeline: [
 			{ id: 't1', label: 'Pedido confirmado', at: '14:02', state: 'done' },
-			{ id: 't2', label: 'Passeador chegou ao local', at: '14:28', state: 'done' },
-			{ id: 't3', label: 'Passeio em andamento', at: '14:35', state: 'current' },
-			{ id: 't4', label: 'Passeio concluido', at: '15:15', state: 'pending' },
+			{ id: 't2', label: 'Aguardando passeio', at: 'Hoje · 14:30', state: 'current' },
+			{ id: 't3', label: 'Passeio em andamento', at: '--', state: 'pending' },
+			{ id: 't4', label: 'Passeio concluido', at: '--', state: 'pending' },
 		],
 	},
 	{
