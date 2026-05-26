@@ -18,6 +18,8 @@ import { useAcceptWalk, useDeclineWalk } from "@/features/walks/hooks/use-walk-a
 import { useWalks } from "@/features/walks/hooks/use-walks";
 import { useWalkerStats } from "@/features/stats/hooks/use-stats";
 import { useWalkerAvailability, useUpdateWalkerAvailability } from "@/features/walkers/hooks/use-walkers";
+import { useDocuments } from "@/features/documents/hooks/use-documents";
+import { useProfile } from "@/features/profile/hooks/use-profile";
 import type { WalkRequest } from "@/types";
 
 function getGreeting() {
@@ -31,8 +33,8 @@ function getInitials(name: string) {
   return name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
 }
 
-function getHeroSubtitle(identityVerified: boolean, available: boolean, requestCount: number): string {
-  if (!identityVerified) return "Conclua a verificação de identidade para começar a trabalhar.";
+function getHeroSubtitle(canToggle: boolean, available: boolean, requestCount: number): string {
+  if (!canToggle) return "Conclua seu perfil para ativar sua disponibilidade.";
   if (!available) return "Ative sua disponibilidade para receber pedidos.";
   if (requestCount > 0) return `${requestCount} pedido${requestCount > 1 ? "s" : ""} aguardando sua resposta.`;
   return "Você está online. Aguardando novos pedidos.";
@@ -65,17 +67,36 @@ export default function WalkerDashboardPage() {
   const { data: available = false } = useWalkerAvailability(walkerId);
   const { mutate: updateAvailability, isPending: updatingAvailability } = useUpdateWalkerAvailability(walkerId);
 
-  // For demonstration, identity status is derived from profile/documents in a real app
-  const identityVerified = true;
+  const { data: documents } = useDocuments();
+  const { data: profile } = useProfile();
+
+  const hasPhoto        = !!profile?.avatarUrl;
+  const identityVerified = documents?.identity === "verified";
+  const backgroundVerified = documents?.background === "verified";
+  const canToggle       = hasPhoto && identityVerified && backgroundVerified;
 
   const completedWalks = allWalks.filter((w) => w.status === "completed");
   const activeWalk = allWalks.find((w) => w.status === "in_progress");
 
   function handleAvailabilityClick() {
-    if (!identityVerified) {
+    if (!hasPhoto) {
+      toast.warning("Foto de perfil necessária", {
+        description: "Adicione uma foto ao seu perfil antes de ativar sua disponibilidade.",
+        action: { label: "Atualizar perfil", onClick: () => router.push("/profile") },
+      });
+      return;
+    }
+    if (!canToggle) {
       toast.warning("Verificação de identidade necessária", {
         description: "Complete a verificação antes de ativar sua disponibilidade.",
         action: { label: "Verificar agora", onClick: () => router.push("/profile/documents") },
+      });
+      return;
+    }
+    if (!backgroundVerified) {
+      toast.warning("Antecedentes criminais necessários", {
+        description: "Envie seu comprovante de antecedentes antes de ativar sua disponibilidade.",
+        action: { label: "Enviar agora", onClick: () => router.push("/profile/documents") },
       });
       return;
     }
@@ -118,7 +139,7 @@ export default function WalkerDashboardPage() {
       {/* ── Hero ── */}
       <div className={cn(
         "relative overflow-hidden rounded-2xl px-6 py-8 md:px-8 text-primary-foreground transition-all duration-500",
-        available && identityVerified
+        available && canToggle
           ? "bg-gradient-to-br from-primary via-primary to-emerald-700/60"
           : "bg-gradient-to-br from-primary via-primary to-primary/80",
       )}>
@@ -131,7 +152,7 @@ export default function WalkerDashboardPage() {
             <p className="text-sm font-medium text-primary-foreground/65">{greeting}</p>
             <h1 className="mt-0.5 text-3xl font-bold tracking-tight">{firstName}!</h1>
             <p className="mt-1.5 text-sm text-primary-foreground/70">
-              {getHeroSubtitle(identityVerified, available, walkerRequests.length)}
+              {getHeroSubtitle(canToggle, available, walkerRequests.length)}
             </p>
 
             {/* Availability toggle */}
@@ -141,32 +162,32 @@ export default function WalkerDashboardPage() {
               disabled={updatingAvailability}
               className={cn(
                 "mt-5 flex w-52 cursor-pointer select-none items-center justify-between rounded-xl px-4 py-3 transition-all duration-200 disabled:opacity-70",
-                available && identityVerified
+                available && canToggle
                   ? "bg-emerald-500/20 ring-1 ring-emerald-500/30 hover:bg-emerald-500/25"
                   : "bg-white/10 hover:bg-white/[0.15]",
               )}
             >
               <div className="flex items-center gap-3">
                 <span className="relative flex h-2.5 w-2.5 shrink-0">
-                  {available && identityVerified && (
+                  {available && canToggle && (
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                   )}
                   <span className={cn(
                     "relative inline-flex h-2.5 w-2.5 rounded-full transition-colors duration-300",
-                    available && identityVerified ? "bg-emerald-400" : "bg-white/30",
+                    available && canToggle ? "bg-emerald-400" : "bg-white/30",
                   )} />
                 </span>
                 <div>
                   <p className="text-[10px] font-medium uppercase tracking-wider text-primary-foreground/50">
-                    {!identityVerified ? "Disponibilidade" : "Status"}
+                    {!canToggle ? "Disponibilidade" : "Status"}
                   </p>
                   <p className="text-sm font-semibold leading-tight text-primary-foreground">
-                    {!identityVerified ? "Bloqueada" : available ? "Disponível" : "Indisponível"}
+                    {!canToggle ? "Bloqueada" : available ? "Disponível" : "Indisponível"}
                   </p>
                 </div>
               </div>
 
-              {!identityVerified ? (
+              {!canToggle ? (
                 <Lock className="h-4 w-4 shrink-0 text-white/40" />
               ) : (
                 <div className={cn(
@@ -303,12 +324,12 @@ export default function WalkerDashboardPage() {
             <div>
               <p className="text-sm font-semibold text-foreground">Nenhum pedido no momento</p>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                {!identityVerified
-                  ? "Verifique sua identidade para poder receber pedidos."
+                {!canToggle
+                  ? "Conclua seu perfil para poder receber pedidos."
                   : "Ative sua disponibilidade para começar a receber pedidos."}
               </p>
             </div>
-            {identityVerified && (
+            {canToggle && (
               <button
                 type="button"
                 onClick={handleAvailabilityClick}
