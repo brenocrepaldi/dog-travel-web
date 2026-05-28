@@ -117,7 +117,7 @@ export default function WalkerDashboardPage() {
   function handleAccept(request: WalkRequest) {
     const walkerName = session?.user?.name ?? "Passeador";
     acceptWalk(
-      { request, walkerName },
+      { request, walkerName, walkerId: walkerId ?? "" },
       {
         onSuccess: () => {
           toast.success("Passeio aceito!", {

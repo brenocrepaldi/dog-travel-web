@@ -2,7 +2,19 @@ import {
   walks as seedWalks,
   walkRequests as seedWalkRequests,
 } from "@/lib/mock-data";
-import type { WalkRecord, WalkRequest, UserRole } from "@/types";
+import {
+  DURATION_BASE_PRICE,
+  EXTRA_PET_FEE,
+  PLATFORM_AND_SAFETY_FEE_RATE,
+  FIRST_RIDE_DISCOUNT_RATE,
+} from "@/config/pricing";
+import type {
+  WalkRecord,
+  WalkRequest,
+  UserRole,
+  WalkEstimateRequest,
+  WalkEstimateResult,
+} from "@/types";
 import api, { isApiConfigured } from "@/services/api";
 
 // Module-level mutable stores — used only when API is not configured
@@ -48,6 +60,27 @@ export const WalksApi = {
   hasReview: async (walkId: string): Promise<boolean> => {
     const { ReviewsApi } = await import("@/features/reviews/api/reviews.api");
     return ReviewsApi.getByWalkId(walkId).then((r) => r !== null);
+  },
+
+  // ─── Estimate ───────────────────────────────────────────────────────────────
+
+  estimate: async (input: WalkEstimateRequest): Promise<WalkEstimateResult> => {
+    if (!isApiConfigured) {
+      const { durationMinutes, petCount, isFirstRide } = input;
+      const durationBase         = DURATION_BASE_PRICE[durationMinutes] ?? 18;
+      const extraPetFee          = Math.max(0, petCount - 1) * EXTRA_PET_FEE;
+      const subtotal             = durationBase + extraPetFee;
+      const platformAndSafetyFee = +(subtotal * PLATFORM_AND_SAFETY_FEE_RATE).toFixed(2);
+      const totalBeforeDiscount  = subtotal + platformAndSafetyFee;
+      const firstRideDiscount    = isFirstRide
+        ? +(totalBeforeDiscount * FIRST_RIDE_DISCOUNT_RATE).toFixed(2)
+        : 0;
+      const total = +(totalBeforeDiscount - firstRideDiscount).toFixed(2);
+      return { durationBase, extraPetFee, platformAndSafetyFee, firstRideDiscount, total };
+    }
+    return api
+      .post<WalkEstimateResult>("/walks/estimate", input)
+      .then((r) => r.data);
   },
 
   // ─── Mutations ──────────────────────────────────────────────────────────────
@@ -133,7 +166,7 @@ export const WalksApi = {
       .then((r) => r.data);
   },
 
-  accept: async (request: WalkRequest, walkerName: string): Promise<WalkRecord> => {
+  accept: async (request: WalkRequest, walkerName: string, walkerId: string): Promise<WalkRecord> => {
     if (!isApiConfigured) {
       walkRequestsStore = walkRequestsStore.filter((r) => r.id !== request.id);
 
@@ -143,7 +176,7 @@ export const WalksApi = {
       });
       const newWalk: WalkRecord = {
         id: `accepted-${request.id}`,
-        walkerId: "1",
+        walkerId,
         clientName: request.clientName,
         petNames: request.petNames,
         status: "accepted",
@@ -156,7 +189,7 @@ export const WalksApi = {
         startCode: randomCode(),
         participants: [
           { id: request.clientId, name: request.clientName, role: "client" },
-          { id: "1", name: walkerName, role: "walker" },
+          { id: walkerId, name: walkerName, role: "walker" },
         ],
         timeline: [
           { id: "t1", label: "Pedido aceito", at: now, state: "done" },

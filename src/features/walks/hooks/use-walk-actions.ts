@@ -25,8 +25,8 @@ export function useCancelWalk() {
 export function useAcceptWalk() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ request, walkerName }: { request: WalkRequest; walkerName: string }) =>
-      WalksApi.accept(request, walkerName),
+    mutationFn: ({ request, walkerName, walkerId }: { request: WalkRequest; walkerName: string; walkerId: string }) =>
+      WalksApi.accept(request, walkerName, walkerId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["walks"] });
       queryClient.invalidateQueries({ queryKey: ["walk-requests"] });
