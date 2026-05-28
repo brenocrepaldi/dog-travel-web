@@ -1,10 +1,11 @@
 "use client";
 
-import { ArrowRight, CalendarClock } from "lucide-react";
+import { AlertTriangle, ArrowRight, CalendarClock } from "lucide-react";
 import { FlowActions } from "@/components/common/flow-actions";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useAvailableWalkers } from "@/features/walkers/hooks/use-walkers";
 import type { WalkFormData } from "../walk-request-form";
 
 const DURATION_OPTIONS = [15, 30, 45, 60] as const;
@@ -19,6 +20,16 @@ interface Props {
 export function StepDateTime({ data, updateData, onNext, onBack }: Props) {
   const isValid = data.date && data.time && data.durationMinutes > 0;
   const today   = new Date().toISOString().split("T")[0];
+
+  const slotComplete = Boolean(data.selectedWalkerId && data.date && data.time && data.durationMinutes > 0);
+  const { data: availableWalkers } = useAvailableWalkers(
+    { date: data.date, time: data.time, durationMinutes: data.durationMinutes },
+    slotComplete,
+  );
+  const preSelectedUnavailable =
+    slotComplete &&
+    availableWalkers !== undefined &&
+    !availableWalkers.some((w) => w.id === data.selectedWalkerId);
 
   function openPicker(e: React.FocusEvent<HTMLInputElement>) {
     const input = e.currentTarget;
@@ -114,6 +125,22 @@ export function StepDateTime({ data, updateData, onNext, onBack }: Props) {
             <p className="text-sm font-semibold text-foreground capitalize">{previewLabel}</p>
             <p className="text-xs text-muted-foreground mt-0.5">
               {data.durationMinutes} minutos de duração
+            </p>
+          </div>
+        </div>
+      )}
+
+      {preSelectedUnavailable && (
+        <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/8 px-4 py-3">
+          <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0 mt-0.5">
+            <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
+              Passeador indisponível neste horário
+            </p>
+            <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5 leading-relaxed">
+              O passeador selecionado não está disponível nesta data e horário. Você pode continuar e outro passeador será atribuído automaticamente.
             </p>
           </div>
         </div>
