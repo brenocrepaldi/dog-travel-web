@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Building2, ChevronRight, CreditCard, FileCheck2, TrendingUp, WalletCards } from 'lucide-react';
+import { Briefcase, Building2, ChevronRight, CreditCard, FileCheck2, TrendingUp, WalletCards } from 'lucide-react';
 import { LogoutButton } from './_components/logout-button';
 
 function getInitials(name: string) {
@@ -93,7 +93,13 @@ export default async function ProfilePage() {
 				<div>
 					<SectionLabel>Profissional</SectionLabel>
 					<Card className="overflow-hidden py-0 gap-0">
-						<CardContent className="p-0">
+						<CardContent className="p-0 divide-y divide-border/60">
+							<NavItem
+								href="/profile/walker-profile"
+								icon={Briefcase}
+								label="Perfil profissional"
+								description="Descrição, área de atendimento e especialidades"
+							/>
 							<NavItem
 								href="/profile/documents"
 								icon={FileCheck2}
@@ -119,7 +125,7 @@ export default async function ProfilePage() {
 									description="Histórico de recebimentos"
 								/>
 								<NavItem
-									href="/profile/payment-methods"
+									href="/profile/bank-account"
 									icon={Building2}
 									label="Dados bancários"
 									description="Conta para recebimento de pagamentos"

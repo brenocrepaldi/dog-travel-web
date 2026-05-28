@@ -19,7 +19,7 @@ import {
   Wallet,
   WalletCards,
 } from 'lucide-react';
-import { usePaymentHistory } from '@/features/payments/hooks/use-payments';
+import { useWalkerEarnings } from '@/features/walkers/hooks/use-walkers';
 import { useWalkerStats } from '@/features/stats/hooks/use-stats';
 import type { PaymentHistoryItem } from '@/types';
 
@@ -139,7 +139,7 @@ function EarningRow({ item }: { item: PaymentHistoryItem }) {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function WalkerPayments() {
-  const { data: history = [], isLoading, isError, refetch } = usePaymentHistory();
+  const { data: history = [], isLoading, isError, refetch } = useWalkerEarnings();
 
   return (
     <div className="flex flex-col gap-8 pb-8 lg:flex-row lg:items-start lg:gap-10">
