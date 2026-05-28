@@ -7,13 +7,21 @@ import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
 import { Phone, MessageSquare, Compass, Loader2, MapPin } from 'lucide-react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 import { cn } from '@/lib/utils';
-import { useWalkLocation } from '@/features/tracking/hooks/use-tracking';
+import { useWalkLocation, useLocationBroadcast } from '@/features/tracking/hooks/use-tracking';
 import { useWalkById } from '@/features/walks/hooks/use-walks';
 
 export default function MapTracker({ walkId }: { walkId: string }) {
+	const { data: session } = useSession();
 	const { data: walk } = useWalkById(walkId);
 	const { data: location, isLoading } = useWalkLocation(walkId);
+
+	const isWalker = session?.user?.role === 'walker';
+	const walkInProgress = walk?.status === 'in_progress';
+
+	// Walker continuously sends their GPS position while the walk is active
+	useLocationBroadcast(walkId, isWalker && walkInProgress);
 
 	const walkerParticipant = walk?.participants.find((p) => p.role === 'walker');
 	const walkerName = walkerParticipant?.name ?? 'Passeador';
@@ -58,7 +66,7 @@ export default function MapTracker({ walkId }: { walkId: string }) {
 			{/* ─── Mapbox Map ─── */}
 			<Map
 				mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
-				initialViewState={{ longitude: lng, latitude: lat, zoom: 15 }}
+				initialViewState={{ longitude: lng, latitude: lat, zoom: 18 }}
 				mapStyle="mapbox://styles/mapbox/streets-v12"
 				style={{
 					width: '100%',
