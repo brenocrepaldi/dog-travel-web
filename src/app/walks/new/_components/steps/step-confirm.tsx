@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  BadgeCheck,
   BadgePercent,
   Camera,
   Check,
@@ -15,12 +16,14 @@ import {
   MessageSquare,
   PawPrint,
   ShieldCheck,
+  User,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { FlowActions } from "@/components/common/flow-actions";
 import { PIX_INSTANT_ID } from "@/config/pricing";
 import { useDogs } from "@/features/dogs/hooks/use-dogs";
 import { usePaymentMethods } from "@/features/payments/hooks/use-payments";
+import { useWalkerById } from "@/features/walkers/hooks/use-walkers";
 import type { WalkFormData } from "../walk-request-form";
 
 function fmt(val: number) {
@@ -63,6 +66,7 @@ interface Props {
 export function StepConfirm({ data, onBack, onSubmit, submitting }: Props) {
   const { data: pets = [] } = useDogs();
   const { data: paymentMethods = [] } = usePaymentMethods();
+  const { data: selectedWalker } = useWalkerById(data.selectedWalkerId ?? '');
 
   const selectedPets = data.selectedPetIds
     .map((id) => pets.find((pet) => pet.id === id))
@@ -137,6 +141,22 @@ export function StepConfirm({ data, onBack, onSubmit, submitting }: Props) {
         <SummaryRow icon={Calendar}   label="Data e horário"     value={dateLabel} />
         <SummaryRow icon={Clock}      label="Duração"            value={`${data.durationMinutes} minutos`} />
         <SummaryRow icon={MapPin}     label="Local de partida"   value={data.address || "—"} />
+        {selectedWalker && (
+          <div className="flex items-start gap-3 py-3 last:pb-0">
+            <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0 mt-0.5">
+              <User className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                Passeador solicitado
+              </p>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <p className="text-sm font-medium text-foreground">{selectedWalker.name}</p>
+                {selectedWalker.verified && <BadgeCheck className="h-3.5 w-3.5 shrink-0 text-primary" />}
+              </div>
+            </div>
+          </div>
+        )}
         <SummaryRow icon={CreditCard} label="Forma de pagamento" value={methodLabel} />
         {data.notes && (
           <SummaryRow icon={FileText} label="Observações" value={data.notes} />
