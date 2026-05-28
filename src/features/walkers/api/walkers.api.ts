@@ -12,6 +12,12 @@ export interface WalkerFilters {
   size?: string;
 }
 
+export interface WalkerAvailabilityFilters {
+  date: string;
+  time: string;
+  durationMinutes: number;
+}
+
 export const WalkersApi = {
   list: async (filters?: WalkerFilters): Promise<WalkerProfile[]> => {
     if (!isApiConfigured) {
@@ -100,5 +106,16 @@ export const WalkersApi = {
     availabilityStore[walkerId] = available;
     if (!isApiConfigured) return;
     await api.patch(`/walkers/${walkerId}/availability`, { available });
+  },
+
+  getAvailable: async (filters: WalkerAvailabilityFilters): Promise<WalkerProfile[]> => {
+    if (!isApiConfigured) {
+      // Mock: return walkers whose availability flag is currently true
+      const { walkers: allWalkers } = await import("@/lib/mock-data");
+      return allWalkers.filter((w) => availabilityStore[w.id] === true);
+    }
+    return api
+      .get<WalkerProfile[]>("/walkers/available", { params: filters })
+      .then((r) => r.data);
   },
 };
