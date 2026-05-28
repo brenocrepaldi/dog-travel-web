@@ -12,6 +12,7 @@ import type {
 	WalkerStats,
 	DocumentsStatus,
 	WalkLocation,
+	WalkerBankAccount,
 } from '@/types';
 
 export const pets: Pet[] = [
@@ -447,14 +448,25 @@ export const walkerCertificates: WalkerCertDocument[] = [
 ];
 
 // ─── Walker Earnings View ─────────────────────────────────────────────────────
-// Earnings history shown on the walker payments page — will come from the earnings API.
-export const walkerEarnings: Array<{
-	id: number; walkId: string; date: string; client: string; pets: string; duration: string; amount: string;
-}> = [
-	{ id: 1, walkId: '1', date: '22/03/2026', client: 'Ana Silva',  pets: 'Rex',  duration: '30 min', amount: 'R$ 37,00' },
-	{ id: 2, walkId: '2', date: '21/03/2026', client: 'Julia M.',   pets: 'Mel',  duration: '45 min', amount: 'R$ 44,00' },
-	{ id: 3, walkId: '3', date: '15/03/2026', client: 'Roberto K.', pets: 'Thor', duration: '60 min', amount: 'R$ 52,00' },
+// Earnings history shown on the walker payments page — will come from GET /walkers/me/earnings.
+export const walkerEarningsHistory: PaymentHistoryItem[] = [
+	{ id: 'earn_1', walkId: '1', date: '2026-03-22', amount: 37, status: 'paid',    methodId: '', description: 'Passeio com Rex · Ana Silva'     },
+	{ id: 'earn_2', walkId: '2', date: '2026-03-21', amount: 44, status: 'paid',    methodId: '', description: 'Passeio com Mel · Julia M.'       },
+	{ id: 'earn_3', walkId: '3', date: '2026-03-15', amount: 52, status: 'paid',    methodId: '', description: 'Passeio com Thor · Roberto K.'    },
+	{ id: 'earn_4', walkId: '4', date: '2026-03-25', amount: 44, status: 'pending', methodId: '', description: 'Passeio com Max · Carlos Lima'    },
 ];
+
+// ─── Walker Bank Account ──────────────────────────────────────────────────────
+// Bank account used for walker payouts — will come from GET /walkers/me/bank-account.
+export const walkerBankAccountDefault: WalkerBankAccount = {
+	bankName: '',
+	accountType: 'checking',
+	branch: '',
+	accountNumber: '',
+	holderName: '',
+	holderDocument: '',
+	pixKey: '',
+};
 
 // ─── Client Payment View ──────────────────────────────────────────────────────
 // Payment transaction history shown on the client payments page — will come from the payments API.

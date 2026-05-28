@@ -94,6 +94,26 @@ export interface WalkerProfile {
   behaviorExpertise: string[];
 }
 
+export interface WalkerProfileUpdate {
+  description?: string;
+  location?: string;
+  serviceArea?: string;
+  availability?: string;
+  tags?: string[];
+  supportedSizes?: DogSize[];
+  behaviorExpertise?: string[];
+}
+
+export interface WalkerBankAccount {
+  bankName: string;
+  accountType: 'checking' | 'savings';
+  branch: string;
+  accountNumber: string;
+  holderName: string;
+  holderDocument: string;
+  pixKey?: string;
+}
+
 // ─── Payment Domain (extended) ────────────────────────────────────────────────
 
 export interface ManagedPaymentMethod {

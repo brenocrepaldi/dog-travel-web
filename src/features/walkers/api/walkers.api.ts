@@ -1,9 +1,11 @@
-import { walkers, walkerAvailability } from "@/lib/mock-data";
-import type { WalkerProfile } from "@/types";
+import { walkers, walkerAvailability, walkerEarningsHistory, walkerBankAccountDefault } from "@/lib/mock-data";
+import type { EarningsParams, PaymentHistoryItem, WalkerBankAccount, WalkerProfile, WalkerProfileUpdate } from "@/types";
 import api, { isApiConfigured } from "@/services/api";
 
-// Module-level mutable store for availability
+// Module-level mutable stores
 const availabilityStore: Record<string, boolean> = { ...walkerAvailability };
+let myWalkerProfileStore: WalkerProfile | null = null;
+let myBankAccountStore: WalkerBankAccount = { ...walkerBankAccountDefault };
 
 export interface WalkerFilters {
   query?: string;
@@ -34,6 +36,46 @@ export const WalkersApi = {
       return walkers.find((w) => w.id === id);
     }
     return api.get<WalkerProfile>(`/walkers/${id}`).then((r) => r.data);
+  },
+
+  getMe: async (): Promise<WalkerProfile | null> => {
+    if (!isApiConfigured) {
+      return myWalkerProfileStore ?? (walkers[0] ? { ...walkers[0] } : null);
+    }
+    return api.get<WalkerProfile>("/walkers/me").then((r) => r.data);
+  },
+
+  updateMe: async (data: WalkerProfileUpdate): Promise<void> => {
+    if (!isApiConfigured) {
+      const base = myWalkerProfileStore ?? walkers[0];
+      if (base) myWalkerProfileStore = { ...base, ...data };
+      return;
+    }
+    await api.patch("/walkers/me", data);
+  },
+
+  getEarnings: async (params?: EarningsParams): Promise<PaymentHistoryItem[]> => {
+    if (!isApiConfigured) {
+      return [...walkerEarningsHistory];
+    }
+    return api
+      .get<PaymentHistoryItem[]>("/walkers/me/earnings", { params })
+      .then((r) => r.data);
+  },
+
+  getBankAccount: async (): Promise<WalkerBankAccount> => {
+    if (!isApiConfigured) {
+      return { ...myBankAccountStore };
+    }
+    return api.get<WalkerBankAccount>("/walkers/me/bank-account").then((r) => r.data);
+  },
+
+  updateBankAccount: async (data: WalkerBankAccount): Promise<void> => {
+    if (!isApiConfigured) {
+      myBankAccountStore = { ...data };
+      return;
+    }
+    await api.patch("/walkers/me/bank-account", data);
   },
 
   getAvailability: async (walkerId: string): Promise<boolean> => {

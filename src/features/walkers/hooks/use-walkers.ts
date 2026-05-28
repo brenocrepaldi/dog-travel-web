@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { WalkersApi, type WalkerFilters } from "../api/walkers.api";
+import type { EarningsParams, WalkerBankAccount, WalkerProfileUpdate } from "@/types";
 
 export function useWalkers(filters?: WalkerFilters) {
   return useQuery({
@@ -15,6 +16,50 @@ export function useWalkerById(id: string) {
     queryFn: () => WalkersApi.getById(id),
     enabled: Boolean(id),
     staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useWalkerProfile() {
+  return useQuery({
+    queryKey: ["walkers", "me"],
+    queryFn: () => WalkersApi.getMe(),
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useUpdateWalkerProfile() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: WalkerProfileUpdate) => WalkersApi.updateMe(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["walkers", "me"] });
+    },
+  });
+}
+
+export function useWalkerEarnings(params?: EarningsParams) {
+  return useQuery({
+    queryKey: ["walkers", "me", "earnings", params],
+    queryFn: () => WalkersApi.getEarnings(params),
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
+export function useWalkerBankAccount() {
+  return useQuery({
+    queryKey: ["walkers", "me", "bank-account"],
+    queryFn: () => WalkersApi.getBankAccount(),
+    staleTime: 10 * 60 * 1000,
+  });
+}
+
+export function useUpdateWalkerBankAccount() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: WalkerBankAccount) => WalkersApi.updateBankAccount(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["walkers", "me", "bank-account"] });
+    },
   });
 }
 
