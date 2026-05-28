@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { WalkersApi, type WalkerFilters } from "../api/walkers.api";
+import { WalkersApi, type WalkerFilters, type WalkerAvailabilityFilters } from "../api/walkers.api";
 import type { EarningsParams, WalkerBankAccount, WalkerProfileUpdate } from "@/types";
 
 export function useWalkers(filters?: WalkerFilters) {
@@ -77,6 +77,7 @@ export function useWalkerAvailability(walkerId: string) {
     queryKey: ["walkers", walkerId, "availability"],
     queryFn: () => WalkersApi.getAvailability(walkerId),
     enabled: Boolean(walkerId),
+    staleTime: 30_000,
   });
 }
 
@@ -98,5 +99,14 @@ export function useUpdateWalkerAvailability(walkerId: string) {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["walkers", walkerId, "availability"] });
     },
+  });
+}
+
+export function useAvailableWalkers(filters: WalkerAvailabilityFilters, enabled = true) {
+  return useQuery({
+    queryKey: ["walkers", "available", filters],
+    queryFn: () => WalkersApi.getAvailable(filters),
+    enabled: enabled && Boolean(filters.date) && Boolean(filters.time),
+    staleTime: 2 * 60 * 1000,
   });
 }
