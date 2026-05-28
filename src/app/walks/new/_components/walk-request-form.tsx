@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { BadgeCheck, CheckCircle2, LogOut, User } from 'lucide-react';
@@ -147,6 +148,7 @@ export function WalkRequestForm() {
 	const searchParams = useSearchParams();
 	const repeatWalkId  = searchParams.get('repeat') ?? '';
 	const preselectedWalkerId = searchParams.get('walker') ?? '';
+	const { data: session } = useSession();
 	const { data: pets = [] } = useDogs();
 	const { data: walkToRepeat } = useWalkById(repeatWalkId);
 	const { data: preselectedWalker } = useWalkerById(preselectedWalkerId);
@@ -168,9 +170,16 @@ export function WalkRequestForm() {
 		if (!repeatWalkId || !walkToRepeat) return;
 		hasPrefilledRepeat.current = true;
 		const { date, time } = toDateAndTime(walkToRepeat.scheduledAt);
-		const selectedPetIds = walkToRepeat.petNames
-			.map((petName) => pets.find((pet) => pet.name.toLowerCase() === petName.toLowerCase())?.id)
-			.filter((petId): petId is string => Boolean(petId));
+
+		// Prefer petIds from the walk record (reliable); fall back to name matching
+		// for walks created before this field was added.
+		const ownedPetIds = new Set(pets.map((p) => p.id));
+		const selectedPetIds = walkToRepeat.petIds
+			? walkToRepeat.petIds.filter((id) => ownedPetIds.has(id))
+			: walkToRepeat.petNames
+					.map((name) => pets.find((p) => p.name.toLowerCase() === name.toLowerCase())?.id)
+					.filter((id): id is string => Boolean(id));
+
 		setData((previous) => ({
 			...previous,
 			selectedPetIds: selectedPetIds.length > 0 ? selectedPetIds : previous.selectedPetIds,
@@ -237,7 +246,8 @@ export function WalkRequestForm() {
 		const newWalk = {
 			id: `local-${crypto.randomUUID()}`,
 			walkerId: data.selectedWalkerId ?? null,
-			clientName: 'Você',
+			clientName: session?.user?.name ?? 'Cliente',
+			petIds: data.selectedPetIds,
 			petNames,
 			status: 'pending' as const,
 			dateLabel,
