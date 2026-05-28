@@ -9,6 +9,7 @@ import {
 	Dog,
 	Info,
 	Lightbulb,
+	Loader2,
 	MapPin,
 	Search,
 	ShieldCheck,
@@ -16,6 +17,7 @@ import {
 	Star,
 } from 'lucide-react';
 import { useDogs } from '@/features/dogs/hooks/use-dogs';
+import { useWalkers } from '@/features/walkers/hooks/use-walkers';
 import { cn } from '@/lib/utils';
 import type { DogSize, WalkerProfile } from '@/types';
 import { buttonVariants } from '@/components/ui/button';
@@ -26,10 +28,6 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { EmptyState } from '@/components/common/empty-state';
 import { trackMetricEvent } from '@/lib/metrics';
-
-interface WalkersExplorerProps {
-	walkers: WalkerProfile[];
-}
 
 // ─── Walker Avatar ────────────────────────────────────────────────────────────
 
@@ -248,15 +246,29 @@ function inferBehaviorNeeds(notes: string | undefined) {
 
 // ─── Main Explorer ────────────────────────────────────────────────────────────
 
-export function WalkersExplorer({ walkers }: WalkersExplorerProps) {
+export function WalkersExplorer() {
 	const { data: pets = [] } = useDogs();
+
+	// query + size drive the API fetch; trustPack + fitMyPets are client-side only
+	const [inputQuery, setInputQuery] = useState('');
 	const [query, setQuery] = useState('');
 	const [sizeFilter, setSizeFilter] = useState<DogSize | ''>('');
 	const [onlyWithTrustPack, setOnlyWithTrustPack] = useState(false);
 	const [fitMyPets, setFitMyPets] = useState(false);
 
+	// Debounce text input so we don't fire a request on every keystroke
+	useEffect(() => {
+		const timer = setTimeout(() => setQuery(inputQuery), 300);
+		return () => clearTimeout(timer);
+	}, [inputQuery]);
+
+	const { data: walkers = [], isLoading } = useWalkers({
+		query: query || undefined,
+		size:  sizeFilter || undefined,
+	});
+
 	const hasActiveFilters =
-		Boolean(query.trim()) || sizeFilter !== '' || onlyWithTrustPack || fitMyPets;
+		Boolean(inputQuery.trim()) || sizeFilter !== '' || onlyWithTrustPack || fitMyPets;
 
 	const derivedProfile = useMemo(() => {
 		const sizes = new Set<DogSize>();
@@ -277,18 +289,14 @@ export function WalkersExplorer({ walkers }: WalkersExplorerProps) {
 		};
 	}, [pets]);
 
+	// query + size are already filtered server-side; trustPack + fitMyPets are client-side only
 	const filteredWalkers = useMemo(() => {
 		return walkers.filter((walker) => {
-			const search = query.trim().toLowerCase();
-			const textSource =
-				`${walker.name} ${walker.location} ${walker.tags.join(' ')} ${walker.behaviorExpertise.join(' ')}`.toLowerCase();
-			const matchesSearch = search.length === 0 || textSource.includes(search);
-			const matchesSize = !sizeFilter || walker.supportedSizes.includes(sizeFilter);
 			const hasTrustPack =
 				walker.trustChecks.identityVerified && walker.trustChecks.backgroundCheck;
 			const matchesTrust = !onlyWithTrustPack || hasTrustPack;
 
-			if (!fitMyPets) return matchesSearch && matchesSize && matchesTrust;
+			if (!fitMyPets) return matchesTrust;
 
 			const supportsAllMySizes =
 				derivedProfile.sizes.length === 0 ||
@@ -298,16 +306,9 @@ export function WalkersExplorer({ walkers }: WalkersExplorerProps) {
 			const supportsMultiDog =
 				!derivedProfile.needsMultiDogSupport || walker.behaviorExpertise.includes('multiplos-caes');
 
-			return (
-				matchesSearch &&
-				matchesSize &&
-				matchesTrust &&
-				supportsAllMySizes &&
-				supportsReactive &&
-				supportsMultiDog
-			);
+			return matchesTrust && supportsAllMySizes && supportsReactive && supportsMultiDog;
 		});
-	}, [derivedProfile, fitMyPets, onlyWithTrustPack, query, sizeFilter, walkers]);
+	}, [derivedProfile, fitMyPets, onlyWithTrustPack, walkers]);
 
 	useEffect(() => {
 		if (fitMyPets) {
@@ -332,16 +333,17 @@ export function WalkersExplorer({ walkers }: WalkersExplorerProps) {
 		trackMetricEvent({
 			name: 'walkers_filters_applied',
 			payload: {
-				queryLength: query.trim().length,
+				queryLength: inputQuery.trim().length,
 				sizeFilter,
 				onlyWithTrustPack,
 				fitMyPets,
 				resultCount: filteredWalkers.length,
 			},
 		});
-	}, [filteredWalkers.length, fitMyPets, hasActiveFilters, onlyWithTrustPack, query, sizeFilter]);
+	}, [filteredWalkers.length, fitMyPets, hasActiveFilters, inputQuery, onlyWithTrustPack, sizeFilter]);
 
 	const clearFilters = () => {
+		setInputQuery('');
 		setQuery('');
 		setSizeFilter('');
 		setOnlyWithTrustPack(false);
@@ -389,8 +391,8 @@ export function WalkersExplorer({ walkers }: WalkersExplorerProps) {
 								<Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
 								<Input
 									type="search"
-									value={query}
-									onChange={(e) => setQuery(e.target.value)}
+									value={inputQuery}
+									onChange={(e) => setInputQuery(e.target.value)}
 									placeholder="Nome, região ou especialidade..."
 									className="pl-9 bg-background"
 								/>
@@ -469,7 +471,12 @@ export function WalkersExplorer({ walkers }: WalkersExplorerProps) {
 
 			{/* ── Main: resultados ── */}
 			<div className="flex min-w-0 flex-1 flex-col gap-6 lg:order-1">
-				{filteredWalkers.length === 0 ? (
+				{isLoading ? (
+					<div className="flex items-center justify-center gap-3 py-20 text-muted-foreground">
+						<Loader2 className="h-5 w-5 animate-spin" />
+						<span className="text-sm">Carregando passeadores...</span>
+					</div>
+				) : filteredWalkers.length === 0 ? (
 					<EmptyState
 						icon={Search}
 						title="Nenhum passeador encontrado"

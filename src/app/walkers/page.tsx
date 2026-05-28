@@ -1,13 +1,10 @@
 import type { Metadata } from "next";
 import { Separator } from "@/components/ui/separator";
-import { WalkersApi } from "@/features/walkers/api/walkers.api";
 import { WalkersExplorer } from "./_components/walkers-explorer";
 
 export const metadata: Metadata = { title: "Passeadores | DogTravel" };
 
-export default async function WalkersPage() {
-  const walkers = await WalkersApi.list();
-
+export default function WalkersPage() {
   return (
     <div className="flex flex-col gap-8 pb-8">
       <header className="space-y-1.5">
@@ -22,7 +19,7 @@ export default async function WalkersPage() {
         <Separator className="mt-6" />
       </header>
 
-      <WalkersExplorer walkers={walkers} />
+      <WalkersExplorer />
     </div>
   );
 }
