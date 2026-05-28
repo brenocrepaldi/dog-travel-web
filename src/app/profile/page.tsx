@@ -1,20 +1,12 @@
 import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Briefcase, Building2, ChevronRight, CreditCard, FileCheck2, TrendingUp, WalletCards } from 'lucide-react';
 import { LogoutButton } from './_components/logout-button';
+import { ProfileAvatar } from './_components/profile-avatar';
 
-function getInitials(name: string) {
-	return name
-		.split(' ')
-		.map((n) => n[0])
-		.join('')
-		.slice(0, 2)
-		.toUpperCase();
-}
 
 interface NavItemProps {
 	href: string;
@@ -54,7 +46,6 @@ export default async function ProfilePage() {
 	if (!session?.user) redirect('/login');
 
 	const { name, email, image, role = 'client' } = session.user;
-	const initials = name ? getInitials(name) : '?';
 
 	return (
 		<div className="max-w-xl space-y-6 pb-8">
@@ -74,12 +65,10 @@ export default async function ProfilePage() {
 				href="/profile/details"
 				className="flex items-center gap-4 p-4 rounded-2xl border border-border bg-card hover:bg-accent/40 transition-colors duration-150 group"
 			>
-				<Avatar className="h-14 w-14 ring-2 ring-border/40 ring-offset-2 ring-offset-card shadow-sm shrink-0">
-					<AvatarImage src={image ?? ''} alt={name ?? ''} />
-					<AvatarFallback className="text-lg bg-primary/10 text-primary font-semibold">
-						{initials}
-					</AvatarFallback>
-				</Avatar>
+				<ProfileAvatar
+					fallbackName={name ?? ''}
+					fallbackImage={image ?? undefined}
+				/>
 				<div className="flex-1 min-w-0">
 					<p className="text-base font-semibold text-foreground truncate">{name ?? 'Usuário'}</p>
 					<p className="text-sm text-muted-foreground truncate">{email ?? ''}</p>
