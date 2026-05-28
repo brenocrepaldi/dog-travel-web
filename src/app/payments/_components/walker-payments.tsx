@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,9 +20,62 @@ import {
   Wallet,
   WalletCards,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { useWalkerEarnings } from '@/features/walkers/hooks/use-walkers';
 import { useWalkerStats } from '@/features/stats/hooks/use-stats';
-import type { PaymentHistoryItem } from '@/types';
+import type { EarningsParams, PaymentHistoryItem } from '@/types';
+
+// ─── Period filter ────────────────────────────────────────────────────────────
+
+type PeriodPreset = 'this_month' | 'last_month' | 'last_3_months' | 'all';
+
+const PERIOD_LABELS: Record<PeriodPreset, string> = {
+  this_month: 'Este mês',
+  last_month: 'Mês anterior',
+  last_3_months: 'Últimos 3 meses',
+  all: 'Tudo',
+};
+
+function toIsoDate(d: Date) {
+  return d.toISOString().split('T')[0];
+}
+
+function periodToParams(preset: PeriodPreset): EarningsParams {
+  const now = new Date();
+  if (preset === 'this_month') {
+    return { from: toIsoDate(new Date(now.getFullYear(), now.getMonth(), 1)), to: toIsoDate(now) };
+  }
+  if (preset === 'last_month') {
+    const firstOfLast = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastOfLast = new Date(now.getFullYear(), now.getMonth(), 0);
+    return { from: toIsoDate(firstOfLast), to: toIsoDate(lastOfLast) };
+  }
+  if (preset === 'last_3_months') {
+    return { from: toIsoDate(new Date(now.getFullYear(), now.getMonth() - 3, 1)), to: toIsoDate(now) };
+  }
+  return {};
+}
+
+function PeriodFilter({ value, onChange }: { value: PeriodPreset; onChange: (p: PeriodPreset) => void }) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {(Object.keys(PERIOD_LABELS) as PeriodPreset[]).map((preset) => (
+        <button
+          key={preset}
+          onClick={() => onChange(preset)}
+          className={cn(
+            'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors duration-150',
+            value === preset
+              ? 'bg-primary text-primary-foreground'
+              : 'bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground',
+          )}
+        >
+          {PERIOD_LABELS[preset]}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -139,7 +193,8 @@ function EarningRow({ item }: { item: PaymentHistoryItem }) {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function WalkerPayments() {
-  const { data: history = [], isLoading, isError, refetch } = useWalkerEarnings();
+  const [period, setPeriod] = useState<PeriodPreset>('this_month');
+  const { data: history = [], isLoading, isError, refetch } = useWalkerEarnings(periodToParams(period));
 
   return (
     <div className="flex flex-col gap-8 pb-8 lg:flex-row lg:items-start lg:gap-10">
@@ -175,6 +230,8 @@ export function WalkerPayments() {
             </span>
             <div className="flex-1 h-px bg-border/60" />
           </div>
+
+          <PeriodFilter value={period} onChange={setPeriod} />
 
           {isLoading && (
             <div className="flex items-center justify-center gap-3 py-16 rounded-2xl border border-border/60 bg-card text-muted-foreground">
