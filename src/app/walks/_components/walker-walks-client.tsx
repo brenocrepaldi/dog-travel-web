@@ -272,9 +272,11 @@ const FILTERS: { value: FilterValue; label: string; match: (w: WalkRecord) => bo
 // ── Main component ─────────────────────────────────────────────────────────
 export function WalkerWalksClient() {
 	const { data: session } = useSession();
-	const walkerId = session?.user?.id ?? '1';
+	const walkerId = session?.user?.id;
 
-	const { data: rawWalks = [], isLoading } = useWalks('walker', walkerId);
+	const { data: rawWalks = [], isLoading } = useWalks('walker', walkerId ?? '', {
+		enabled: !!walkerId,
+	});
 	const [activeFilter, setActiveFilter] = useState<FilterValue>('todos');
 	const [search, setSearch] = useState('');
 

@@ -52,9 +52,9 @@ function SectionHeader({ title, href, linkLabel }: { title: string; href: string
 }
 
 export default function WalkerDashboardPage() {
-  const { data: session } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
   const firstName = session?.user?.name?.split(" ")[0] ?? "Passeador";
-  const walkerId  = session?.user?.id ?? "1";
+  const walkerId  = session?.user?.id;
   const greeting  = getGreeting();
   const router    = useRouter();
 
@@ -62,10 +62,12 @@ export default function WalkerDashboardPage() {
   const { mutate: acceptWalk } = useAcceptWalk();
   const { mutate: declineWalk } = useDeclineWalk();
 
-  const { data: allWalks = [], isLoading: walksLoading } = useWalks("walker", walkerId);
+  const { data: allWalks = [], isLoading: walksLoading } = useWalks("walker", walkerId ?? "", {
+    enabled: !!walkerId,
+  });
   const { data: stats } = useWalkerStats();
-  const { data: available = false } = useWalkerAvailability(walkerId);
-  const { mutate: updateAvailability, isPending: updatingAvailability } = useUpdateWalkerAvailability(walkerId);
+  const { data: available = false } = useWalkerAvailability(walkerId ?? "");
+  const { mutate: updateAvailability, isPending: updatingAvailability } = useUpdateWalkerAvailability(walkerId ?? "");
 
   const { data: documents } = useDocuments();
   const { data: profile } = useProfile();
@@ -74,6 +76,8 @@ export default function WalkerDashboardPage() {
   const identityVerified = documents?.identity === "verified";
   const backgroundVerified = documents?.background === "verified";
   const canToggle       = hasPhoto && identityVerified && backgroundVerified;
+
+  if (sessionStatus === "loading") return null;
 
   const completedWalks = allWalks.filter((w) => w.status === "completed");
   const activeWalk = allWalks.find((w) => w.status === "in_progress");
