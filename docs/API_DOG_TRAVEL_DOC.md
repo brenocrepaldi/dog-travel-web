@@ -248,7 +248,7 @@ The dashboard aggregates data from several domains (stats, walks, dogs, document
 
 ---
 
-### GET /users/me/stats
+### GET /me/stats
 
 **Description:** Returns cumulative statistics for the authenticated client.
 
@@ -511,11 +511,66 @@ The walk request is a 6-step wizard. Steps 1–5 collect data and step 6 submits
 | 1    | Seus cães           | `GET /dogs` (lists client's pets for selection)                                  |
 | 2    | Data e horário      | None (local form)                                                                |
 | 3    | Local de partida    | Nominatim reverse geocode + forward geocode (external — see Section 16)          |
-| 4    | Estimativa de preço | Client-side calculation (pricing rules from `src/config/pricing.ts`)             |
+| 4    | Estimativa de preço | `POST /walks/estimate` (server-side pricing breakdown)                           |
 | 5    | Forma de pagamento  | `GET /payment-methods` (saved methods) + `POST /payment-methods` ("Add card" dialog) |
 | 6    | Confirmar pedido    | `POST /walks`                                                                    |
 
 > **Note:** The `repeat` query param (`/walks/new?repeat=<walkId>`) prefills the form with data from a previous walk via `GET /walks/{id}` (`useWalkById`). The confirmation step (step 6) resolves the selected payment method label via `GET /payment-methods`.
+
+---
+
+### POST /walks/estimate
+
+**Description:** Returns a server-computed price breakdown for a walk given its duration, number of pets, and whether it is the client's first ride. Called in Step 4 of the walk request wizard. The total from this response is synced to form state and submitted as `price` in `POST /walks`.
+
+**Authentication:** Required (Bearer JWT)
+
+**Profile:** Client
+
+#### Request Body
+
+| Field           | Type    | Required | Description                                              |
+|-----------------|---------|----------|----------------------------------------------------------|
+| durationMinutes | number  | ✅        | Walk duration in minutes (15, 30, 45, or 60)             |
+| petCount        | number  | ✅        | Number of pets to be walked (≥ 1)                        |
+| isFirstRide     | boolean | ✅        | Whether this is the client's first walk on DogTravel     |
+
+**Example Request:**
+```json
+{
+  "durationMinutes": 30,
+  "petCount": 2,
+  "isFirstRide": false
+}
+```
+
+#### Response — 200 OK
+
+```json
+{
+  "durationBase": 18.00,
+  "extraPetFee": 4.00,
+  "platformAndSafetyFee": 1.76,
+  "firstRideDiscount": 0.00,
+  "total": 23.76
+}
+```
+
+| Field                | Type   | Description                                                        |
+|----------------------|--------|--------------------------------------------------------------------|
+| durationBase         | number | Base price for the selected duration in BRL                        |
+| extraPetFee          | number | Additional fee for each extra pet beyond the first (in BRL)        |
+| platformAndSafetyFee | number | Platform + safety fee (8% of subtotal) in BRL                      |
+| firstRideDiscount    | number | First-ride discount (15% of subtotal), positive value if applied   |
+| total                | number | Final amount to be charged, in BRL                                 |
+
+#### Response — 400 Bad Request
+
+```json
+{ "message": "durationMinutes must be one of: 15, 30, 45, 60" }
+```
+
+**Source:** `src/features/walks/api/walks.api.ts` — `WalksApi.estimate()` · `src/features/walks/hooks/use-walks.ts` — `useWalkEstimate()` · `src/app/walks/new/_components/steps/step-price.tsx`
 
 ---
 
@@ -1914,7 +1969,7 @@ Empty body or the updated `User` object (frontend ignores the body and refetches
 
 ---
 
-### POST /documents/identity
+### POST /profile/documents/identity
 
 **Description:** Uploads the walker's identity verification documents. Requires two files: the official ID document (RG, CNH, or passport) and a selfie holding the document open. After upload the status transitions to `"pending"` while DogTravel's team reviews (up to 3 business days).
 
@@ -1949,7 +2004,7 @@ Empty body on success. The frontend then invalidates the `GET /profile/documents
 
 ---
 
-### POST /documents/background
+### POST /profile/documents/background
 
 **Description:** Uploads the criminal background check certificate. Must be issued within the last 90 days. After upload the status transitions to `"pending"` while DogTravel's team reviews (up to 5 business days).
 
@@ -1977,7 +2032,7 @@ Empty body on success.
 
 ---
 
-### POST /documents/certificates
+### POST /profile/documents/certificates
 
 **Description:** Adds an optional professional certification to the walker's profile (e.g. dog training, first aid, veterinary). Each certificate is independently reviewed by DogTravel before receiving `"verified"` status. Returns the created `WalkerCertDocument` record.
 
@@ -2026,7 +2081,7 @@ Content-Type: application/pdf
 
 ---
 
-### DELETE /documents/certificates/{id}
+### DELETE /profile/documents/certificates/{id}
 
 **Description:** Removes a professional certification from the walker's profile. Only certificates with status `"pending"` or `"idle"` can be deleted via the UI — `"verified"` certificates show no delete button. The API should enforce this constraint as well.
 
@@ -2058,7 +2113,7 @@ Empty body on success.
 
 ---
 
-✅ **Fase 12 concluída.** 5 rotas encontradas e documentadas (`GET /profile/documents`, `POST /documents/identity`, `POST /documents/background`, `POST /documents/certificates`, `DELETE /documents/certificates/{id}`). Avançando para a Fase 13.
+✅ **Fase 12 concluída.** 5 rotas encontradas e documentadas (`GET /profile/documents`, `POST /profile/documents/identity`, `POST /profile/documents/background`, `POST /profile/documents/certificates`, `DELETE /profile/documents/certificates/{id}`). Avançando para a Fase 13.
 
 ---
 
@@ -2207,11 +2262,11 @@ Same shape as one element of `GET /walkers` array. Includes all fields listed in
 
 ### GET /walkers/{walkerId}/availability
 
-**Description:** Returns the current availability toggle state of a specific walker. Used on the walker dashboard to show the live availability switch.
+**Description:** Returns the current availability toggle state of a specific walker. Used on the walker dashboard to show the live availability switch, and also called from the walker detail page (`/walkers/{id}`) to display a real-time availability badge to clients.
 
 **Authentication:** Required (Bearer JWT)
 
-**Profile:** Walker
+**Profile:** Client | Walker
 
 #### Path Parameters
 
@@ -2263,7 +2318,53 @@ Empty body on success.
 
 ---
 
-✅ **Fase 13 concluída.** 4 rotas encontradas e documentadas (`GET /walkers`, `GET /walkers/{id}`, `GET /walkers/{walkerId}/availability`, `PATCH /walkers/{walkerId}/availability`). Avançando para a Fase 14.
+### GET /walkers/available
+
+**Description:** Returns walkers who are currently set as available AND match the requested date, time, and duration slot. Called in the walk request wizard (Step 2 — date and time selection) to let the client see which walkers can take their walk before submitting it. Also used on the `WalkerAvailabilityBadge` component if a date-context filter is desired in the future.
+
+**Authentication:** Required (Bearer JWT)
+
+**Profile:** Client
+
+#### Query Parameters
+
+| Parameter       | Type   | Required | Description                                            |
+|-----------------|--------|----------|--------------------------------------------------------|
+| date            | string | ✅        | Target date in `YYYY-MM-DD` format                     |
+| time            | string | ✅        | Target start time in `HH:MM` (24 h) format             |
+| durationMinutes | number | ✅        | Walk duration in minutes (15, 30, 45, or 60)           |
+
+**Example Request:**
+```
+GET /walkers/available?date=2026-06-10&time=08:00&durationMinutes=30
+```
+
+#### Response — 200 OK
+
+Array of `WalkerProfile` objects (same shape as `GET /walkers`) whose `available` flag is `true` and who have no conflicting walk in the requested time window.
+
+```json
+[
+  {
+    "id": "walker_1",
+    "name": "Carlos Silva",
+    "rating": 4.9,
+    ...
+  }
+]
+```
+
+#### Response — 400 Bad Request
+
+```json
+{ "message": "date, time and durationMinutes are required" }
+```
+
+**Source:** `src/features/walkers/api/walkers.api.ts` — `WalkersApi.getAvailable()` · `src/features/walkers/hooks/use-walkers.ts` — `useAvailableWalkers()`
+
+---
+
+✅ **Fase 13 concluída.** 6 rotas encontradas e documentadas (`GET /walkers`, `GET /walkers/{id}`, `GET /walkers/{id}/reviews`, `GET /walkers/available`, `GET /walkers/{walkerId}/availability`, `PATCH /walkers/{walkerId}/availability`). Avançando para a Fase 14.
 
 ---
 
@@ -2511,35 +2612,9 @@ The routes below are **not explicitly present** in any API module file (`*.api.t
 
 ---
 
-### GET /walks/{walkId}/estimate *(inferred)*
+### POST /walks/estimate *(implemented — see Section 3)*
 
-**Description:** Returns a server-computed price breakdown for a walk estimate. Currently the pricing logic is entirely client-side (`DURATION_BASE_PRICE`, `EXTRA_PET_FEE`, `PLATFORM_AND_SAFETY_FEE_RATE`), but the source comment in `walks/new` explicitly states: *"will come from a pricing/configuration API endpoint"*.
-
-**Authentication:** Required (Bearer JWT)
-
-**Query Parameters:**
-
-| Parameter       | Type     | Description                       |
-|-----------------|----------|-----------------------------------|
-| petIds          | string[] | IDs of pets to include            |
-| durationMinutes | number   | Walk duration (15, 30, 45, or 60) |
-| lat             | number   | Start location latitude           |
-| lng             | number   | Start location longitude          |
-
-**Expected Response — 200 OK:**
-
-```json
-{
-  "baseRate": 0.45,
-  "durationMinutes": 30,
-  "subtotal": 1800,
-  "platformFee": 144,
-  "total": 1656,
-  "currency": "BRL"
-}
-```
-
-*(amounts in cents)*
+**Description:** ✅ This route is now implemented. Server-side pricing breakdown for a walk, given `durationMinutes`, `petCount`, and `isFirstRide`. See the full documentation in **[Section 3 — POST /walks/estimate](#post-walksestimate)**.
 
 ---
 
@@ -2649,7 +2724,7 @@ Complete list of all documented API routes (excluding inferred).
 | 1 | POST | `/auth/register` | Client \| Walker | 1 |
 | 2 | POST | `/auth/login` | Client \| Walker | 1 |
 | 3 | POST | `/auth/refresh` | Client \| Walker | 1 |
-| 4 | GET | `/users/me/stats` | Client | 2 |
+| 4 | GET | `/me/stats` | Client | 2 |
 | 5 | GET | `/walkers/me/stats` | Walker | 2 |
 | 6 | GET | `/walks` | Client \| Walker | 2 |
 | 7 | POST | `/walks` | Client | 3 |
@@ -2679,25 +2754,27 @@ Complete list of all documented API routes (excluding inferred).
 | 31 | GET | `/profile` | Client \| Walker | 11 |
 | 32 | PATCH | `/profile` | Client \| Walker | 11 |
 | 33 | GET | `/profile/documents` | Walker | 12 |
-| 34 | POST | `/documents/identity` | Walker | 12 |
-| 35 | POST | `/documents/background` | Walker | 12 |
-| 36 | POST | `/documents/certificates` | Walker | 12 |
-| 37 | DELETE | `/documents/certificates/{id}` | Walker | 12 |
+| 34 | POST | `/profile/documents/identity` | Walker | 12 |
+| 35 | POST | `/profile/documents/background` | Walker | 12 |
+| 36 | POST | `/profile/documents/certificates` | Walker | 12 |
+| 37 | DELETE | `/profile/documents/certificates/{id}` | Walker | 12 |
 | 38 | GET | `/walkers` | Client | 13 |
 | 39 | GET | `/walkers/{id}` | Client | 13 |
 | 40 | GET | `/walkers/{id}/reviews` | Client | 13 |
-| 41 | GET | `/walkers/{walkerId}/availability` | Walker | 13 |
-| 42 | PATCH | `/walkers/{walkerId}/availability` | Walker | 13 |
-| 43 | GET | `/walkers/me` | Walker | 13.1 |
-| 44 | PATCH | `/walkers/me` | Walker | 13.1 |
-| 45 | GET | `/walkers/me/earnings` | Walker | 13.1 |
-| 46 | GET | `/walkers/me/bank-account` | Walker | 13.1 |
-| 47 | PATCH | `/walkers/me/bank-account` | Walker | 13.1 |
-| 48 | POST | `/profile/avatar` | Client \| Walker | 11 |
-| 49 | POST | `/auth/logout` | Client \| Walker | 14 |
-| 50 | PATCH | `/walks/{walkId}/complete` | Walker | 14 |
+| 41 | GET | `/walkers/available` | Client | 13 |
+| 42 | GET | `/walkers/{walkerId}/availability` | Client \| Walker | 13 |
+| 43 | PATCH | `/walkers/{walkerId}/availability` | Walker | 13 |
+| 44 | GET | `/walkers/me` | Walker | 13.1 |
+| 45 | PATCH | `/walkers/me` | Walker | 13.1 |
+| 46 | GET | `/walkers/me/earnings` | Walker | 13.1 |
+| 47 | GET | `/walkers/me/bank-account` | Walker | 13.1 |
+| 48 | PATCH | `/walkers/me/bank-account` | Walker | 13.1 |
+| 49 | POST | `/profile/avatar` | Client \| Walker | 11 |
+| 50 | POST | `/auth/logout` | Client \| Walker | 14 |
+| 51 | PATCH | `/walks/{walkId}/complete` | Walker | 14 |
+| 52 | POST | `/walks/estimate` | Client | 3 |
 
-**Total: 50 explicit routes + 6 inferred routes = 56 routes documented.**
+**Total: 52 explicit routes + 5 inferred routes = 57 routes documented.**
 
 ---
 
