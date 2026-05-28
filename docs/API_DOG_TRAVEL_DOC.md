@@ -2193,6 +2193,228 @@ Empty body on success.
 
 ---
 
+## 13.1 Walker Own Profile Management
+
+> **Profile:** Walker only
+>
+> These routes allow a walker to view and edit their own professional profile (bio, service area, specialties). Separate from `GET/PATCH /profile` which manages base user fields (name, email, phone, avatar).
+
+---
+
+### GET /walkers/me
+
+**Description:** Returns the full professional profile of the authenticated walker. Used on the walker profile editing page (`/profile/walker-profile`) to populate the form with current values.
+
+**Authentication:** Required — Bearer token
+
+**Profile:** Walker
+
+#### Response — 200 OK
+
+Same shape as `GET /walkers/{id}` — returns a full `WalkerProfile` object.
+
+```json
+{
+  "id": "uuid-walker-1",
+  "name": "Carlos Silva",
+  "rating": 4.9,
+  "reviews": 124,
+  "location": "Zona Sul, São Paulo",
+  "serviceArea": "Moema, Vila Mariana e Itaim Bibi",
+  "description": "Especialista em cães de grande porte e alta energia.",
+  "tags": ["Grande Porte", "Energéticos", "Adestrador"],
+  "verified": true,
+  "availability": "Seg–Sáb, 07:00–19:00",
+  "completedWalks": 812,
+  "trustChecks": {
+    "identityVerified": true,
+    "backgroundCheck": true
+  },
+  "certifications": [
+    { "title": "Adestramento Positivo", "verified": true }
+  ],
+  "supportedSizes": ["medium", "large", "giant"],
+  "behaviorExpertise": ["agitado", "reativo", "multiplos-caes"]
+}
+```
+
+**Source:** `src/features/walkers/api/walkers.api.ts` — `WalkersApi.getMe()` · `src/features/walkers/hooks/use-walkers.ts` — `useWalkerProfile()` · `src/app/profile/walker-profile/page.tsx`
+
+---
+
+### PATCH /walkers/me
+
+**Description:** Updates the authenticated walker's professional profile fields. Only editable fields are accepted — read-only fields (`rating`, `reviews`, `completedWalks`, `verified`, `trustChecks`, `certifications`) are ignored and must not be sent.
+
+**Authentication:** Required — Bearer token
+
+**Profile:** Walker
+
+#### Request Body
+
+All fields optional — send only those that changed.
+
+| Field             | Type       | Description                                          |
+|-------------------|------------|------------------------------------------------------|
+| description       | string     | Walker's bio / presentation text                     |
+| location          | string     | Neighborhood / city (e.g. `"Pinheiros, São Paulo"`)  |
+| serviceArea       | string     | Text description of service coverage area            |
+| availability      | string     | Human-readable schedule (e.g. `"Seg–Sex, 7h–19h"`)  |
+| tags              | string[]   | Display tags shown on the public profile card        |
+| supportedSizes    | DogSize[]  | Dog sizes accepted (`"small"`, `"medium"`, `"large"`, `"giant"`) |
+| behaviorExpertise | string[]   | Behavior specialties (e.g. `"reativo"`, `"filhote"`) |
+
+**Example Request:**
+```json
+{
+  "description": "Passeador com 5 anos de experiência, especializado em cães reativos.",
+  "location": "Pinheiros, São Paulo",
+  "serviceArea": "Pinheiros, Vila Madalena e Perdizes",
+  "availability": "Seg–Sex, 7h–19h",
+  "tags": ["Pontual", "Experiente", "Dog Lover"],
+  "supportedSizes": ["small", "medium", "large"],
+  "behaviorExpertise": ["reativo", "filhote", "multiplos-caes"]
+}
+```
+
+#### Response — 200 OK
+
+```json
+{}
+```
+
+#### Response — 403 Forbidden
+
+```json
+{
+  "error": "NOT_A_WALKER",
+  "message": "Esta rota é exclusiva para passeadores."
+}
+```
+
+**Source:** `src/features/walkers/api/walkers.api.ts` — `WalkersApi.updateMe()` · `src/features/walkers/hooks/use-walkers.ts` — `useUpdateWalkerProfile()` · `src/app/profile/walker-profile/page.tsx`
+
+---
+
+### GET /walkers/me/earnings
+
+**Description:** Returns the authenticated walker's full earnings history — one entry per completed or pending payout. Different from `GET /payment-history` which is exclusively for client-side payment records.
+
+**Authentication:** Required — Bearer token
+
+**Profile:** Walker
+
+**Query Parameters:**
+
+| Name       | Type   | Required | Description                             |
+|------------|--------|----------|-----------------------------------------|
+| `from`     | string | No       | ISO date filter — start date (YYYY-MM-DD) |
+| `to`       | string | No       | ISO date filter — end date (YYYY-MM-DD)   |
+| `page`     | number | No       | Page number (default: 1)               |
+| `pageSize` | number | No       | Items per page (default: 20)           |
+
+#### Response — 200 OK
+
+```json
+[
+  {
+    "id": "earn_1",
+    "walkId": "uuid-walk-1",
+    "date": "2026-03-22",
+    "amount": 37.00,
+    "status": "paid",
+    "methodId": "",
+    "description": "Passeio com Rex · Ana Silva"
+  },
+  {
+    "id": "earn_2",
+    "walkId": "uuid-walk-2",
+    "date": "2026-03-21",
+    "amount": 44.00,
+    "status": "paid",
+    "methodId": "",
+    "description": "Passeio com Mel · Julia M."
+  }
+]
+```
+
+**Status values:**
+- `paid` — payout already transferred to walker's account
+- `pending` — walk completed but payout not yet processed
+- `failed` — payout failed (see walk record for reason)
+
+**Source:** `src/features/walkers/api/walkers.api.ts` — `WalkersApi.getEarnings()` · `src/features/walkers/hooks/use-walkers.ts` — `useWalkerEarnings()` · `src/app/payments/_components/walker-payments.tsx`
+
+---
+
+### GET /walkers/me/bank-account
+
+**Description:** Returns the bank account details of the authenticated walker used for payout transfers.
+
+**Authentication:** Required — Bearer token
+
+**Profile:** Walker
+
+#### Response — 200 OK
+
+```json
+{
+  "bankName": "Nubank",
+  "accountType": "checking",
+  "branch": "0001",
+  "accountNumber": "12345-6",
+  "holderName": "Carlos Silva",
+  "holderDocument": "123.456.789-00",
+  "pixKey": "carlos@example.com"
+}
+```
+
+**Source:** `src/features/walkers/api/walkers.api.ts` — `WalkersApi.getBankAccount()` · `src/features/walkers/hooks/use-walkers.ts` — `useWalkerBankAccount()` · `src/app/profile/bank-account/page.tsx`
+
+---
+
+### PATCH /walkers/me/bank-account
+
+**Description:** Updates the walker's bank account used for receiving payouts.
+
+**Authentication:** Required — Bearer token
+
+**Profile:** Walker
+
+#### Request Body
+
+```json
+{
+  "bankName": "Nubank",
+  "accountType": "checking",
+  "branch": "0001",
+  "accountNumber": "12345-6",
+  "holderName": "Carlos Silva",
+  "holderDocument": "123.456.789-00",
+  "pixKey": "carlos@example.com"
+}
+```
+
+| Field            | Type   | Required | Description                              |
+|------------------|--------|----------|------------------------------------------|
+| `bankName`       | string | Yes      | Bank name                                |
+| `accountType`    | string | Yes      | `checking` or `savings`                  |
+| `branch`         | string | Yes      | Bank branch number                       |
+| `accountNumber`  | string | Yes      | Account number with digit                |
+| `holderName`     | string | Yes      | Legal name of account holder             |
+| `holderDocument` | string | Yes      | CPF or CNPJ                              |
+| `pixKey`         | string | No       | PIX key (CPF, email, phone, or random)   |
+
+#### Response — 200 OK
+
+```json
+{}
+```
+
+**Source:** `src/features/walkers/api/walkers.api.ts` — `WalkersApi.updateBankAccount()` · `src/features/walkers/hooks/use-walkers.ts` — `useUpdateWalkerBankAccount()` · `src/app/profile/bank-account/page.tsx`
+
+---
+
 ## 14. Inferred Routes
 
 The routes below are **not explicitly present** in any API module file (`*.api.ts`) but are **strongly implied** by UI flows, business logic, or code comments in the frontend. The backend should implement them.
@@ -2391,10 +2613,15 @@ Complete list of all documented API routes (excluding inferred).
 | 39 | GET | `/walkers/{id}` | Client | 13 |
 | 40 | GET | `/walkers/{walkerId}/availability` | Walker | 13 |
 | 41 | PATCH | `/walkers/{walkerId}/availability` | Walker | 13 |
-| 42 | POST | `/auth/logout` | Client \| Walker | 14 |
-| 43 | PATCH | `/walks/{walkId}/complete` | Walker | 14 |
+| 42 | GET | `/walkers/me` | Walker | 13.1 |
+| 43 | PATCH | `/walkers/me` | Walker | 13.1 |
+| 44 | GET | `/walkers/me/earnings` | Walker | 13.1 |
+| 45 | GET | `/walkers/me/bank-account` | Walker | 13.1 |
+| 46 | PATCH | `/walkers/me/bank-account` | Walker | 13.1 |
+| 47 | POST | `/auth/logout` | Client \| Walker | 14 |
+| 48 | PATCH | `/walks/{walkId}/complete` | Walker | 14 |
 
-**Total: 43 explicit routes + 6 inferred routes = 49 routes documented.**
+**Total: 48 explicit routes + 6 inferred routes = 54 routes documented.**
 
 ---
 
