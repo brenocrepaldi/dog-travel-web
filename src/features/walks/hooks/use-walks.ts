@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { WalksApi } from "../api/walks.api";
-import type { UserRole } from "@/types";
+import type { UserRole, WalkEstimateRequest } from "@/types";
 
 export function useWalks(role: UserRole, walkerId?: string, options?: { enabled?: boolean }) {
   return useQuery({
@@ -22,5 +22,15 @@ export function useWalkRequests() {
   return useQuery({
     queryKey: ["walk-requests"],
     queryFn: WalksApi.listRequests,
+    refetchInterval: 15_000,
+  });
+}
+
+export function useWalkEstimate(input: WalkEstimateRequest, enabled = true) {
+  return useQuery({
+    queryKey: ["walks", "estimate", input],
+    queryFn: () => WalksApi.estimate(input),
+    enabled: enabled && input.durationMinutes > 0 && input.petCount > 0,
+    staleTime: 2 * 60 * 1000,
   });
 }
