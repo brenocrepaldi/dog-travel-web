@@ -12,7 +12,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { AuthApi } from "@/features/auth/api/auth.api";
+import { useResetPassword } from "@/features/auth/hooks/use-auth";
 import { resetPasswordSchema, type ResetPasswordFormValues } from "@/lib/validations/auth";
 
 export default function ResetPasswordPage() {
@@ -23,6 +23,7 @@ export default function ResetPasswordPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [done, setDone] = useState(false);
+  const { mutateAsync: resetPassword } = useResetPassword();
 
   const {
     register,
@@ -41,7 +42,7 @@ export default function ResetPasswordPage() {
     }
 
     try {
-      await AuthApi.resetPassword(token, data.password);
+      await resetPassword({ token, password: data.password });
       setDone(true);
     } catch {
       toast.error("Erro ao redefinir senha", {

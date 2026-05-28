@@ -11,11 +11,12 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { AuthApi } from "@/features/auth/api/auth.api";
+import { useForgotPassword } from "@/features/auth/hooks/use-auth";
 import { forgotPasswordSchema, type ForgotPasswordFormValues } from "@/lib/validations/auth";
 
 export default function ForgotPasswordPage() {
   const [submitted, setSubmitted] = useState(false);
+  const { mutateAsync: forgotPassword } = useForgotPassword();
 
   const {
     register,
@@ -27,7 +28,7 @@ export default function ForgotPasswordPage() {
 
   async function onSubmit(data: ForgotPasswordFormValues) {
     try {
-      await AuthApi.forgotPassword(data.email);
+      await forgotPassword(data.email);
       setSubmitted(true);
     } catch {
       toast.error("Erro ao enviar e-mail", {

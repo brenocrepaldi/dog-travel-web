@@ -227,9 +227,6 @@ export function WalkRequestForm() {
 
 		setSubmitting(true);
 
-		// Simulate a short processing delay for realism
-		await new Promise((resolve) => setTimeout(resolve, 800));
-
 		const scheduledAt = new Date(`${data.date}T${data.time || '00:00'}:00`).toISOString();
 		const petNames = pets
 			.filter((p) => data.selectedPetIds.includes(p.id))

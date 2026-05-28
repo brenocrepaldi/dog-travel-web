@@ -16,6 +16,7 @@ import type { WalkReview } from "@/types";
 
 interface WalkReviewFormProps {
   walkId: string;
+  walkerId: string;
   walkDate: string;
   walkerName: string;
   petNames: string[];
@@ -24,6 +25,7 @@ interface WalkReviewFormProps {
 
 export function WalkReviewForm({
   walkId,
+  walkerId,
   walkDate,
   walkerName,
   petNames,
@@ -34,7 +36,7 @@ export function WalkReviewForm({
   const [comment, setComment] = useState(existingReview?.comment ?? "");
   const [editing, setEditing] = useState(!existingReview);
 
-  const { mutate: submitReview, isPending } = useSubmitReview(walkId);
+  const { mutate: submitReview, isPending } = useSubmitReview(walkId, walkerId);
 
   function handleSave() {
     if (rating < 1) {

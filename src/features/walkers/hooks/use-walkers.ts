@@ -10,11 +10,11 @@ export function useWalkers(filters?: WalkerFilters) {
   });
 }
 
-export function useWalkerById(id: string) {
+export function useWalkerById(id: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ["walkers", id],
     queryFn: () => WalkersApi.getById(id),
-    enabled: Boolean(id),
+    enabled: (options?.enabled ?? true) && !!id,
     staleTime: 5 * 60 * 1000,
   });
 }

@@ -103,16 +103,16 @@ export const WalkersApi = {
   },
 
   updateAvailability: async (walkerId: string, available: boolean): Promise<void> => {
-    availabilityStore[walkerId] = available;
-    if (!isApiConfigured) return;
+    if (!isApiConfigured) {
+      availabilityStore[walkerId] = available;
+      return;
+    }
     await api.patch(`/walkers/${walkerId}/availability`, { available });
   },
 
   getAvailable: async (filters: WalkerAvailabilityFilters): Promise<WalkerProfile[]> => {
     if (!isApiConfigured) {
-      // Mock: return walkers whose availability flag is currently true
-      const { walkers: allWalkers } = await import("@/lib/mock-data");
-      return allWalkers.filter((w) => availabilityStore[w.id] === true);
+      return walkers.filter((w) => availabilityStore[w.id] === true);
     }
     return api
       .get<WalkerProfile[]>("/walkers/available", { params: filters })

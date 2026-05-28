@@ -460,7 +460,7 @@ export function WalkDetailClient({ walkId }: { walkId: string }) {
   const isWalker = session?.user?.role === 'walker';
 
   const { data: walk, isLoading: walkLoading } = useWalkById(walkId);
-  const { data: walker } = useWalkerById(walk?.walkerId ?? '');
+  const { data: walker } = useWalkerById(walk?.walkerId ?? '', { enabled: !!walk?.walkerId });
   const { data: review } = useReview(walkId);
   const { data: paymentMethods = [] } = usePaymentMethods();
   const { mutate: completeWalk, isPending: completing } = useCompleteWalk();

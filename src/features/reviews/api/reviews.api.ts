@@ -16,27 +16,28 @@ export const ReviewsApi = {
       .catch(() => null);
   },
 
-  submit: async (walkId: string, payload: { rating: number; comment: string }): Promise<WalkReview> => {
+  submit: async (walkId: string, payload: { rating: number; comment: string; walkerId?: string }): Promise<WalkReview> => {
+    const { walkerId, ...reviewPayload } = payload;
     if (!isApiConfigured) {
       const existing = reviewsStore.find((r) => r.walkId === walkId);
       if (existing) {
         reviewsStore = reviewsStore.map((r) =>
-          r.walkId === walkId ? { ...r, ...payload } : r
+          r.walkId === walkId ? { ...r, ...reviewPayload } : r
         );
-        return { ...existing, ...payload };
+        return { ...existing, ...reviewPayload };
       }
       const newReview: WalkReview = {
         walkId,
-        walkerId: "1",
-        rating: payload.rating,
-        comment: payload.comment,
+        walkerId: walkerId ?? "",
+        rating: reviewPayload.rating,
+        comment: reviewPayload.comment,
         createdAt: new Date().toISOString(),
       };
       reviewsStore = [newReview, ...reviewsStore];
       return newReview;
     }
     return api
-      .post<WalkReview>(`/walks/${walkId}/review`, payload)
+      .post<WalkReview>(`/walks/${walkId}/review`, reviewPayload)
       .then((r) => r.data);
   },
 

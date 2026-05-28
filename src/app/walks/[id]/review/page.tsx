@@ -40,6 +40,7 @@ export default function WalkReviewPage({
   return (
     <WalkReviewForm
       walkId={walk.id}
+      walkerId={walk.walkerId ?? ""}
       walkDate={walk.dateLabel}
       walkerName={walker.name}
       petNames={walk.petNames}

@@ -47,4 +47,12 @@ export const ProfileApi = {
       })
       .then((r) => r.data);
   },
+
+  deleteAvatar: async (): Promise<void> => {
+    if (!isApiConfigured) {
+      myProfileStore = { ...myProfileStore, avatarUrl: undefined };
+      return;
+    }
+    await api.delete("/profile/avatar");
+  },
 };

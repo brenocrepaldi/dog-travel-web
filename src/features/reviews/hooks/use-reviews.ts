@@ -9,7 +9,7 @@ export function useReview(walkId: string, enabled = true) {
   });
 }
 
-export function useSubmitReview(walkId: string) {
+export function useSubmitReview(walkId: string, walkerId?: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({
@@ -23,7 +23,7 @@ export function useSubmitReview(walkId: string) {
     }) =>
       isUpdate
         ? ReviewsApi.update(walkId, { rating, comment })
-        : ReviewsApi.submit(walkId, { rating, comment }),
+        : ReviewsApi.submit(walkId, { rating, comment, walkerId }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reviews", walkId] });
       queryClient.invalidateQueries({ queryKey: ["walks", walkId] });

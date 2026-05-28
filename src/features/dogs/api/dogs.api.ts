@@ -2,8 +2,8 @@ import { pets } from "@/lib/mock-data";
 import type { Pet } from "@/types";
 import api, { isApiConfigured } from "@/services/api";
 
-// Module-level mutable store — used only when API is not configured
-let dogsStore: Pet[] = pets.filter((p) => p.ownerId === "client_1");
+// Module-level mutable store — mock only; not thread-safe across requests
+let dogsStore: Pet[] = [...pets];
 
 export const DogsApi = {
   list: async (): Promise<Pet[]> => {

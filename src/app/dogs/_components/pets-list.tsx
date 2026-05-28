@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import {
 	Edit2,
 	Info,
@@ -14,8 +15,11 @@ import {
 	ChevronRight,
 	ChevronDown,
 	ChevronUp,
+	Trash2,
+	AlertCircle,
 } from "lucide-react";
-import { useDogs, useAddDog, useUpdateDog } from "@/features/dogs/hooks/use-dogs";
+import { useDogs, useAddDog, useUpdateDog, useRemoveDog } from "@/features/dogs/hooks/use-dogs";
+import { toast } from "sonner";
 import { DOG_SIZE_LABEL } from "@/lib/pets";
 import type { Pet } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -245,8 +249,17 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
 }
 
 // Card individual do pet — design premium
-function PetCard({ pet, onEdit }: { pet: Pet; onEdit: (pet: Pet) => void }) {
+function PetCard({
+	pet,
+	onEdit,
+	onRemove,
+}: {
+	pet: Pet;
+	onEdit: (pet: Pet) => void;
+	onRemove: (pet: Pet) => void;
+}) {
 	const [notesExpanded, setNotesExpanded] = useState(false);
+	const [confirmingDelete, setConfirmingDelete] = useState(false);
 
 	return (
 		<div
@@ -297,26 +310,59 @@ function PetCard({ pet, onEdit }: { pet: Pet; onEdit: (pet: Pet) => void }) {
 				</div>
 			</div>
 
-			<div className="shrink-0 border-t border-border/40 px-5 py-3 flex items-center justify-between bg-muted/20">
-				<span className="text-[11px] text-muted-foreground/60 font-medium uppercase tracking-wider">
-					Perfil do Pet
-				</span>
-				<button
-					onClick={() => onEdit(pet)}
-					className="flex items-center gap-1 text-[11px] text-primary/70 hover:text-primary transition-colors font-medium cursor-pointer"
-				>
-					Editar dados
-					<ChevronRight className="w-3 h-3" />
-				</button>
+			<div className="shrink-0 border-t border-border/40 px-5 py-3 bg-muted/20">
+				{confirmingDelete ? (
+					<div className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 space-y-2.5">
+						<div className="flex items-center gap-2 text-sm text-destructive">
+							<AlertCircle className="w-4 h-4 shrink-0" />
+							<span className="font-medium">Remover {pet.name}?</span>
+						</div>
+						<div className="grid grid-cols-2 gap-2">
+							<button
+								type="button"
+								onClick={() => setConfirmingDelete(false)}
+								className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted/60 transition-colors cursor-pointer"
+							>
+								Cancelar
+							</button>
+							<button
+								type="button"
+								onClick={() => { setConfirmingDelete(false); onRemove(pet); }}
+								className="rounded-lg bg-destructive px-3 py-1.5 text-xs font-medium text-destructive-foreground hover:bg-destructive/90 transition-colors cursor-pointer"
+							>
+								Sim, remover
+							</button>
+						</div>
+					</div>
+				) : (
+					<div className="flex items-center justify-between">
+						<button
+							onClick={() => setConfirmingDelete(true)}
+							className="flex items-center gap-1 text-[11px] text-muted-foreground/50 hover:text-destructive transition-colors font-medium cursor-pointer"
+						>
+							<Trash2 className="w-3 h-3" />
+							Remover
+						</button>
+						<button
+							onClick={() => onEdit(pet)}
+							className="flex items-center gap-1 text-[11px] text-primary/70 hover:text-primary transition-colors font-medium cursor-pointer"
+						>
+							Editar dados
+							<ChevronRight className="w-3 h-3" />
+						</button>
+					</div>
+				)}
 			</div>
 		</div>
 	);
 }
 
 export function PetsList() {
+	const { data: session } = useSession();
 	const { data: pets = [], isLoading } = useDogs();
 	const { mutate: addDog } = useAddDog();
 	const { mutate: updateDog } = useUpdateDog();
+	const { mutate: removeDog } = useRemoveDog();
 
 	const [sheetOpen, setSheetOpen] = useState(false);
 	const [editingPet, setEditingPet] = useState<Pet | null>(null);
@@ -352,6 +398,12 @@ export function PetsList() {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
+	const handleRemove = (pet: Pet) => {
+		removeDog(pet.id, {
+			onSuccess: () => toast.success(`${pet.name} removido com sucesso.`),
+		});
+	};
+
 	const handleSheetOpenChange = (open: boolean) => {
 		setSheetOpen(open);
 		if (!open) router.replace("/dogs", { scroll: false });
@@ -374,7 +426,7 @@ export function PetsList() {
 		}
 
 		addDog({
-			ownerId: "client_1",
+			ownerId: session?.user?.id ?? "",
 			name: savedPet.name,
 			breed: savedPet.breed,
 			age: savedPet.age,
@@ -430,7 +482,7 @@ export function PetsList() {
 							style={{ animationDelay: `${index * 60}ms` }}
 							className="animate-in fade-in slide-in-from-bottom-2 duration-400 min-w-0"
 						>
-							<PetCard pet={pet} onEdit={handleEdit} />
+							<PetCard pet={pet} onEdit={handleEdit} onRemove={handleRemove} />
 						</div>
 					))
 				)}

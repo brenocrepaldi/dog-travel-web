@@ -64,3 +64,10 @@ export function useCompleteWalk() {
     },
   });
 }
+
+export function useReportWalk() {
+  return useMutation({
+    mutationFn: ({ walkId, reason, description }: { walkId: string; reason: string; description?: string }) =>
+      WalksApi.report(walkId, { reason, description }),
+  });
+}

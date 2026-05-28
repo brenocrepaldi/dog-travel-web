@@ -69,13 +69,14 @@ export default function WalkerDashboardPage() {
   const { data: available = false } = useWalkerAvailability(walkerId ?? "");
   const { mutate: updateAvailability, isPending: updatingAvailability } = useUpdateWalkerAvailability(walkerId ?? "");
 
-  const { data: documents } = useDocuments();
-  const { data: profile } = useProfile();
+  const { data: documents, isLoading: documentsLoading } = useDocuments();
+  const { data: profile, isLoading: profileLoading } = useProfile();
 
-  const hasPhoto        = !!profile?.avatarUrl;
-  const identityVerified = documents?.identity === "verified";
+  const hasPhoto           = !!profile?.avatarUrl;
+  const identityVerified   = documents?.identity === "verified";
   const backgroundVerified = documents?.background === "verified";
-  const canToggle       = hasPhoto && identityVerified && backgroundVerified;
+  const isEligibilityLoading = documentsLoading || profileLoading;
+  const canToggle          = !isEligibilityLoading && hasPhoto && identityVerified && backgroundVerified;
 
   if (sessionStatus === "loading") return null;
 

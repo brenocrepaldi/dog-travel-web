@@ -47,7 +47,7 @@ export function ChatInterface({
       {/* ─── Header ─── */}
       <div className="flex items-center p-4 border-b border-border bg-background z-10">
         <Link
-          href={`/walks/${walkId}/tracking`}
+          href={walk?.status === "in_progress" ? `/walks/${walkId}/tracking` : `/walks/${walkId}`}
           className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "mr-2 shrink-0")}
         >
           <ArrowLeft className="h-5 w-5" />

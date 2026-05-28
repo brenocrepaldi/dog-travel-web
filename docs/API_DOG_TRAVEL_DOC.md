@@ -853,6 +853,52 @@ When the client selects PIX as payment method, after `POST /walks` succeeds, the
 
 ---
 
+### POST /walks/{id}/report
+
+**Description:** Submits a problem report for a specific walk (e.g., walker behaviour, safety concern). Available to both client and walker after a walk has been accepted or completed.
+
+**Authentication:** Required — Bearer token
+
+**Profile:** Client | Walker
+
+#### Path Parameters
+
+| Param | Type   | Required | Description |
+|-------|--------|----------|-------------|
+| id    | string | ✅        | Walk ID     |
+
+#### Request Body
+
+| Field       | Type   | Required | Description                                                                 |
+|-------------|--------|----------|-----------------------------------------------------------------------------|
+| reason      | string | ✅        | Report category (e.g. `"walker_no_show"`, `"safety_concern"`, `"other"`)   |
+| description | string | ❌        | Free-text description of the problem (max 1000 characters)                  |
+
+**Example Request:**
+```json
+{
+  "reason": "safety_concern",
+  "description": "O passeador não apareceu no horário combinado e não respondeu mensagens."
+}
+```
+
+#### Response — 201 Created
+```json
+{}
+```
+
+#### Response — 404 Not Found
+```json
+{
+  "error": "WALK_NOT_FOUND",
+  "message": "Passeio não encontrado."
+}
+```
+
+**Source:** `src/features/walks/api/walks.api.ts` — `WalksApi.report()` · `src/features/walks/hooks/use-walk-actions.ts` — `useReportWalk()`
+
+---
+
 ## 4. Walk Acceptance & Execution (Walker)
 
 > **Profile:** Walker
@@ -1971,6 +2017,28 @@ Empty body or the updated `User` object (frontend ignores the body and refetches
 ```
 
 **Source:** `src/features/profile/api/profile.api.ts` — `ProfileApi.uploadAvatar()` · `src/features/profile/hooks/use-profile.ts` — `useUploadAvatar()` · `src/app/profile/_components/profile-info.tsx`
+
+---
+
+### DELETE /profile/avatar
+
+**Description:** Removes the authenticated user's profile photo. After deletion the `avatarUrl` field is `null` and the UI falls back to the initials avatar. Can be called from the profile edit screen.
+
+**Authentication:** Required (Bearer JWT)
+
+**Profile:** Client | Walker
+
+#### Response — 204 No Content
+
+Empty body.
+
+#### Response — 404 Not Found
+
+```json
+{ "error": "AVATAR_NOT_FOUND", "message": "Nenhuma foto de perfil encontrada." }
+```
+
+**Source:** `src/features/profile/api/profile.api.ts` — `ProfileApi.deleteAvatar()` · `src/features/profile/hooks/use-profile.ts` — `useDeleteAvatar()`
 
 ---
 

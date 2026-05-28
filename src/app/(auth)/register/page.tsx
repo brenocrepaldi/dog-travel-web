@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import { maskCPF } from "@/lib/cpf";
 import { registerSchema, type RegisterFormValues } from "@/lib/validations/auth";
 import type { UserRole } from "@/types";
-import { AuthApi } from "@/features/auth/api/auth.api";
+import { useRegister } from "@/features/auth/hooks/use-auth";
 import { signIn } from "next-auth/react";
 
 import { Button } from "@/components/ui/button";
@@ -99,9 +99,10 @@ function DataStep({
   onBack: () => void;
 }) {
   const router = useRouter();
+  const { mutateAsync: register } = useRegister();
 
   const {
-    register,
+    register: registerField,
     control,
     handleSubmit,
     formState: { errors, isSubmitting },
@@ -111,7 +112,7 @@ function DataStep({
 
   async function onSubmit(data: RegisterFormValues) {
     try {
-      await AuthApi.register({ ...data, role });
+      await register({ ...data, role });
 
       toast.success("Conta criada com sucesso!", {
         description: "Bem-vindo ao DogTravel!",
@@ -164,7 +165,7 @@ function DataStep({
             id="name"
             placeholder="Seu nome"
             autoComplete="name"
-            {...register("name")}
+            {...registerField("name")}
             aria-invalid={!!errors.name}
           />
           {errors.name && (
@@ -213,7 +214,7 @@ function DataStep({
             type="email"
             placeholder="voce@exemplo.com"
             autoComplete="email"
-            {...register("email")}
+            {...registerField("email")}
             aria-invalid={!!errors.email}
           />
           {errors.email && (
@@ -251,7 +252,7 @@ function DataStep({
             type="password"
             placeholder="Mínimo 6 caracteres"
             autoComplete="new-password"
-            {...register("password")}
+            {...registerField("password")}
             aria-invalid={!!errors.password}
           />
           {errors.password && (
@@ -267,7 +268,7 @@ function DataStep({
             type="password"
             placeholder="Repita a senha"
             autoComplete="new-password"
-            {...register("confirmPassword")}
+            {...registerField("confirmPassword")}
             aria-invalid={!!errors.confirmPassword}
           />
           {errors.confirmPassword && (

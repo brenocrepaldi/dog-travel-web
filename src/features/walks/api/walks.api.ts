@@ -263,4 +263,11 @@ export const WalksApi = {
     }
     await api.post(`/walk-requests/${requestId}/decline`);
   },
+
+  report: async (walkId: string, payload: { reason: string; description?: string }): Promise<void> => {
+    if (!isApiConfigured) {
+      return;
+    }
+    await api.post(`/walks/${walkId}/report`, payload);
+  },
 };
