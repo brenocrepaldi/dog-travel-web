@@ -17,11 +17,11 @@ import type {
 } from '@/types';
 
 export const pets: Pet[] = [
-	{ id: '1', ownerId: 'client_1', name: 'Rex',  breed: 'Golden Retriever', age: 3, size: 'large', notes: 'Brincalhao e docil.' },
-	{ id: '2', ownerId: 'client_1', name: 'Mel',  breed: 'Poodle',           age: 1, size: 'small', notes: 'Agitada, puxa a coleira nos primeiros 5 minutos.' },
-	{ id: '3', ownerId: 'client_4', name: 'Thor', breed: 'Labrador',         age: 2, size: 'large' },
-	{ id: '4', ownerId: 'client_5', name: 'Bolt', breed: 'Border Collie',    age: 4, size: 'medium' },
-	{ id: '5', ownerId: 'client_5', name: 'Nina', breed: 'Shih Tzu',         age: 6, size: 'small' },
+	{ id: '1', ownerId: 'client_1', name: 'Rex',  breed: 'Golden Retriever', age: 3, size: 'large',  gender: 'male',   notes: 'Brincalhao e docil.' },
+	{ id: '2', ownerId: 'client_1', name: 'Mel',  breed: 'Poodle',           age: 1, size: 'small',  gender: 'female', notes: 'Agitada, puxa a coleira nos primeiros 5 minutos.' },
+	{ id: '3', ownerId: 'client_4', name: 'Thor', breed: 'Labrador',         age: 2, size: 'large',  gender: 'male' },
+	{ id: '4', ownerId: 'client_5', name: 'Bolt', breed: 'Border Collie',    age: 4, size: 'medium', gender: 'male' },
+	{ id: '5', ownerId: 'client_5', name: 'Nina', breed: 'Shih Tzu',         age: 6, size: 'small',  gender: 'female' },
 ];
 
 export const walkRequests: WalkRequest[] = [

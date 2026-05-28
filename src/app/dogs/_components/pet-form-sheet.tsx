@@ -22,7 +22,7 @@ import {
   PET_IMAGE_ACCEPT,
   validatePetImage,
 } from "@/lib/validations/pet";
-import type { DogSize } from "@/types";
+import type { DogGender, DogSize } from "@/types";
 import { DOG_SIZE_TEXT_OPTIONS } from "@/lib/pets";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +31,7 @@ export interface PetDraft {
   breed: string;
   age: number;
   size: DogSize;
+  gender: DogGender;
   behavior: string;
   photoUrl?: string;
 }
@@ -40,6 +41,7 @@ interface PetFormState {
   breed: string;
   age: string;
   size: DogSize;
+  gender: DogGender;
   behavior: string;
   photoUrl: string | null;
 }
@@ -51,6 +53,7 @@ function toFormState(petToEdit?: PetDraft | null): PetFormState {
       breed: "",
       age: "",
       size: "medium",
+      gender: "male",
       behavior: "",
       photoUrl: null,
     };
@@ -60,6 +63,7 @@ function toFormState(petToEdit?: PetDraft | null): PetFormState {
     breed: petToEdit.breed,
     age: String(petToEdit.age),
     size: petToEdit.size,
+    gender: petToEdit.gender,
     behavior: petToEdit.behavior,
     photoUrl: petToEdit.photoUrl ?? null,
   };
@@ -291,6 +295,7 @@ export function PetFormSheet({
       breed: formData.breed,
       age: Number.parseInt(formData.age, 10),
       size: formData.size,
+      gender: formData.gender,
       behavior: formData.behavior,
       photoUrl: formData.photoUrl ?? undefined,
     });
@@ -406,6 +411,36 @@ export function PetFormSheet({
                 )}
               </Field>
             </div>
+
+            <Field label="Sexo" required>
+              <div className="grid grid-cols-2 gap-2">
+                {(
+                  [
+                    { value: "male",   label: "Macho", symbol: "♂" },
+                    { value: "female", label: "Fêmea", symbol: "♀" },
+                  ] as const
+                ).map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() =>
+                      setFormData((prev) => ({ ...prev, gender: option.value }))
+                    }
+                    className={cn(
+                      "flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium transition-all cursor-pointer",
+                      formData.gender === option.value
+                        ? option.value === "male"
+                          ? "border-blue-500/50 bg-blue-500/10 text-blue-700 dark:text-blue-400"
+                          : "border-pink-500/50 bg-pink-500/10 text-pink-700 dark:text-pink-400"
+                        : "border-border bg-transparent text-muted-foreground hover:bg-muted/40"
+                    )}
+                  >
+                    <span className="text-base leading-none">{option.symbol}</span>
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </Field>
           </div>
 
           {/* Seção: Porte */}

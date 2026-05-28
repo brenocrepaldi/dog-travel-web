@@ -32,6 +32,7 @@ function toDraft(pet: Pet): PetDraft {
 		breed: pet.breed,
 		age: pet.age,
 		size: pet.size,
+		gender: pet.gender,
 		behavior: pet.notes ?? "",
 		photoUrl: pet.photoUrl,
 	};
@@ -301,6 +302,14 @@ function PetCard({
 								<Dog className="w-3 h-3" />
 								{pet.age} {pet.age === 1 ? "ano" : "anos"}
 							</span>
+							<span className={cn(
+								"inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-medium tracking-wide",
+								pet.gender === "male"
+									? "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20"
+									: "bg-pink-500/10 text-pink-700 dark:text-pink-400 border-pink-500/20"
+							)}>
+								{pet.gender === "male" ? "♂ Macho" : "♀ Fêmea"}
+							</span>
 						</div>
 
 						<div className="mt-auto pt-3">
@@ -418,6 +427,7 @@ export function PetsList() {
 					breed: savedPet.breed,
 					age: savedPet.age,
 					size: savedPet.size,
+					gender: savedPet.gender,
 					notes: savedPet.behavior,
 					photoUrl: savedPet.photoUrl,
 				},
@@ -431,6 +441,7 @@ export function PetsList() {
 			breed: savedPet.breed,
 			age: savedPet.age,
 			size: savedPet.size,
+			gender: savedPet.gender,
 			notes: savedPet.behavior,
 			photoUrl: savedPet.photoUrl,
 		});

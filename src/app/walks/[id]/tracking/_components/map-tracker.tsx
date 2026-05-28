@@ -5,7 +5,7 @@ import Map, { Marker, Layer, Source } from 'react-map-gl/mapbox';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
-import { Phone, MessageSquare, Compass, Loader2, MapPin } from 'lucide-react';
+import { Phone, MessageSquare, Compass, Loader2, MapPin, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { cn } from '@/lib/utils';
@@ -97,7 +97,17 @@ export default function MapTracker({ walkId }: { walkId: string }) {
 			</Map>
 
 			{/* ─── Status Bar (Top) ─── */}
-			<div className="absolute top-4 left-4 right-4 z-[1000] flex justify-between items-start pointer-events-none">
+			<div className="absolute top-4 left-4 right-4 z-[1000] flex items-start gap-3 pointer-events-none">
+				<Link
+					href={`/walks/${walkId}`}
+					className={cn(
+						'pointer-events-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border/60 shadow-lg backdrop-blur-md bg-background/90 text-muted-foreground hover:text-foreground transition-colors',
+					)}
+					aria-label="Voltar ao passeio"
+				>
+					<ArrowLeft className="h-4 w-4" />
+				</Link>
+
 				<Card className="pointer-events-auto shadow-lg border-primary/20 backdrop-blur-md bg-background/90 max-w-sm">
 					<CardContent className="p-4 flex items-center gap-4">
 						<div className="flex-1">
