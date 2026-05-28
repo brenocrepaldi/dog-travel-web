@@ -22,7 +22,7 @@ export const DocumentsApi = {
     const form = new FormData();
     form.append("document", doc);
     form.append("selfie", selfie);
-    await api.post("/documents/identity", form, {
+    await api.post("/profile/documents/identity", form, {
       headers: { "Content-Type": "multipart/form-data" },
     });
   },
@@ -35,7 +35,7 @@ export const DocumentsApi = {
     }
     const form = new FormData();
     form.append("document", doc);
-    await api.post("/documents/background", form, {
+    await api.post("/profile/documents/background", form, {
       headers: { "Content-Type": "multipart/form-data" },
     });
   },
@@ -59,7 +59,7 @@ export const DocumentsApi = {
     form.append("title", title);
     form.append("file", file);
     return api
-      .post<WalkerCertDocument>("/documents/certificates", form, {
+      .post<WalkerCertDocument>("/profile/documents/certificates", form, {
         headers: { "Content-Type": "multipart/form-data" },
       })
       .then((r) => r.data);
@@ -73,6 +73,6 @@ export const DocumentsApi = {
       };
       return;
     }
-    await api.delete(`/documents/certificates/${id}`);
+    await api.delete(`/profile/documents/certificates/${id}`);
   },
 };

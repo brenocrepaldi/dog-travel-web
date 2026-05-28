@@ -7,7 +7,7 @@ export const StatsApi = {
     if (!isApiConfigured) {
       return { ...seedClientStats };
     }
-    return api.get<ClientStats>("/users/me/stats").then((r) => r.data);
+    return api.get<ClientStats>("/me/stats").then((r) => r.data);
   },
 
   getWalkerStats: async (): Promise<WalkerStats> => {
