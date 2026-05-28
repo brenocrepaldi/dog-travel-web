@@ -38,7 +38,7 @@ export interface WalkTimelineEvent {
 
 export interface WalkRecord {
   id: string;
-  walkerId: string;
+  walkerId: string | null;
   clientName: string;
   petNames: string[];
   status: WalkStatus;
@@ -102,6 +102,15 @@ export interface WalkerProfileUpdate {
   tags?: string[];
   supportedSizes?: DogSize[];
   behaviorExpertise?: string[];
+}
+
+export interface WalkerPublicReview {
+  id: string;
+  walkId: string;
+  rating: number;
+  comment: string;
+  clientName: string;
+  createdAt: string;
 }
 
 export interface WalkerBankAccount {

@@ -236,7 +236,7 @@ export function WalkRequestForm() {
 
 		const newWalk = {
 			id: `local-${crypto.randomUUID()}`,
-			walkerId: data.selectedWalkerId ?? '',
+			walkerId: data.selectedWalkerId ?? null,
 			clientName: 'Você',
 			petNames,
 			status: 'pending' as const,

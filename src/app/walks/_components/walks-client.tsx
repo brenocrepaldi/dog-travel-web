@@ -360,7 +360,7 @@ function WalkCard({
 							Detalhes
 						</Link>
 						<Link
-							href={`/walks/new?walker=${walk.walkerId}`}
+							href={walk.walkerId ? `/walks/new?walker=${walk.walkerId}` : '/walks/new'}
 							className={cn(
 								buttonVariants({ variant: 'secondary', size: 'lg' }),
 								'rounded-lg w-full',
