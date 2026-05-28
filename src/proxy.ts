@@ -1,35 +1,42 @@
 import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
-/**
- * Next.js Proxy (formerly Middleware) using Auth.js.
- * Protects authenticated routes and redirects appropriately.
- */
+const WALKER_ONLY = ["/profile/walker-profile", "/profile/documents", "/profile/bank-account"];
+const CLIENT_ONLY = ["/dogs", "/walkers", "/walks/new"];
+
 export default auth((req) => {
   const { nextUrl, auth: session } = req;
   const isLoggedIn = !!session;
+  const role = session?.user?.role;
+  const { pathname } = nextUrl;
 
   const isAuthRoute =
-    nextUrl.pathname.startsWith("/login") ||
-    nextUrl.pathname.startsWith("/register");
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/register");
 
   const isProtectedRoute =
-    nextUrl.pathname.startsWith("/dashboard") ||
-    nextUrl.pathname.startsWith("/walk") ||
-    nextUrl.pathname.startsWith("/dogs") ||
-    nextUrl.pathname.startsWith("/payments") ||
-    nextUrl.pathname.startsWith("/profile");
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/walk") ||
+    pathname.startsWith("/dogs") ||
+    pathname.startsWith("/payments") ||
+    pathname.startsWith("/profile");
 
-  // Already logged in and trying to access auth pages → redirect to dashboard
   if (isLoggedIn && isAuthRoute) {
     return NextResponse.redirect(new URL("/dashboard", nextUrl));
   }
 
-  // Not logged in and trying to access protected routes → redirect to login
   if (!isLoggedIn && isProtectedRoute) {
     const loginUrl = new URL("/login", nextUrl);
-    loginUrl.searchParams.set("callbackUrl", nextUrl.pathname);
+    loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
+  }
+
+  if (isLoggedIn && role !== "walker" && WALKER_ONLY.some((p) => pathname.startsWith(p))) {
+    return NextResponse.redirect(new URL("/dashboard", nextUrl));
+  }
+
+  if (isLoggedIn && role !== "client" && CLIENT_ONLY.some((p) => pathname.startsWith(p))) {
+    return NextResponse.redirect(new URL("/dashboard", nextUrl));
   }
 
   return NextResponse.next();
