@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -9,6 +10,7 @@ import {
   CheckSquare,
   Loader2,
   MapPin,
+  PartyPopper,
   Save,
   Tag,
   X,
@@ -184,6 +186,9 @@ function CheckboxGroup<T extends string>({
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function WalkerProfilePage() {
+  const searchParams = useSearchParams();
+  const isOnboarding = searchParams.get("onboarding") === "true";
+
   const { data: profile, isLoading } = useWalkerProfile();
   const { mutate: updateProfile, isPending: isSaving } = useUpdateWalkerProfile();
 
@@ -242,6 +247,22 @@ export default function WalkerProfilePage() {
           <p className="text-sm text-muted-foreground mt-0.5">Informações exibidas para os clientes.</p>
         </div>
       </div>
+
+      {/* Onboarding banner — shown only right after walker registration */}
+      {isOnboarding && (
+        <div className="rounded-2xl border border-primary/20 bg-primary/5 px-5 py-4 flex items-start gap-3">
+          <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+            <PartyPopper className="w-4 h-4 text-primary" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-foreground">Bem-vindo ao DogTravel!</p>
+            <p className="text-xs text-muted-foreground leading-relaxed mt-1">
+              Complete seu perfil profissional para aparecer nas buscas e começar a receber
+              solicitações de passeio. Quanto mais completo, maior sua visibilidade.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Sobre você */}
       <Section icon={Briefcase} title="Sobre você">

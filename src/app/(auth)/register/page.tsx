@@ -125,7 +125,8 @@ function DataStep({
       });
 
       if (result?.ok) {
-        router.push("/dashboard");
+        // Walkers are directed to complete their professional profile before starting
+        router.push(role === "walker" ? "/profile/walker-profile?onboarding=true" : "/dashboard");
       } else {
         router.push("/login");
       }
