@@ -1778,9 +1778,7 @@ Empty body on success.
 
 ### PATCH /profile
 
-**Description:** Updates the authenticated user's mutable profile fields. The `id`, `role`, and `createdAt` fields are immutable and are excluded from the request body.
-
-Avatar updates are sent inline as Base64 data URLs in the `avatarUrl` field (same pattern as pet photos — no separate upload endpoint).
+**Description:** Updates the authenticated user's mutable profile fields. The `id`, `role`, and `createdAt` fields are immutable and are excluded from the request body. Avatar changes are handled by a separate `POST /profile/avatar` endpoint.
 
 **Authentication:** Required (Bearer JWT)
 
@@ -1790,19 +1788,17 @@ Avatar updates are sent inline as Base64 data URLs in the `avatarUrl` field (sam
 
 All fields optional — send only those that changed.
 
-| Field     | Type            | Description                                       |
-|-----------|-----------------|---------------------------------------------------|
-| name      | string          | Updated full name                                 |
-| email     | string          | Updated e-mail address                            |
-| phone     | string          | Updated phone (E.164 format recommended)          |
-| avatarUrl | string \| null   | New Base64 data URL, or `null` to remove avatar   |
+| Field  | Type   | Description                                  |
+|--------|--------|----------------------------------------------|
+| name   | string | Updated full name                            |
+| email  | string | Updated e-mail address                       |
+| phone  | string | Updated phone (E.164 format recommended)     |
 
 ```json
 {
   "name": "Breno Crepaldi",
   "email": "breno@example.com",
-  "phone": "+5511988887777",
-  "avatarUrl": "data:image/jpeg;base64,/9j..."
+  "phone": "+5511988887777"
 }
 ```
 
@@ -1815,6 +1811,42 @@ Empty body or the updated `User` object (frontend ignores the body and refetches
 ```json
 { "message": "Invalid email format" }
 ```
+
+---
+
+### POST /profile/avatar
+
+**Description:** Uploads a new profile avatar for the authenticated user. Accepts `multipart/form-data` with the image file. Returns the server-hosted URL for the uploaded avatar. Called before `PATCH /profile` when the user changes their photo in the profile edit flow.
+
+**Authentication:** Required (Bearer JWT)
+
+**Profile:** Client | Walker
+
+#### Request Body
+
+`Content-Type: multipart/form-data`
+
+| Field  | Type | Required | Description        |
+|--------|------|----------|--------------------|
+| avatar | File | ✅        | Image file (JPEG, PNG, WEBP — max 5 MB) |
+
+#### Response — 200 OK
+
+```json
+{ "avatarUrl": "https://cdn.dogtravel.app/avatars/user-1-abc123.jpg" }
+```
+
+| Field     | Type   | Description                          |
+|-----------|--------|--------------------------------------|
+| avatarUrl | string | Public CDN URL for the uploaded photo |
+
+#### Response — 400 Bad Request
+
+```json
+{ "message": "File too large or unsupported format" }
+```
+
+**Source:** `src/features/profile/api/profile.api.ts` — `ProfileApi.uploadAvatar()` · `src/features/profile/hooks/use-profile.ts` — `useUploadAvatar()` · `src/app/profile/_components/profile-info.tsx`
 
 ---
 
@@ -2128,6 +2160,48 @@ Same shape as one element of `GET /walkers` array. Includes all fields listed in
 ```json
 { "message": "Walker not found" }
 ```
+
+---
+
+### GET /walkers/{id}/reviews
+
+**Description:** Returns the list of public reviews left by clients for a specific walker. Displayed on the walker detail page below the certifications section.
+
+**Authentication:** Required (Bearer JWT)
+
+**Profile:** Client
+
+#### Path Parameters
+
+| Parameter | Type   | Required | Description       |
+|-----------|--------|----------|-------------------|
+| id        | string | ✅        | Walker identifier |
+
+#### Response — 200 OK
+
+```json
+[
+  {
+    "id": "pr1",
+    "walkId": "2",
+    "rating": 5,
+    "comment": "Carlos é incrível! Meu cachorro adorou o passeio.",
+    "clientName": "Ana S.",
+    "createdAt": "2026-03-18T11:20:00Z"
+  }
+]
+```
+
+| Field       | Type   | Description                        |
+|-------------|--------|------------------------------------|
+| id          | string | Review identifier                  |
+| walkId      | string | Walk that originated the review    |
+| rating      | number | Score 1–5                          |
+| comment     | string | Client's written feedback          |
+| clientName  | string | Display name of the reviewing client |
+| createdAt   | string | ISO 8601 timestamp                 |
+
+**Source:** `src/features/walkers/api/walkers.api.ts` — `WalkersApi.getReviews()` · `src/features/walkers/hooks/use-walkers.ts` — `useWalkerReviews()` · `src/app/walkers/[id]/_components/walker-reviews-section.tsx`
 
 ---
 
@@ -2611,17 +2685,19 @@ Complete list of all documented API routes (excluding inferred).
 | 37 | DELETE | `/documents/certificates/{id}` | Walker | 12 |
 | 38 | GET | `/walkers` | Client | 13 |
 | 39 | GET | `/walkers/{id}` | Client | 13 |
-| 40 | GET | `/walkers/{walkerId}/availability` | Walker | 13 |
-| 41 | PATCH | `/walkers/{walkerId}/availability` | Walker | 13 |
-| 42 | GET | `/walkers/me` | Walker | 13.1 |
-| 43 | PATCH | `/walkers/me` | Walker | 13.1 |
-| 44 | GET | `/walkers/me/earnings` | Walker | 13.1 |
-| 45 | GET | `/walkers/me/bank-account` | Walker | 13.1 |
-| 46 | PATCH | `/walkers/me/bank-account` | Walker | 13.1 |
-| 47 | POST | `/auth/logout` | Client \| Walker | 14 |
-| 48 | PATCH | `/walks/{walkId}/complete` | Walker | 14 |
+| 40 | GET | `/walkers/{id}/reviews` | Client | 13 |
+| 41 | GET | `/walkers/{walkerId}/availability` | Walker | 13 |
+| 42 | PATCH | `/walkers/{walkerId}/availability` | Walker | 13 |
+| 43 | GET | `/walkers/me` | Walker | 13.1 |
+| 44 | PATCH | `/walkers/me` | Walker | 13.1 |
+| 45 | GET | `/walkers/me/earnings` | Walker | 13.1 |
+| 46 | GET | `/walkers/me/bank-account` | Walker | 13.1 |
+| 47 | PATCH | `/walkers/me/bank-account` | Walker | 13.1 |
+| 48 | POST | `/profile/avatar` | Client \| Walker | 11 |
+| 49 | POST | `/auth/logout` | Client \| Walker | 14 |
+| 50 | PATCH | `/walks/{walkId}/complete` | Walker | 14 |
 
-**Total: 48 explicit routes + 6 inferred routes = 54 routes documented.**
+**Total: 50 explicit routes + 6 inferred routes = 56 routes documented.**
 
 ---
 
