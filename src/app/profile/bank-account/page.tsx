@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -13,9 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useWalkerBankAccount, useUpdateWalkerBankAccount } from "@/features/walkers/hooks/use-walkers";
-import type { WalkerBankAccount } from "@/types";
+import { bankAccountSchema, type BankAccountFormValues } from "@/lib/validations/walker";
 
 function PageSkeleton() {
   return (
@@ -59,32 +60,39 @@ export default function BankAccountPage() {
   const { data: bankAccount, isLoading } = useWalkerBankAccount();
   const { mutate: updateBankAccount, isPending: isSaving } = useUpdateWalkerBankAccount();
 
-  const [form, setForm] = useState<WalkerBankAccount>({
-    bankName: "",
-    accountType: "checking",
-    branch: "",
-    accountNumber: "",
-    holderName: "",
-    holderDocument: "",
-    pixKey: "",
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm<BankAccountFormValues>({
+    resolver: zodResolver(bankAccountSchema),
+    defaultValues: {
+      bankName: "",
+      accountType: "checking",
+      branch: "",
+      accountNumber: "",
+      holderName: "",
+      holderDocument: "",
+      pixKey: "",
+    },
   });
 
   useEffect(() => {
     if (!bankAccount) return;
-    setForm({ ...bankAccount });
-  }, [bankAccount]);
+    reset({ ...bankAccount, pixKey: bankAccount.pixKey ?? "" });
+  }, [bankAccount, reset]);
 
-  function handleSave() {
-    updateBankAccount(form, {
+  function onSubmit(data: BankAccountFormValues) {
+    updateBankAccount(data, {
       onSuccess: () => toast.success("Dados bancários atualizados!"),
       onError:   () => toast.error("Erro ao salvar. Tente novamente."),
     });
   }
 
-  function field(key: keyof WalkerBankAccount) {
-    return (e: React.ChangeEvent<HTMLInputElement>) =>
-      setForm((f) => ({ ...f, [key]: e.target.value }));
-  }
+  const accountType = watch("accountType");
 
   if (isLoading) {
     return (
@@ -112,90 +120,106 @@ export default function BankAccountPage() {
         </div>
       </div>
 
-      <Section icon={Building2} title="Conta bancária">
-        <FieldRow label="Banco">
-          <Input
-            value={form.bankName}
-            placeholder="Ex: Nubank, Itaú, Bradesco..."
-            onChange={field("bankName")}
-            className="rounded-lg"
-          />
-        </FieldRow>
-        <div className="grid grid-cols-2 gap-4">
-          <FieldRow label="Agência">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <Section icon={Building2} title="Conta bancária">
+          <FieldRow label="Banco">
             <Input
-              value={form.branch}
-              placeholder="Ex: 0001"
-              onChange={field("branch")}
+              placeholder="Ex: Nubank, Itaú, Bradesco..."
+              {...register("bankName")}
+              aria-invalid={!!errors.bankName}
               className="rounded-lg"
             />
+            {errors.bankName && (
+              <p className="text-destructive text-xs mt-1">{errors.bankName.message}</p>
+            )}
           </FieldRow>
-          <FieldRow label="Conta">
-            <Input
-              value={form.accountNumber}
-              placeholder="Ex: 12345-6"
-              onChange={field("accountNumber")}
-              className="rounded-lg"
-            />
-          </FieldRow>
-        </div>
-        <FieldRow label="Tipo de conta">
-          <div className="flex gap-3">
-            {([
-              { value: "checking", label: "Corrente" },
-              { value: "savings",  label: "Poupança" },
-            ] as const).map(({ value, label }) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setForm((f) => ({ ...f, accountType: value }))}
-                className={[
-                  "flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-all duration-150 cursor-pointer",
-                  form.accountType === value
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground",
-                ].join(" ")}
-              >
-                {label}
-              </button>
-            ))}
+          <div className="grid grid-cols-2 gap-4">
+            <FieldRow label="Agência">
+              <Input
+                placeholder="Ex: 0001"
+                {...register("branch")}
+                aria-invalid={!!errors.branch}
+                className="rounded-lg"
+              />
+              {errors.branch && (
+                <p className="text-destructive text-xs mt-1">{errors.branch.message}</p>
+              )}
+            </FieldRow>
+            <FieldRow label="Conta">
+              <Input
+                placeholder="Ex: 12345-6"
+                {...register("accountNumber")}
+                aria-invalid={!!errors.accountNumber}
+                className="rounded-lg"
+              />
+              {errors.accountNumber && (
+                <p className="text-destructive text-xs mt-1">{errors.accountNumber.message}</p>
+              )}
+            </FieldRow>
           </div>
-        </FieldRow>
-      </Section>
+          <FieldRow label="Tipo de conta">
+            <div className="flex gap-3">
+              {([
+                { value: "checking", label: "Corrente" },
+                { value: "savings",  label: "Poupança" },
+              ] as const).map(({ value, label }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setValue("accountType", value)}
+                  className={[
+                    "flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-all duration-150 cursor-pointer",
+                    accountType === value
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground",
+                  ].join(" ")}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </FieldRow>
+        </Section>
 
-      <Section icon={Building2} title="Titular e chave PIX">
-        <FieldRow label="Nome do titular">
-          <Input
-            value={form.holderName}
-            placeholder="Nome conforme consta no banco"
-            onChange={field("holderName")}
-            className="rounded-lg"
-          />
-        </FieldRow>
-        <FieldRow label="CPF / CNPJ">
-          <Input
-            value={form.holderDocument}
-            placeholder="000.000.000-00"
-            onChange={field("holderDocument")}
-            className="rounded-lg"
-          />
-        </FieldRow>
-        <FieldRow label="Chave PIX (opcional)">
-          <Input
-            value={form.pixKey ?? ""}
-            placeholder="CPF, e-mail, telefone ou chave aleatória"
-            onChange={field("pixKey")}
-            className="rounded-lg"
-          />
-        </FieldRow>
-      </Section>
+        <Section icon={Building2} title="Titular e chave PIX">
+          <FieldRow label="Nome do titular">
+            <Input
+              placeholder="Nome conforme consta no banco"
+              {...register("holderName")}
+              aria-invalid={!!errors.holderName}
+              className="rounded-lg"
+            />
+            {errors.holderName && (
+              <p className="text-destructive text-xs mt-1">{errors.holderName.message}</p>
+            )}
+          </FieldRow>
+          <FieldRow label="CPF / CNPJ">
+            <Input
+              placeholder="000.000.000-00"
+              {...register("holderDocument")}
+              aria-invalid={!!errors.holderDocument}
+              className="rounded-lg"
+            />
+            {errors.holderDocument && (
+              <p className="text-destructive text-xs mt-1">{errors.holderDocument.message}</p>
+            )}
+          </FieldRow>
+          <FieldRow label="Chave PIX (opcional)">
+            <Input
+              placeholder="CPF, e-mail, telefone ou chave aleatória"
+              {...register("pixKey")}
+              className="rounded-lg"
+            />
+          </FieldRow>
+        </Section>
 
-      <div className="flex justify-end">
-        <Button onClick={handleSave} disabled={isSaving} className="gap-2 rounded-lg shadow-sm">
-          {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          {isSaving ? "Salvando..." : "Salvar dados"}
-        </Button>
-      </div>
+        <div className="flex justify-end">
+          <Button type="submit" disabled={isSaving} className="gap-2 rounded-lg shadow-sm">
+            {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            {isSaving ? "Salvando..." : "Salvar dados"}
+          </Button>
+        </div>
+      </form>
     </div>
   );
 }

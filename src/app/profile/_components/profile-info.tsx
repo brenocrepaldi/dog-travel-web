@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -8,7 +10,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PET_IMAGE_ACCEPT, validatePetImage } from '@/lib/validations/pet';
-import { Camera, Edit2, FileText, Mail, MapPin, Phone, Save, User, X } from 'lucide-react';
+import { profileSchema, type ProfileFormValues } from '@/lib/validations/profile';
+import { Camera, Edit2, Mail, Phone, Save, User, X } from 'lucide-react';
 import { useProfile, useUpdateProfile, useUploadAvatar } from '@/features/profile/hooks/use-profile';
 
 function getInitials(name: string) {
@@ -106,53 +109,42 @@ export function ProfileInfo() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null);
+  const [previewAvatarUrl, setPreviewAvatarUrl] = useState('');
 
   const { data: profile, isLoading } = useProfile();
   const { mutateAsync: saveProfileAsync, isPending: isSavingProfile } = useUpdateProfile();
   const { mutateAsync: uploadAvatarAsync, isPending: isUploading } = useUploadAvatar();
   const isSaving = isSavingProfile || isUploading;
 
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    avatarUrl: '',
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    formState: { errors },
+  } = useForm<ProfileFormValues>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: { name: '', email: '', phone: '' },
   });
-  const [draft, setDraft] = useState(formData);
 
-  // Sync form data when profile loads
   useEffect(() => {
     if (!profile) return;
-    const next = {
-      name: profile.name ?? '',
-      email: profile.email ?? '',
-      phone: profile.phone ?? '',
-      avatarUrl: profile.avatarUrl ?? '',
-    };
-    setFormData(next);
-    setDraft(next);
-  }, [profile]);
+    reset({ name: profile.name ?? '', email: profile.email ?? '', phone: profile.phone ?? '' });
+  }, [profile, reset]);
 
-  const displayName = isEditing ? draft.name : formData.name;
-  const displayImage = isEditing ? draft.avatarUrl : formData.avatarUrl;
+  const watchedName = watch('name');
+  const displayName = isEditing ? watchedName : (profile?.name ?? '');
+  const displayImage = isEditing ? previewAvatarUrl || profile?.avatarUrl : profile?.avatarUrl;
 
   const processFile = (file: File) => {
     const error = validatePetImage(file);
-    if (error) {
-      toast.error(error);
-      return;
-    }
+    if (error) { toast.error(error); return; }
     setPendingAvatarFile(file);
     const reader = new FileReader();
     reader.onload = () => {
-      const result = reader.result;
-      if (typeof result === 'string') {
-        setDraft((prev) => ({ ...prev, avatarUrl: result }));
-      }
+      if (typeof reader.result === 'string') setPreviewAvatarUrl(reader.result);
     };
-    reader.onerror = () => {
-      toast.error('Não foi possível ler a imagem. Tente outro arquivo.');
-    };
+    reader.onerror = () => toast.error('Não foi possível ler a imagem. Tente outro arquivo.');
     reader.readAsDataURL(file);
   };
 
@@ -163,26 +155,26 @@ export function ProfileInfo() {
   };
 
   const handleEdit = () => {
-    setDraft(formData);
+    setPreviewAvatarUrl('');
+    setPendingAvatarFile(null);
     setIsEditing(true);
   };
 
   const handleCancel = () => {
-    setDraft(formData);
+    reset({ name: profile?.name ?? '', email: profile?.email ?? '', phone: profile?.phone ?? '' });
     setPendingAvatarFile(null);
+    setPreviewAvatarUrl('');
     setIsEditing(false);
   };
 
-  const handleSave = async () => {
+  const onSubmit = async (data: ProfileFormValues) => {
     try {
-      let avatarUrl = draft.avatarUrl;
       if (pendingAvatarFile) {
-        const result = await uploadAvatarAsync(pendingAvatarFile);
-        avatarUrl = result.avatarUrl;
+        await uploadAvatarAsync(pendingAvatarFile);
       }
-      await saveProfileAsync({ name: draft.name, email: draft.email, phone: draft.phone });
-      setFormData({ ...draft, avatarUrl });
+      await saveProfileAsync(data);
       setPendingAvatarFile(null);
+      setPreviewAvatarUrl('');
       toast.success('Perfil atualizado com sucesso!');
       setIsEditing(false);
     } catch {
@@ -228,9 +220,9 @@ export function ProfileInfo() {
         {!isEditing && (
           <div className="text-center">
             <p className="text-base font-semibold text-foreground leading-tight">
-              {formData.name || 'Sem nome'}
+              {profile?.name || 'Sem nome'}
             </p>
-            <p className="text-sm text-muted-foreground mt-0.5">{formData.email}</p>
+            <p className="text-sm text-muted-foreground mt-0.5">{profile?.email}</p>
           </div>
         )}
       </div>
@@ -260,45 +252,94 @@ export function ProfileInfo() {
               <ReadonlyField
                 icon={<User className="w-4 h-4" />}
                 label="Nome completo"
-                value={formData.name}
+                value={profile?.name ?? ''}
               />
               <ReadonlyField
                 icon={<Mail className="w-4 h-4" />}
                 label="E-mail"
-                value={formData.email}
+                value={profile?.email ?? ''}
               />
               <ReadonlyField
                 icon={<Phone className="w-4 h-4" />}
                 label="Telefone"
-                value={formData.phone}
+                value={profile?.phone ?? ''}
               />
             </div>
           ) : (
-            <div className="px-5 py-5 space-y-4">
-              <EditField
-                id="name"
-                label="Nome completo"
-                icon={<User className="w-3.5 h-3.5" />}
-                value={draft.name}
-                onChange={(v) => setDraft((p) => ({ ...p, name: v }))}
-              />
-              <EditField
-                id="email"
-                label="E-mail"
-                type="email"
-                icon={<Mail className="w-3.5 h-3.5" />}
-                value={draft.email}
-                onChange={(v) => setDraft((p) => ({ ...p, email: v }))}
-              />
-              <EditField
-                id="phone"
-                label="Telefone"
-                icon={<Phone className="w-3.5 h-3.5" />}
-                value={draft.phone}
-                onChange={(v) => setDraft((p) => ({ ...p, phone: v }))}
-              />
+            <form onSubmit={handleSubmit(onSubmit)} className="px-5 py-5 space-y-4">
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="profile-name"
+                  className="text-xs font-medium text-muted-foreground uppercase tracking-wider"
+                >
+                  Nome completo
+                </Label>
+                <div className="relative">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 pointer-events-none">
+                    <User className="w-3.5 h-3.5" />
+                  </div>
+                  <Input
+                    id="profile-name"
+                    {...register('name')}
+                    className="pl-9 rounded-lg"
+                    aria-invalid={!!errors.name}
+                  />
+                </div>
+                {errors.name && (
+                  <p className="text-destructive text-xs">{errors.name.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="profile-email"
+                  className="text-xs font-medium text-muted-foreground uppercase tracking-wider"
+                >
+                  E-mail
+                </Label>
+                <div className="relative">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 pointer-events-none">
+                    <Mail className="w-3.5 h-3.5" />
+                  </div>
+                  <Input
+                    id="profile-email"
+                    type="email"
+                    {...register('email')}
+                    className="pl-9 rounded-lg"
+                    aria-invalid={!!errors.email}
+                  />
+                </div>
+                {errors.email && (
+                  <p className="text-destructive text-xs">{errors.email.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="profile-phone"
+                  className="text-xs font-medium text-muted-foreground uppercase tracking-wider"
+                >
+                  Telefone
+                </Label>
+                <div className="relative">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 pointer-events-none">
+                    <Phone className="w-3.5 h-3.5" />
+                  </div>
+                  <Input
+                    id="profile-phone"
+                    {...register('phone')}
+                    className="pl-9 rounded-lg"
+                    aria-invalid={!!errors.phone}
+                  />
+                </div>
+                {errors.phone && (
+                  <p className="text-destructive text-xs">{errors.phone.message}</p>
+                )}
+              </div>
+
               <div className="flex justify-end gap-2 pt-1">
                 <Button
+                  type="button"
                   variant="ghost"
                   size="sm"
                   onClick={handleCancel}
@@ -309,8 +350,8 @@ export function ProfileInfo() {
                   Cancelar
                 </Button>
                 <Button
+                  type="submit"
                   size="sm"
-                  onClick={handleSave}
                   disabled={isSaving}
                   className="rounded-lg gap-1.5 shadow-sm"
                 >
@@ -318,7 +359,7 @@ export function ProfileInfo() {
                   {isSaving ? 'Salvando...' : 'Salvar'}
                 </Button>
               </div>
-            </div>
+            </form>
           )}
         </CardContent>
       </Card>
