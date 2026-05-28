@@ -364,6 +364,27 @@ export interface PaginatedResponse<T> {
 }
 
 // ─── DTOs ─────────────────────────────────────────────────────────────────────
+
+/**
+ * Payload sent by the client to create a new walk request (POST /walks).
+ * Contains only client-supplied fields — the backend derives id, status,
+ * clientName, dateLabel, distanceKm, participants, and timeline from
+ * the JWT session and its own state.
+ */
+export interface CreateWalkDto {
+  petIds: string[];
+  petNames: string[];
+  scheduledAt: string;
+  durationMinutes: number;
+  price: number;
+  startAddress: string;
+  paymentMethodId: string;
+  walkerId?: string;
+  lat?: number;
+  lng?: number;
+  notes?: string;
+}
+
 export interface WalkEstimateDto {
   petIds: string[];
   durationMinutes: number;

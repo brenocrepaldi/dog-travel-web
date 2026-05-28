@@ -14,6 +14,7 @@ import type {
   UserRole,
   WalkEstimateRequest,
   WalkEstimateResult,
+  CreateWalkDto,
 } from "@/types";
 import api, { isApiConfigured } from "@/services/api";
 
@@ -28,7 +29,7 @@ function randomCode() {
 // ─── Read ─────────────────────────────────────────────────────────────────────
 
 export const WalksApi = {
-  list: async (role: UserRole, walkerId = "1"): Promise<WalkRecord[]> => {
+  list: async (role: UserRole, walkerId?: string): Promise<WalkRecord[]> => {
     if (!isApiConfigured) {
       if (role === "client") {
         return [...walksStore].filter((w) =>
@@ -37,8 +38,10 @@ export const WalksApi = {
       }
       return [...walksStore].filter((w) => w.walkerId === walkerId);
     }
+    const params: Record<string, string> = { role };
+    if (role === "walker" && walkerId) params.walkerId = walkerId;
     return api
-      .get<WalkRecord[]>("/walks", { params: { role, walkerId } })
+      .get<WalkRecord[]>("/walks", { params })
       .then((r) => r.data);
   },
 
@@ -85,13 +88,59 @@ export const WalksApi = {
 
   // ─── Mutations ──────────────────────────────────────────────────────────────
 
-  create: async (walk: Omit<WalkRecord, "id">): Promise<WalkRecord> => {
+  create: async (dto: CreateWalkDto): Promise<WalkRecord> => {
     if (!isApiConfigured) {
-      const newWalk: WalkRecord = { ...walk, id: `local-${crypto.randomUUID()}` };
+      const dateLabel = new Date(dto.scheduledAt).toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      const now = new Date().toLocaleTimeString("pt-BR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      const newWalk: WalkRecord = {
+        id: `local-${crypto.randomUUID()}`,
+        walkerId: dto.walkerId ?? null,
+        clientName: "Cliente",
+        petIds: dto.petIds,
+        petNames: dto.petNames,
+        status: "pending",
+        dateLabel,
+        scheduledAt: dto.scheduledAt,
+        durationMinutes: dto.durationMinutes,
+        price: dto.price,
+        distanceKm: 0,
+        startAddress: dto.startAddress,
+        startLat: dto.lat,
+        startLng: dto.lng,
+        notes: dto.notes,
+        paymentMethodId: dto.paymentMethodId,
+        participants: [],
+        timeline: [
+          { id: "ev-1", label: "Pedido criado", at: now, state: "done" },
+          { id: "ev-2", label: "Aguardando passeador", at: dateLabel, state: "pending" },
+        ],
+      };
+      const newRequest: WalkRequest = {
+        id: newWalk.id,
+        clientId: "client_1",
+        clientName: "Cliente",
+        petNames: dto.petNames,
+        petIds: dto.petIds,
+        durationMinutes: dto.durationMinutes,
+        price: dto.price,
+        scheduledAt: dto.scheduledAt,
+        scheduledLabel: dateLabel,
+        startAddress: dto.startAddress,
+        receivedMinutes: 0,
+      };
       walksStore = [newWalk, ...walksStore];
+      walkRequestsStore = [newRequest, ...walkRequestsStore];
       return newWalk;
     }
-    return api.post<WalkRecord>("/walks", walk).then((r) => r.data);
+    return api.post<WalkRecord>("/walks", dto).then((r) => r.data);
   },
 
   cancel: async (id: string): Promise<void> => {

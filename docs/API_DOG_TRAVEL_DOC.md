@@ -702,50 +702,48 @@ The walk request is a 6-step wizard. Steps 1–5 collect data and step 6 submits
 
 #### Request Body
 
-| Field           | Type              | Required | Description                              |
-|-----------------|-------------------|----------|------------------------------------------|
-| walkerId        | string            | ❌        | Pre-assigned walker ID (usually omitted) |
-| clientName      | string            | ✅        | Client display name                      |
-| petNames        | string[]          | ✅        | Names of pets to be walked               |
-| status          | `"pending"`       | ✅        | Initial status — always `"pending"`      |
-| dateLabel       | string            | ✅        | Human-readable scheduled date label      |
-| scheduledAt     | string (ISO 8601) | ✅        | Scheduled start datetime                 |
-| durationMinutes | number            | ✅        | Walk duration in minutes (15, 30, 45, 60)|
-| price           | number            | ✅        | Estimated price in BRL                   |
-| distanceKm      | number            | ✅        | Expected distance (0 at creation)        |
-| startAddress    | string            | ✅        | Starting address text                    |
-| notes           | string            | ❌        | Optional notes for the walker            |
-| paymentMethodId | string            | ✅        | ID of the selected payment method        |
-| participants    | WalkParticipant[] | ✅        | Empty array at creation                  |
-| timeline        | WalkTimelineEvent[] | ✅      | Initial timeline events                  |
+> The client sends only the fields it knows. The backend derives `id`, `status`, `clientName`, `dateLabel`, `distanceKm`, `participants`, and `timeline` from the JWT session and its own state.
+
+| Field           | Type              | Required | Description                                                     |
+|-----------------|-------------------|----------|-----------------------------------------------------------------|
+| petIds          | string[]          | ✅        | IDs of the pets to be walked                                    |
+| petNames        | string[]          | ✅        | Display names of the pets (derived by backend from `petIds`)    |
+| scheduledAt     | string (ISO 8601) | ✅        | Scheduled start datetime                                        |
+| durationMinutes | number            | ✅        | Walk duration in minutes (15, 30, 45, or 60)                    |
+| price           | number            | ✅        | Price shown to the client at checkout (BRL); backend validates  |
+| startAddress    | string            | ✅        | Starting address text                                           |
+| paymentMethodId | string            | ✅        | ID of the selected payment method                               |
+| walkerId        | string            | ❌        | Pre-selected walker ID (omit if not pre-assigned)               |
+| lat             | number            | ❌        | Start latitude from geocoding                                   |
+| lng             | number            | ❌        | Start longitude from geocoding                                  |
+| notes           | string            | ❌        | Optional notes for the walker                                   |
 
 **Example Request:**
 ```json
 {
-  "clientName": "João Silva",
+  "petIds": ["pet-001", "pet-002"],
   "petNames": ["Rex", "Mel"],
-  "status": "pending",
-  "dateLabel": "25 mai., 14:00",
   "scheduledAt": "2026-05-25T14:00:00.000Z",
   "durationMinutes": 30,
   "price": 44.50,
-  "distanceKm": 0,
   "startAddress": "Rua das Flores, 123 - São Paulo",
-  "notes": "Rex puxa muito a coleira",
   "paymentMethodId": "pm_001",
-  "participants": [],
-  "timeline": [
-    { "id": "ev-1", "label": "Pedido criado", "at": "2026-05-25T10:00:00.000Z", "state": "done" },
-    { "id": "ev-2", "label": "Aguardando passeador", "at": "2026-05-25T14:00:00.000Z", "state": "pending" }
-  ]
+  "lat": -23.561,
+  "lng": -46.655,
+  "notes": "Rex puxa muito a coleira"
 }
 ```
 
 #### Response — 201 Created
+
+Returns the full `WalkRecord` as created by the backend, with all server-generated fields populated.
+
 ```json
 {
   "id": "walk-uuid-001",
+  "walkerId": null,
   "clientName": "João Silva",
+  "petIds": ["pet-001", "pet-002"],
   "petNames": ["Rex", "Mel"],
   "status": "pending",
   "dateLabel": "25 mai., 14:00",
@@ -754,11 +752,13 @@ The walk request is a 6-step wizard. Steps 1–5 collect data and step 6 submits
   "price": 44.50,
   "distanceKm": 0,
   "startAddress": "Rua das Flores, 123 - São Paulo",
+  "startLat": -23.561,
+  "startLng": -46.655,
   "paymentMethodId": "pm_001",
   "participants": [],
   "timeline": [
-    { "id": "ev-1", "label": "Pedido criado", "at": "2026-05-25T10:00:00.000Z", "state": "done" },
-    { "id": "ev-2", "label": "Aguardando passeador", "at": "2026-05-25T14:00:00.000Z", "state": "pending" }
+    { "id": "ev-1", "label": "Pedido criado", "at": "10:00", "state": "done" },
+    { "id": "ev-2", "label": "Aguardando passeador", "at": "14:00", "state": "pending" }
   ]
 }
 ```

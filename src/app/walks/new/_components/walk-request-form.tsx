@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { BadgeCheck, CheckCircle2, LogOut, User } from 'lucide-react';
@@ -29,6 +28,7 @@ import { StepPayment } from './steps/step-payment';
 import { StepConfirm } from './steps/step-confirm';
 import { StepPixPayment } from './steps/step-pix-payment';
 import { PIX_INSTANT_ID } from '@/config/pricing';
+import type { CreateWalkDto } from '@/types';
 
 // ─── Form state shape ──────────────────────────────────────────────────────
 export interface WalkFormData {
@@ -148,7 +148,6 @@ export function WalkRequestForm() {
 	const searchParams = useSearchParams();
 	const repeatWalkId  = searchParams.get('repeat') ?? '';
 	const preselectedWalkerId = searchParams.get('walker') ?? '';
-	const { data: session } = useSession();
 	const { data: pets = [] } = useDogs();
 	const { data: walkToRepeat } = useWalkById(repeatWalkId);
 	const { data: preselectedWalker } = useWalkerById(preselectedWalkerId);
@@ -236,46 +235,21 @@ export function WalkRequestForm() {
 			.filter((p) => data.selectedPetIds.includes(p.id))
 			.map((p) => p.name);
 
-		const dateLabel = new Date(scheduledAt).toLocaleDateString('pt-BR', {
-			day: '2-digit',
-			month: 'short',
-			hour: '2-digit',
-			minute: '2-digit',
-		});
-
-		const newWalk = {
-			id: `local-${crypto.randomUUID()}`,
-			walkerId: data.selectedWalkerId ?? null,
-			clientName: session?.user?.name ?? 'Cliente',
+		const dto: CreateWalkDto = {
 			petIds: data.selectedPetIds,
 			petNames,
-			status: 'pending' as const,
-			dateLabel,
 			scheduledAt,
 			durationMinutes: data.durationMinutes,
 			price: data.estimatedPrice ?? 0,
-			distanceKm: 0,
 			startAddress: data.address,
-			notes: data.notes || undefined,
 			paymentMethodId,
-			participants: [],
-			timeline: [
-				{
-					id: 'ev-1',
-					label: 'Pedido criado',
-					at: new Date().toISOString(),
-					state: 'done' as const,
-				},
-				{
-					id: 'ev-2',
-					label: 'Aguardando passeador',
-					at: scheduledAt,
-					state: 'pending' as const,
-				},
-			],
+			walkerId: data.selectedWalkerId ?? undefined,
+			lat: data.lat ?? undefined,
+			lng: data.lng ?? undefined,
+			notes: data.notes || undefined,
 		};
 
-		await createWalk(newWalk);
+		await createWalk(dto);
 
 		trackMetricEvent({
 			name: 'walk_request_submitted',

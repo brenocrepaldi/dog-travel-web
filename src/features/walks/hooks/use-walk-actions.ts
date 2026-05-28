@@ -1,11 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { WalksApi } from "../api/walks.api";
-import type { WalkRecord, WalkRequest } from "@/types";
+import type { CreateWalkDto, WalkRequest } from "@/types";
 
 export function useCreateWalk() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (walk: Omit<WalkRecord, "id">) => WalksApi.create(walk),
+    mutationFn: (dto: CreateWalkDto) => WalksApi.create(dto),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["walks"] });
     },
