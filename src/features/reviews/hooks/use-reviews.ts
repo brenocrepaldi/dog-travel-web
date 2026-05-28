@@ -27,6 +27,7 @@ export function useSubmitReview(walkId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reviews", walkId] });
       queryClient.invalidateQueries({ queryKey: ["walks", walkId] });
+      queryClient.invalidateQueries({ queryKey: ["walks"] });
     },
   });
 }

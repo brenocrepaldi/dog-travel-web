@@ -40,6 +40,7 @@ export interface WalkRecord {
   id: string;
   walkerId: string | null;
   clientName: string;
+  petIds?: string[];
   petNames: string[];
   status: WalkStatus;
   dateLabel: string;
@@ -56,6 +57,7 @@ export interface WalkRecord {
   startCode?: string;
   startLat?: number;
   startLng?: number;
+  hasReview?: boolean;
 }
 
 export interface WalkReview {
@@ -85,6 +87,7 @@ export interface WalkerProfile {
   verified: boolean;
   availability: string;
   completedWalks: number;
+  joinedAt: string;
   trustChecks: {
     identityVerified: boolean;
     backgroundCheck: boolean;
@@ -363,6 +366,20 @@ export interface WalkEstimateDto {
   petIds: string[];
   durationMinutes: number;
   location: GeoLocation;
+}
+
+export interface WalkEstimateRequest {
+  durationMinutes: number;
+  petCount: number;
+  isFirstRide: boolean;
+}
+
+export interface WalkEstimateResult {
+  durationBase: number;
+  extraPetFee: number;
+  platformAndSafetyFee: number;
+  firstRideDiscount: number;
+  total: number;
 }
 
 export interface PaginationParams {

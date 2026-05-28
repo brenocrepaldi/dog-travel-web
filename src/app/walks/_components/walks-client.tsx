@@ -21,7 +21,6 @@ import {
 	Star,
 	X,
 } from 'lucide-react';
-import { useReview } from '@/features/reviews/hooks/use-reviews';
 
 // ── Status config ──────────────────────────────────────────────────────────
 const statusMap: Record<WalkRecord['status'], { label: string; dot: string; pill: string }> = {
@@ -117,8 +116,7 @@ function WalkCard({
 	const [confirmingCancel, setConfirmingCancel] = useState(false);
 
 	const walkerName = walk.participants.find((p) => p.role === 'walker')?.name ?? 'Passeador';
-	const { data: review } = useReview(walk.id, isCompleted);
-	const hasReview = review != null;
+	const hasReview = walk.hasReview ?? false;
 
 	const walkerInitials = walkerName
 		.split(' ')
