@@ -35,4 +35,22 @@ export const AuthApi = {
     if (!isApiConfigured) return;
     await api.post("/auth/logout");
   },
+
+  // Triggers the password recovery flow: backend sends a reset e-mail.
+  forgotPassword: async (email: string): Promise<void> => {
+    if (!isApiConfigured) {
+      await new Promise((r) => setTimeout(r, 800));
+      return;
+    }
+    await api.post("/auth/forgot-password", { email });
+  },
+
+  // Resets the password using the token received by e-mail.
+  resetPassword: async (token: string, password: string): Promise<void> => {
+    if (!isApiConfigured) {
+      await new Promise((r) => setTimeout(r, 800));
+      return;
+    }
+    await api.post("/auth/reset-password", { token, password });
+  },
 };

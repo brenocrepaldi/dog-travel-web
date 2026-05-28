@@ -189,6 +189,75 @@
 
 ---
 
+### POST /auth/forgot-password
+
+**Description:** Triggers the password recovery flow. If the provided e-mail is registered, the backend sends a reset link. Always returns 200 to avoid user enumeration.
+
+**Authentication:** Not required
+
+**Profile:** Client | Walker
+
+#### Request Body
+
+| Field | Type   | Required | Description              |
+|-------|--------|----------|--------------------------|
+| email | string | ✅        | E-mail address to recover |
+
+**Example Request:**
+```json
+{
+  "email": "joao@email.com"
+}
+```
+
+#### Response — 200 OK
+```json
+{}
+```
+> Always returns 200 regardless of whether the e-mail is registered (prevents user enumeration).
+
+---
+
+### POST /auth/reset-password
+
+**Description:** Resets the user's password using a time-limited token delivered by e-mail. The token is expected as a query parameter in the reset link (`/reset-password?token=<token>`).
+
+**Authentication:** Not required (uses one-time reset token in body)
+
+**Profile:** Client | Walker
+
+#### Request Body
+
+| Field    | Type   | Required | Description                              |
+|----------|--------|----------|------------------------------------------|
+| token    | string | ✅        | One-time reset token from the e-mail link |
+| password | string | ✅        | New password (min 6 characters)           |
+
+**Example Request:**
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "password": "novaSenha123"
+}
+```
+
+#### Response — 200 OK
+```json
+{}
+```
+
+#### Response — 400 Bad Request
+```json
+{
+  "error": "INVALID_OR_EXPIRED_TOKEN",
+  "message": "Link de recuperação inválido ou expirado."
+}
+```
+
+> **Frontend flow:** `/forgot-password` → user submits e-mail → backend sends link → user clicks link → `/reset-password?token=<token>` → user enters new password → redirect to `/login`.
+
+---
+
 ### NextAuth Internal Routes (managed by NextAuth.js)
 
 These routes are automatically handled by the `/app/api/auth/[...nextauth]/route.ts` handler and are part of the NextAuth.js session management layer — not direct backend API calls.
@@ -2773,6 +2842,8 @@ Complete list of all documented API routes (excluding inferred).
 | 50 | POST | `/auth/logout` | Client \| Walker | 14 |
 | 51 | PATCH | `/walks/{walkId}/complete` | Walker | 14 |
 | 52 | POST | `/walks/estimate` | Client | 3 |
+| 53 | POST | `/auth/forgot-password` | Client \| Walker | 1 |
+| 54 | POST | `/auth/reset-password` | Client \| Walker | 1 |
 
 **Total: 52 explicit routes + 5 inferred routes = 57 routes documented.**
 
