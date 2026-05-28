@@ -25,4 +25,26 @@ export const ProfileApi = {
     }
     await api.patch("/profile", data);
   },
+
+  uploadAvatar: async (file: File): Promise<{ avatarUrl: string }> => {
+    if (!isApiConfigured) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const avatarUrl = reader.result as string;
+          myProfileStore = { ...myProfileStore, avatarUrl };
+          resolve({ avatarUrl });
+        };
+        reader.onerror = () => reject(new Error("Failed to read file"));
+        reader.readAsDataURL(file);
+      });
+    }
+    const form = new FormData();
+    form.append("avatar", file);
+    return api
+      .post<{ avatarUrl: string }>("/profile/avatar", form, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+      .then((r) => r.data);
+  },
 };

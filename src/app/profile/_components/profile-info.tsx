@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PET_IMAGE_ACCEPT, validatePetImage } from '@/lib/validations/pet';
 import { Camera, Edit2, FileText, Mail, MapPin, Phone, Save, User, X } from 'lucide-react';
-import { useProfile, useUpdateProfile } from '@/features/profile/hooks/use-profile';
+import { useProfile, useUpdateProfile, useUploadAvatar } from '@/features/profile/hooks/use-profile';
 
 function getInitials(name: string) {
   return name
@@ -105,9 +105,12 @@ function ProfileSkeleton() {
 export function ProfileInfo() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null);
 
   const { data: profile, isLoading } = useProfile();
-  const { mutate: updateProfile, isPending: isSaving } = useUpdateProfile();
+  const { mutateAsync: saveProfileAsync, isPending: isSavingProfile } = useUpdateProfile();
+  const { mutateAsync: uploadAvatarAsync, isPending: isUploading } = useUploadAvatar();
+  const isSaving = isSavingProfile || isUploading;
 
   const [formData, setFormData] = useState({
     name: '',
@@ -139,6 +142,7 @@ export function ProfileInfo() {
       toast.error(error);
       return;
     }
+    setPendingAvatarFile(file);
     const reader = new FileReader();
     reader.onload = () => {
       const result = reader.result;
@@ -165,23 +169,25 @@ export function ProfileInfo() {
 
   const handleCancel = () => {
     setDraft(formData);
+    setPendingAvatarFile(null);
     setIsEditing(false);
   };
 
-  const handleSave = () => {
-    updateProfile(
-      { name: draft.name, email: draft.email, phone: draft.phone, avatarUrl: draft.avatarUrl },
-      {
-        onSuccess: () => {
-          setFormData(draft);
-          toast.success('Perfil atualizado com sucesso!');
-          setIsEditing(false);
-        },
-        onError: () => {
-          toast.error('Erro ao salvar. Tente novamente.');
-        },
-      },
-    );
+  const handleSave = async () => {
+    try {
+      let avatarUrl = draft.avatarUrl;
+      if (pendingAvatarFile) {
+        const result = await uploadAvatarAsync(pendingAvatarFile);
+        avatarUrl = result.avatarUrl;
+      }
+      await saveProfileAsync({ name: draft.name, email: draft.email, phone: draft.phone });
+      setFormData({ ...draft, avatarUrl });
+      setPendingAvatarFile(null);
+      toast.success('Perfil atualizado com sucesso!');
+      setIsEditing(false);
+    } catch {
+      toast.error('Erro ao salvar. Tente novamente.');
+    }
   };
 
   if (isLoading) return <ProfileSkeleton />;
