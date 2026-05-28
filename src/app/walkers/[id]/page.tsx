@@ -25,6 +25,7 @@ import { TrustItemCard } from '@/components/walkers/trust-item-card';
 import { WalkersApi } from '@/features/walkers/api/walkers.api';
 import type { DogSize } from '@/types';
 import { Separator } from '@/components/ui/separator';
+import { WalkerReviewsSection } from './_components/walker-reviews-section';
 
 export const metadata: Metadata = { title: 'Perfil do Passeador | DogTravel' };
 
@@ -300,6 +301,9 @@ export default async function WalkerDetailPage({ params }: { params: Promise<{ i
 							</CardContent>
 						</Card>
 					)}
+
+					{/* Reviews */}
+					<WalkerReviewsSection walkerId={id} />
 
 					{/* Bottom CTA banner */}
 					<div className="rounded-2xl border border-primary/15 bg-primary/5 px-5 py-5 sm:px-6 flex flex-col sm:flex-row sm:items-center gap-5">

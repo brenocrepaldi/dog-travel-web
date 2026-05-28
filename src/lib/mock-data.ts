@@ -13,6 +13,7 @@ import type {
 	DocumentsStatus,
 	WalkLocation,
 	WalkerBankAccount,
+	WalkerPublicReview,
 } from '@/types';
 
 export const pets: Pet[] = [
@@ -446,6 +447,24 @@ export const walkerCertificates: WalkerCertDocument[] = [
 	{ id: 'c1', title: 'Adestramento Positivo',      fileName: 'cert_adestramento.pdf',        status: 'verified' },
 	{ id: 'c2', title: 'Primeiros Socorros com Pets', fileName: 'primeiros_socorros_2024.jpg', status: 'pending'  },
 ];
+
+// ─── Walker Public Reviews ────────────────────────────────────────────────────
+// Reviews displayed on each walker's public profile page — will come from GET /walkers/{id}/reviews.
+export const walkerPublicReviews: Record<string, WalkerPublicReview[]> = {
+	'1': [
+		{ id: 'pr1', walkId: '2', rating: 5, comment: 'Carlos é incrível! Rex adorou o passeio e ele enviou fotos a cada 10 minutos.', clientName: 'Ana S.',    createdAt: '2026-03-18T11:20:00Z' },
+		{ id: 'pr2', walkId: '3', rating: 5, comment: 'Muito pontual e cuidadoso. Recomendo muito!',                                                            clientName: 'Julia M.', createdAt: '2026-03-10T15:00:00Z' },
+		{ id: 'pr3', walkId: '5', rating: 4, comment: 'Ótimo passeador, Thor chegou cansado e feliz. Só achei o preço um pouco alto.',                          clientName: 'Roberto K.', createdAt: '2026-02-28T09:30:00Z' },
+	],
+	'2': [
+		{ id: 'pr4', walkId: '1', rating: 5, comment: 'Ana é fantástica com os cães! Mel ficou super tranquila com ela.',                                      clientName: 'Clara T.',  createdAt: '2026-03-22T14:30:00Z' },
+		{ id: 'pr5', walkId: '4', rating: 5, comment: 'Profissional e carinhosa. Segunda vez que contrato e vai ter terceira!',                                 clientName: 'Marcos L.', createdAt: '2026-03-15T10:00:00Z' },
+	],
+	'3': [
+		{ id: 'pr6', walkId: '6', rating: 4, comment: 'Pedro foi muito atencioso com o Bob. Só demorou um pouco para chegar.',                                 clientName: 'Sofia R.',  createdAt: '2026-03-20T16:45:00Z' },
+	],
+	'4': [],
+};
 
 // ─── Walker Earnings View ─────────────────────────────────────────────────────
 // Earnings history shown on the walker payments page — will come from GET /walkers/me/earnings.

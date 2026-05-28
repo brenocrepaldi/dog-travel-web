@@ -1,5 +1,5 @@
-import { walkers, walkerAvailability, walkerEarningsHistory, walkerBankAccountDefault } from "@/lib/mock-data";
-import type { EarningsParams, PaymentHistoryItem, WalkerBankAccount, WalkerProfile, WalkerProfileUpdate } from "@/types";
+import { walkers, walkerAvailability, walkerEarningsHistory, walkerBankAccountDefault, walkerPublicReviews } from "@/lib/mock-data";
+import type { EarningsParams, PaymentHistoryItem, WalkerBankAccount, WalkerProfile, WalkerProfileUpdate, WalkerPublicReview } from "@/types";
 import api, { isApiConfigured } from "@/services/api";
 
 // Module-level mutable stores
@@ -28,6 +28,15 @@ export const WalkersApi = {
     }
     return api
       .get<WalkerProfile[]>("/walkers", { params: filters })
+      .then((r) => r.data);
+  },
+
+  getReviews: async (walkerId: string): Promise<WalkerPublicReview[]> => {
+    if (!isApiConfigured) {
+      return walkerPublicReviews[walkerId] ?? [];
+    }
+    return api
+      .get<WalkerPublicReview[]>(`/walkers/${walkerId}/reviews`)
       .then((r) => r.data);
   },
 

@@ -63,6 +63,15 @@ export function useUpdateWalkerBankAccount() {
   });
 }
 
+export function useWalkerReviews(walkerId: string) {
+  return useQuery({
+    queryKey: ["walkers", walkerId, "reviews"],
+    queryFn: () => WalkersApi.getReviews(walkerId),
+    enabled: Boolean(walkerId),
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
 export function useWalkerAvailability(walkerId: string) {
   return useQuery({
     queryKey: ["walkers", walkerId, "availability"],
