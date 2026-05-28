@@ -26,6 +26,7 @@ import { WalkersApi } from '@/features/walkers/api/walkers.api';
 import type { DogSize } from '@/types';
 import { Separator } from '@/components/ui/separator';
 import { WalkerReviewsSection } from './_components/walker-reviews-section';
+import { WalkerAvailabilityBadge } from './_components/walker-availability-badge';
 
 export const metadata: Metadata = { title: 'Perfil do Passeador | DogTravel' };
 
@@ -150,9 +151,7 @@ export default async function WalkerDetailPage({ params }: { params: Promise<{ i
 		]),
 	);
 
-	const joinedYear = 2023 + (parseInt(id, 10) % 2);
-	const joinedMonth = (parseInt(id, 10) * 3) % 12;
-	const joinedDate = new Date(joinedYear, joinedMonth, 1).toLocaleDateString('pt-BR', {
+	const joinedDate = new Date(walker.joinedAt).toLocaleDateString('pt-BR', {
 		month: 'long',
 		year: 'numeric',
 	});
@@ -359,11 +358,8 @@ export default async function WalkerDetailPage({ params }: { params: Promise<{ i
 								</p>
 							</div>
 
-							{/* Disponibilidade */}
-							<div className="flex items-center gap-2 rounded-lg bg-muted/40 border border-border/50 px-3 py-2">
-								<Calendar className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-								<span className="text-xs text-muted-foreground">{walker.availability}</span>
-							</div>
+							{/* Disponibilidade real-time */}
+							<WalkerAvailabilityBadge walkerId={walker.id} scheduleLabel={walker.availability} />
 
 							<div className="h-px bg-border/40" />
 
