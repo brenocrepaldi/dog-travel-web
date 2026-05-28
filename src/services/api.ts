@@ -12,7 +12,15 @@ const api = axios.create({
 api.interceptors.request.use(
   async (config) => {
     if (typeof window !== "undefined") {
-      const session = await getSession();
+      const session = await getSession() as Awaited<ReturnType<typeof getSession>> & { error?: string };
+
+      // If the JWT callback flagged a refresh failure, redirect immediately
+      // instead of sending a request that will certainly return 401.
+      if (session?.error === "RefreshAccessTokenError") {
+        window.location.href = "/login";
+        return Promise.reject(new Error("RefreshAccessTokenError"));
+      }
+
       const token = session?.accessToken;
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
@@ -26,7 +34,14 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.response?.status === 401 && typeof window !== "undefined") {
+    // Redirect to login on 401. The _retried flag prevents an infinite loop
+    // in the unlikely case the redirect is delayed and another request fires.
+    if (
+      error.response?.status === 401 &&
+      typeof window !== "undefined" &&
+      !error.config?._retried
+    ) {
+      error.config._retried = true;
       window.location.href = "/login";
     }
     return Promise.reject(error);

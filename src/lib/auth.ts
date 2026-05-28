@@ -32,6 +32,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               role: result.user.role,
               accessToken: result.accessToken,
               refreshToken: result.refreshToken,
+              expiresAt: result.expiresAt,
             };
           } catch {
             return null;
@@ -54,21 +55,54 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.role = user.role ?? "";
         token.id = user.id;
-        // Store backend tokens when coming from a real API login
-        const u = user as typeof user & { accessToken?: string; refreshToken?: string };
+        const u = user as typeof user & {
+          accessToken?: string;
+          refreshToken?: string;
+          expiresAt?: number;
+        };
         if (u.accessToken) token.accessToken = u.accessToken;
         if (u.refreshToken) token.refreshToken = u.refreshToken;
+        // expiresAt is a Unix timestamp (seconds). Backend should return it; default to 1h.
+        token.expiresAt = u.expiresAt ?? Math.floor(Date.now() / 1000) + 3600;
+        return token;
       }
-      return token;
+
+      // Return token unchanged when API is not configured (dev mode with mock data)
+      if (!isApiConfigured) return token;
+
+      // Access token still valid — nothing to do
+      if (Date.now() < (token.expiresAt as number) * 1000) return token;
+
+      // Access token expired — attempt refresh
+      if (!token.refreshToken) {
+        return { ...token, error: "RefreshAccessTokenError" as const };
+      }
+
+      try {
+        const { AuthApi } = await import("@/features/auth/api/auth.api");
+        const refreshed = await AuthApi.refreshToken(token.refreshToken as string);
+        return {
+          ...token,
+          accessToken: refreshed.accessToken,
+          refreshToken: refreshed.refreshToken ?? token.refreshToken,
+          expiresAt: refreshed.expiresAt ?? Math.floor(Date.now() / 1000) + 3600,
+          error: undefined,
+        };
+      } catch {
+        // Refresh failed — user will be redirected on the next 401 from the API
+        return { ...token, error: "RefreshAccessTokenError" as const };
+      }
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.role = token.role as string;
         session.user.id = token.id as string;
       }
+      const s = session as typeof session & { accessToken?: string; error?: string };
       // Expose accessToken so the Axios interceptor can inject it
-      (session as typeof session & { accessToken?: string }).accessToken =
-        token.accessToken as string | undefined;
+      s.accessToken = token.accessToken as string | undefined;
+      // Expose refresh error so the interceptor can redirect to login
+      if (token.error) s.error = token.error as string;
       return session;
     },
   },

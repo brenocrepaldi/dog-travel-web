@@ -330,6 +330,8 @@ export interface RegisterDto {
 export interface LoginResponseDto {
   accessToken: string;
   refreshToken?: string;
+  /** Unix timestamp (seconds) when accessToken expires. Backend should always return this. */
+  expiresAt?: number;
   user: User;
 }
 
