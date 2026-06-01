@@ -112,7 +112,9 @@ function DataStep({
 
   async function onSubmit(data: RegisterFormValues) {
     try {
-      await register({ ...data, role });
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { confirmPassword: _, ...registerData } = data;
+      await register({ ...registerData, role });
 
       toast.success("Conta criada com sucesso!", {
         description: "Bem-vindo ao DogTravel!",
