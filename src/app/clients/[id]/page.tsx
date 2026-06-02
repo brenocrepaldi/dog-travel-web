@@ -156,40 +156,34 @@ function ClientAvatar({
 
 function DogCard({ dog }: { dog: ClientProfile["dogs"][number] }) {
   return (
-    <div className={cn(
-      "group relative overflow-hidden rounded-xl border border-border/60 bg-card",
-      "transition-all duration-300 hover:shadow-md hover:border-border",
-    )}>
-      {/* Photo */}
-      <div className="relative h-36 w-full overflow-hidden bg-amber-500/5">
+    <div className="group flex items-center gap-3 rounded-xl border border-border/60 bg-card p-3 transition-all duration-200 hover:border-border hover:shadow-sm">
+      {/* Square avatar */}
+      <div className="aspect-square h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-amber-500/8">
         {dog.photoUrl ? (
           <img
             src={dog.photoUrl}
             alt={dog.name}
-            className="h-full w-full object-contain"
+            className="h-full w-full object-cover"
           />
         ) : (
-          <div className="flex h-full w-full flex-col items-center justify-center gap-2">
-            <PawPrint className="h-10 w-10 text-amber-400/60" />
+          <div className="flex h-full w-full items-center justify-center">
+            <PawPrint className="h-7 w-7 text-amber-400/70" />
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-        <div className="absolute bottom-2 left-3">
-          <p className="text-sm font-bold text-white drop-shadow-sm">{dog.name}</p>
-        </div>
       </div>
 
       {/* Info */}
-      <div className="space-y-2 p-3">
-        <p className="text-xs text-muted-foreground">{dog.breed}</p>
-        <div className="flex flex-wrap gap-1.5">
-          <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold", SIZE_COLOR[dog.size] ?? "bg-muted text-muted-foreground")}>
+      <div className="min-w-0 flex-1 space-y-1.5">
+        <p className="truncate text-sm font-semibold text-foreground">{dog.name}</p>
+        <p className="truncate text-xs text-muted-foreground">{dog.breed}</p>
+        <div className="flex flex-wrap gap-1">
+          <span className={cn("inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold", SIZE_COLOR[dog.size] ?? "bg-muted text-muted-foreground")}>
             {SIZE_LABEL[dog.size] ?? dog.size}
           </span>
-          <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+          <span className="inline-flex items-center rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
             {GENDER_LABEL[dog.gender] ?? dog.gender}
           </span>
-          <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+          <span className="inline-flex items-center rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
             {dog.age} {dog.age === 1 ? "ano" : "anos"}
           </span>
         </div>
@@ -394,7 +388,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
               />
               <Separator />
               <CardContent className="p-5">
-                <div className="grid gap-3 grid-cols-2 sm:grid-cols-3">
+                <div className="grid gap-2.5 sm:grid-cols-2">
                   {client.dogs.map((dog) => (
                     <DogCard key={dog.id} dog={dog} />
                   ))}
