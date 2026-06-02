@@ -59,7 +59,8 @@ export function useStartWalk() {
 export function useCompleteWalk() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (walkId: string) => WalksApi.complete(walkId),
+    mutationFn: ({ walkId, coords }: { walkId: string; coords?: { lat: number; lng: number } }) =>
+      WalksApi.complete(walkId, coords),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["walks"] });
     },

@@ -153,7 +153,7 @@ export const WalksApi = {
     await api.patch(`/walks/${id}/cancel`);
   },
 
-  complete: async (walkId: string): Promise<WalkRecord> => {
+  complete: async (walkId: string, coords?: { lat: number; lng: number }): Promise<WalkRecord> => {
     if (!isApiConfigured) {
       const walk = walksStore.find((w) => w.id === walkId);
       if (!walk) throw new Error("WALK_NOT_FOUND");
@@ -178,7 +178,9 @@ export const WalksApi = {
 
       return walksStore.find((w) => w.id === walkId)!;
     }
-    return api.patch<WalkRecord>(`/walks/${walkId}/complete`).then((r) => r.data);
+    return api
+      .patch<WalkRecord>(`/walks/${walkId}/complete`, coords ?? {})
+      .then((r) => r.data);
   },
 
   start: async (walkId: string, code: string): Promise<WalkRecord> => {

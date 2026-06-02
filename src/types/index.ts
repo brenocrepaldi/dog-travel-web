@@ -88,6 +88,7 @@ export interface WalkRecord {
   participants: WalkParticipant[];
   timeline: WalkTimelineEvent[];
   startCode?: string;
+  startedAt?: string | null;
   startLat?: number;
   startLng?: number;
   hasReview?: boolean;

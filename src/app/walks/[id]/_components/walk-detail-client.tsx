@@ -9,7 +9,6 @@ import {
   Clock,
   CreditCard,
   FileText,
-  Loader2,
   MapPin,
   MessageSquare,
   Navigation,
@@ -30,11 +29,11 @@ import { useWalkById } from '@/features/walks/hooks/use-walks';
 import { useWalkerById } from '@/features/walkers/hooks/use-walkers';
 import { useReview } from '@/features/reviews/hooks/use-reviews';
 import { usePaymentMethods } from '@/features/payments/hooks/use-payments';
-import { useCompleteWalk } from '@/features/walks/hooks/use-walk-actions';
 import { WalkRouteMapClient } from './walk-route-map-client';
 import { WalkPets } from './walk-pets';
 import { WalkStartSection } from './walk-start-section';
 import { ClientCodeBanner } from './client-code-banner';
+import { WalkCompleteButton } from './walk-complete-button';
 import type { WalkRecord, WalkerProfile, WalkTimelineEvent, WalkStatus } from '@/types';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -480,7 +479,6 @@ export function WalkDetailClient({ walkId }: { walkId: string }) {
   const { data: walker } = useWalkerById(walk?.walkerId ?? '', { enabled: !!walk?.walkerId });
   const { data: review } = useReview(walkId);
   const { data: paymentMethods = [] } = usePaymentMethods();
-  const { mutate: completeWalk, isPending: completing } = useCompleteWalk();
 
   if (walkLoading) return <WalkDetailSkeleton />;
 
@@ -556,19 +554,7 @@ export function WalkDetailClient({ walkId }: { walkId: string }) {
                   Acompanhar
                 </Link>
               )}
-              {isInProgress && (
-                <Button
-                  size="sm"
-                  disabled={completing}
-                  onClick={() => completeWalk(walk.id)}
-                  className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
-                >
-                  {completing
-                    ? <Loader2 className="h-4 w-4 animate-spin" />
-                    : <CheckCircle2 className="h-4 w-4" />}
-                  Concluir passeio
-                </Button>
-              )}
+              {isInProgress && <WalkCompleteButton walk={walk} />}
             </>
           ) : (
             <>
