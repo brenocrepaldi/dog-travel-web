@@ -133,9 +133,18 @@ function DataStep({
       } else {
         router.push("/login");
       }
-    } catch {
+    } catch (err) {
+      const apiMessage =
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (err as any)?.response?.data?.message?.message ??
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (err as any)?.response?.data?.message ??
+        null;
       toast.error("Erro ao criar conta", {
-        description: "Tente novamente em instantes.",
+        description:
+          typeof apiMessage === "string"
+            ? apiMessage
+            : "Tente novamente em instantes.",
       });
     }
   }

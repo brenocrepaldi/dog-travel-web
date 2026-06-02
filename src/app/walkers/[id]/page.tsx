@@ -151,10 +151,9 @@ export default async function WalkerDetailPage({ params }: { params: Promise<{ i
 		]),
 	);
 
-	const joinedDate = new Date(walker.joinedAt).toLocaleDateString('pt-BR', {
-		month: 'long',
-		year: 'numeric',
-	});
+	const joinedDate = walker.joinedAt
+		? new Date(walker.joinedAt).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+		: undefined;
 
 
 	return (
