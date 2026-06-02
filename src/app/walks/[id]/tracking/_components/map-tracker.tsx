@@ -360,7 +360,7 @@ export default function MapTracker({ walkId }: { walkId: string }) {
                   {clientPhone && (
                     <Link
                       href={`tel:${clientPhone}`}
-                      className={cn(buttonVariants({ variant: 'outline' }), 'gap-2 border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 dark:border-blue-800/50 dark:bg-blue-900/20 dark:text-blue-400')}
+                      className={cn(buttonVariants({ variant: 'outline' }), 'gap-2 border-blue-600 bg-blue-600 text-white hover:bg-blue-700 hover:border-blue-700 hover:text-white')}
                     >
                       <Phone className="h-4 w-4" />
                       Ligar
