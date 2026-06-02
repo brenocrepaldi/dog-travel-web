@@ -6,7 +6,13 @@ import type { RegisterDto } from "@/types";
 export function useLogout() {
   return useMutation({
     mutationFn: async () => {
-      await AuthApi.logout();
+      // Best-effort server-side revocation. If it fails (network error, 401,
+      // etc.) we still clear the client session so the user is not stuck.
+      try {
+        await AuthApi.logout();
+      } catch {
+        // intentionally ignored
+      }
       await signOut({ callbackUrl: "/login" });
     },
   });

@@ -23,9 +23,18 @@ export const AuthApi = {
     return res.json() as Promise<LoginResponseDto>;
   },
 
+  // Uses raw fetch — NOT the axios instance — to avoid the request interceptor
+  // calling getSession() and re-entering the JWT callback while a refresh is
+  // already in progress (circular dependency).
   refreshToken: async (token: string): Promise<LoginResponseDto> => {
-    const res = await api.post<LoginResponseDto>("/auth/refresh", { refreshToken: token });
-    return res.data;
+    const url = `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api"}/auth/refresh`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken: token }),
+    });
+    if (!res.ok) throw new Error("REFRESH_FAILED");
+    return res.json() as Promise<LoginResponseDto>;
   },
 
   // Invalidates the server-side session. The Bearer accessToken in the
