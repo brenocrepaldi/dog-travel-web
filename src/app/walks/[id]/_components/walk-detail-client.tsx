@@ -35,6 +35,7 @@ import { ClientCodeBanner } from './client-code-banner';
 import { WalkInProgressPanel } from './walk-inprogress-panel';
 import { WalkClientInProgressPanel } from './walk-client-inprogress-panel';
 import { WalkLiveMapPreview } from './walk-live-map-preview';
+import { PIX_INSTANT_ID } from '@/config/pricing';
 import type { WalkRecord, WalkerProfile, WalkTimelineEvent, WalkStatus, ManagedPaymentMethod } from '@/types';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -579,7 +580,21 @@ export function WalkDetailClient({ walkId }: { walkId: string }) {
     );
   }
 
-  const paymentMethod = paymentMethods.find((m) => m.id === walk.paymentMethodId);
+  const pixInstantMethod: ManagedPaymentMethod = {
+    id: PIX_INSTANT_ID,
+    type: 'pix',
+    brand: null,
+    label: 'Pagamento instantâneo via QR Code',
+    holderName: '',
+    expiresAt: '--',
+    isDefault: false,
+    status: 'active',
+  };
+
+  const paymentMethod: ManagedPaymentMethod | undefined =
+    walk.paymentMethodId === PIX_INSTANT_ID
+      ? pixInstantMethod
+      : paymentMethods.find((m) => m.id === walk.paymentMethodId);
   const statusCfg = STATUS_CONFIG[walk.status] ?? STATUS_CONFIG.pending;
 
   const isInProgress = walk.status === 'in_progress';
