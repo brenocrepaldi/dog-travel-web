@@ -166,7 +166,7 @@ function DogCard({ dog }: { dog: ClientProfile["dogs"][number] }) {
           <img
             src={dog.photoUrl}
             alt={dog.name}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="h-full w-full object-contain"
           />
         ) : (
           <div className="flex h-full w-full flex-col items-center justify-center gap-2">
