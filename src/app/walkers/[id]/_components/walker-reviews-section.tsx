@@ -26,7 +26,7 @@ function ReviewCard({
   createdAt,
 }: {
   rating: number;
-  comment: string;
+  comment: string | null;
   clientName: string;
   createdAt: string;
 }) {

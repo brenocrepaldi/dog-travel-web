@@ -81,7 +81,7 @@ function PaymentMethodsSidebar() {
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-foreground">
-                    {defaultMethod.brand} {defaultMethod.label}
+                    {defaultMethod.brand ? `${defaultMethod.brand} ` : ''}{defaultMethod.label}
                   </p>
                   <p className="text-[11px] text-muted-foreground mt-0.5">
                     {defaultMethod.holderName}

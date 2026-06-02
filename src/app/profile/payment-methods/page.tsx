@@ -213,7 +213,7 @@ export default function PaymentMethodsPage() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="text-sm font-semibold text-foreground">
-                    {method.brand} {method.label}
+                    {method.brand ? `${method.brand} ` : ''}{method.label}
                   </p>
                   {method.isDefault && (
                     <Badge variant="success" className="gap-1">

@@ -186,7 +186,7 @@ export function StepPayment({ data, updateData, onNext, onBack }: Props) {
                 <Icon className="h-5 w-5 text-primary" />
               </div>
               <div className="flex-1">
-                <p className="font-semibold text-sm">{method.brand}</p>
+                <p className="font-semibold text-sm">{method.brand ?? method.label}</p>
                 <p className="text-xs text-muted-foreground">{method.label}</p>
               </div>
               <div

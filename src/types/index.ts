@@ -64,7 +64,7 @@ export interface WalkReview {
   walkId: string;
   walkerId: string;
   rating: number;
-  comment: string;
+  comment: string | null;
   createdAt: string;
 }
 
@@ -111,7 +111,7 @@ export interface WalkerPublicReview {
   id: string;
   walkId: string;
   rating: number;
-  comment: string;
+  comment: string | null;
   clientName: string;
   createdAt: string;
 }
@@ -131,7 +131,7 @@ export interface WalkerBankAccount {
 export interface ManagedPaymentMethod {
   id: string;
   type: PaymentMethodType;
-  brand: string;
+  brand: string | null;
   label: string;
   holderName: string;
   expiresAt: string;
@@ -145,7 +145,7 @@ export interface PaymentHistoryItem {
   date: string;
   amount: number;
   status: "paid" | "pending" | "failed";
-  methodId: string;
+  methodId: string | null;
   description: string;
 }
 

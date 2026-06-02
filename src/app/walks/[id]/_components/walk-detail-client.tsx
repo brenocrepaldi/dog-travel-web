@@ -332,7 +332,7 @@ function PaymentCard({
   paymentMethod,
 }: {
   price: number;
-  paymentMethod?: { brand: string; label: string };
+  paymentMethod?: { brand: string | null; label: string };
 }) {
   return (
     <Card className="overflow-hidden py-0 gap-0">
@@ -354,7 +354,7 @@ function PaymentCard({
                 Forma de pagamento
               </p>
               <p className="mt-0.5 text-sm font-medium text-foreground">
-                {paymentMethod.brand} {paymentMethod.label}
+                {paymentMethod.brand ? `${paymentMethod.brand} ` : ''}{paymentMethod.label}
               </p>
             </div>
           </div>

@@ -109,7 +109,7 @@ export function WalkSummary({ data, currentStep }: Props) {
         <Row
           icon={CreditCard}
           label="Pagamento"
-          value={method ? `${method.brand} ${method.label}` : "Não selecionado"}
+          value={method ? `${method.brand ? `${method.brand} ` : ''}${method.label}` : "Não selecionado"}
           dimmed={!method}
         />
         <Row
