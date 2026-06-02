@@ -258,31 +258,6 @@ function ReviewCard({ review }: { review: ClientProfile["reviews"][number] }) {
   );
 }
 
-// ─── Sidebar mini-dog row ─────────────────────────────────────────────────────
-
-function SidebarDogRow({ dog }: { dog: ClientProfile["dogs"][number] }) {
-  return (
-    <div className="flex items-center gap-2.5">
-      <div className="h-8 w-8 shrink-0 overflow-hidden rounded-lg">
-        {dog.photoUrl ? (
-          <img src={dog.photoUrl} alt={dog.name} className="h-full w-full object-cover" />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-amber-500/10">
-            <PawPrint className="h-3.5 w-3.5 text-amber-500" />
-          </div>
-        )}
-      </div>
-      <div className="min-w-0">
-        <p className="text-xs font-semibold text-foreground truncate">{dog.name}</p>
-        <p className="text-[10px] text-muted-foreground truncate">{dog.breed}</p>
-      </div>
-      <Badge variant="outline" className="ml-auto shrink-0 text-[9px] px-1.5 py-0">
-        {SIZE_LABEL[dog.size]?.split(" ")[1] ?? dog.size}
-      </Badge>
-    </div>
-  );
-}
-
 // ─── Loading skeleton ─────────────────────────────────────────────────────────
 
 function ClientDetailSkeleton() {
@@ -481,87 +456,148 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
         </div>
 
         {/* ── Sidebar ── */}
-        <aside className="w-full shrink-0 lg:w-72 lg:sticky lg:top-8 lg:self-start">
+        <aside className="w-full shrink-0 lg:w-72 lg:sticky lg:top-8 lg:self-start space-y-4">
+
+          {/* Dog care notes */}
           <Card className="overflow-hidden">
-            <div className="h-1 w-full bg-gradient-to-r from-primary/60 via-primary to-primary/40" />
+            <div className="h-1 w-full bg-gradient-to-r from-amber-400/60 via-amber-500 to-amber-400/40" />
             <CardContent className="p-5 space-y-4">
-
-              {/* Mini profile */}
-              <div className="flex items-center gap-3">
-                <ClientAvatar name={client.name} avatarUrl={client.avatarUrl} size="sm" />
-                <div className="min-w-0">
-                  <p className="font-semibold text-sm text-foreground truncate">{client.name}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5 truncate">Membro desde {joinedLabel}</p>
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-500/10 shrink-0">
+                  <PawPrint className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-foreground">Observações dos cães</p>
+                  <p className="text-[11px] text-muted-foreground">Informações importantes para o passeio</p>
                 </div>
               </div>
 
-              <div className="h-px bg-border/40" />
-
-              {/* Quick stats */}
-              <div className="space-y-2.5">
-                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                  Resumo
-                </p>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="flex items-center gap-1.5 text-muted-foreground text-xs">
-                      <Trophy className="h-3.5 w-3.5 shrink-0" />
-                      Passeios concluídos
-                    </span>
-                    <span className="font-semibold text-foreground text-xs">{client.totalWalks}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-1.5 text-muted-foreground text-xs">
-                      <PawPrint className="h-3.5 w-3.5 shrink-0" />
-                      Cães cadastrados
-                    </span>
-                    <span className="font-semibold text-foreground text-xs">{client.totalDogs}</span>
-                  </div>
-                  {client.avgRatingGiven > 0 && (
-                    <div className="flex items-center justify-between">
-                      <span className="flex items-center gap-1.5 text-muted-foreground text-xs">
-                        <Star className="h-3.5 w-3.5 shrink-0" />
-                        Média das notas dadas
-                      </span>
-                      <span className="flex items-center gap-0.5">
-                        <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                        <span className="font-semibold text-foreground text-xs">{client.avgRatingGiven.toFixed(1)}</span>
-                      </span>
+              {client.dogs.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-2">Nenhum cão cadastrado</p>
+              ) : (
+                <div className="space-y-3">
+                  {client.dogs.map((dog) => (
+                    <div key={dog.id} className="rounded-xl border border-border/50 bg-muted/30 p-3 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <div className="h-8 w-8 shrink-0 overflow-hidden rounded-lg">
+                          {dog.photoUrl ? (
+                            <img src={dog.photoUrl} alt={dog.name} className="h-full w-full object-cover" />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center bg-amber-500/10">
+                              <PawPrint className="h-3.5 w-3.5 text-amber-500" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-foreground truncate">{dog.name}</p>
+                          <p className="text-[10px] text-muted-foreground truncate">{dog.breed} · {GENDER_LABEL[dog.gender] ?? dog.gender}</p>
+                        </div>
+                      </div>
+                      {dog.notes ? (
+                        <p className="text-xs text-muted-foreground leading-relaxed border-l-2 border-amber-400/50 pl-2.5 italic">
+                          {dog.notes}
+                        </p>
+                      ) : (
+                        <p className="text-[11px] text-muted-foreground/60 italic">Sem observações especiais</p>
+                      )}
                     </div>
-                  )}
+                  ))}
                 </div>
-              </div>
-
-              {/* Dogs list */}
-              {client.dogs.length > 0 && (
-                <>
-                  <div className="h-px bg-border/40" />
-                  <div className="space-y-2.5">
-                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                      Cães nesta conta
-                    </p>
-                    <div className="space-y-2">
-                      {client.dogs.map((dog) => (
-                        <SidebarDogRow key={dog.id} dog={dog} />
-                      ))}
-                    </div>
-                  </div>
-                </>
               )}
-
-              <div className="h-px bg-border/40" />
-
-              {/* Back link */}
-              <button
-                onClick={() => router.back()}
-                className="flex w-full cursor-pointer items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                Voltar
-              </button>
-
             </CardContent>
           </Card>
+
+          {/* Rating distribution */}
+          {client.reviews.length > 0 && (
+            <Card className="overflow-hidden">
+              <div className="h-1 w-full bg-gradient-to-r from-primary/60 via-primary to-primary/40" />
+              <CardContent className="p-5 space-y-3.5">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 shrink-0">
+                    <Star className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">Perfil de avaliador</p>
+                    <p className="text-[11px] text-muted-foreground">Como este cliente avalia passeadores</p>
+                  </div>
+                </div>
+
+                {/* Average prominent */}
+                <div className="flex items-center gap-3 rounded-xl bg-primary/5 border border-primary/15 px-4 py-3">
+                  <span className="text-3xl font-bold text-primary">{client.avgRatingGiven.toFixed(1)}</span>
+                  <div>
+                    <div className="flex items-center gap-0.5">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <Star key={i} className={cn("h-3.5 w-3.5", i < Math.round(client.avgRatingGiven) ? "fill-amber-400 text-amber-400" : "fill-muted text-muted-foreground/30")} />
+                      ))}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">{client.reviews.length} avaliação{client.reviews.length > 1 ? "ões" : ""}</p>
+                  </div>
+                </div>
+
+                {/* Star breakdown */}
+                <div className="space-y-1.5">
+                  {[5, 4, 3, 2, 1].map((star) => {
+                    const count = client.reviews.filter((r) => r.rating === star).length;
+                    const pct = client.reviews.length > 0 ? (count / client.reviews.length) * 100 : 0;
+                    return (
+                      <div key={star} className="flex items-center gap-2">
+                        <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground w-6 shrink-0">
+                          {star}<Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
+                        </span>
+                        <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-amber-400 transition-all duration-500"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                        <span className="text-[11px] text-muted-foreground w-4 text-right shrink-0">{count}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Tendência */}
+                <div className={cn(
+                  "rounded-lg border px-3 py-2.5",
+                  client.avgRatingGiven >= 4.5
+                    ? "border-emerald-500/20 bg-emerald-500/5"
+                    : client.avgRatingGiven >= 3.5
+                    ? "border-amber-500/20 bg-amber-500/5"
+                    : "border-rose-500/20 bg-rose-500/5",
+                )}>
+                  <p className={cn("text-xs font-semibold",
+                    client.avgRatingGiven >= 4.5 ? "text-emerald-700 dark:text-emerald-400"
+                    : client.avgRatingGiven >= 3.5 ? "text-amber-700 dark:text-amber-400"
+                    : "text-rose-700 dark:text-rose-400"
+                  )}>
+                    {client.avgRatingGiven >= 4.5
+                      ? "Avaliador generoso"
+                      : client.avgRatingGiven >= 3.5
+                      ? "Avaliador equilibrado"
+                      : "Avaliador criterioso"}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    {client.avgRatingGiven >= 4.5
+                      ? "Tende a valorizar bem o serviço prestado"
+                      : client.avgRatingGiven >= 3.5
+                      ? "Avalia com base no desempenho real"
+                      : "Espera um alto nível de serviço"}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Back link */}
+          <button
+            onClick={() => router.back()}
+            className="flex w-full cursor-pointer items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors py-1"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Voltar
+          </button>
+
         </aside>
 
       </div>

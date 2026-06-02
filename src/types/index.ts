@@ -52,6 +52,7 @@ export interface ClientProfile {
     size: string;
     gender: string;
     photoUrl?: string | null;
+    notes?: string | null;
   }[];
   reviews: {
     walkId: string;
