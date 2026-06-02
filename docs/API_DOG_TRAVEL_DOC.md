@@ -1096,7 +1096,7 @@ Returns the updated `WalkRecord` with `status: "in_progress"` and advanced timel
 ```
 
 > **Business Rules for Walk Start:**
-> - The start button is only enabled **15 minutes before** the scheduled time
+> - The Start button is only enabled **15 minutes before** the scheduled time
 > - The walker must be within **300 meters** of the start location (geofence validated client-side via browser Geolocation API; in development mode this check is skipped)
 > - Maximum **3 code attempts**; after exceeding, a **2-minute lockout** is applied (enforced client-side — the backend should also track this per walk/session)
 > - After a successful start, the walker is redirected to `/walks/{id}/tracking`
