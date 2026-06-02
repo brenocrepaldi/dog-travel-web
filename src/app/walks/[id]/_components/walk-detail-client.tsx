@@ -35,7 +35,7 @@ import { ClientCodeBanner } from './client-code-banner';
 import { WalkInProgressPanel } from './walk-inprogress-panel';
 import { WalkClientInProgressPanel } from './walk-client-inprogress-panel';
 import { WalkLiveMapPreview } from './walk-live-map-preview';
-import type { WalkRecord, WalkerProfile, WalkTimelineEvent, WalkStatus } from '@/types';
+import type { WalkRecord, WalkerProfile, WalkTimelineEvent, WalkStatus, ManagedPaymentMethod } from '@/types';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -344,38 +344,119 @@ function ClientCard({
   );
 }
 
+function CardBrandBadge({ brand }: { brand: string | null }) {
+  const b = (brand ?? '').toLowerCase();
+  if (b === 'visa') return (
+    <div className="flex h-8 w-12 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-white shadow-sm">
+      <span className="text-[13px] font-black italic tracking-tight text-blue-700">VISA</span>
+    </div>
+  );
+  if (b === 'mastercard') return (
+    <div className="flex h-8 w-12 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-white shadow-sm">
+      <div className="relative flex items-center">
+        <div className="h-5 w-5 rounded-full bg-red-500" />
+        <div className="-ml-2 h-5 w-5 rounded-full bg-amber-400 opacity-90" />
+      </div>
+    </div>
+  );
+  if (b === 'elo') return (
+    <div className="flex h-8 w-12 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-black shadow-sm">
+      <span className="text-[11px] font-bold tracking-wide text-yellow-400">elo</span>
+    </div>
+  );
+  if (b === 'amex' || b === 'american express') return (
+    <div className="flex h-8 w-12 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-blue-600 shadow-sm">
+      <span className="text-[9px] font-bold tracking-wider text-white">AMEX</span>
+    </div>
+  );
+  if (b === 'hipercard') return (
+    <div className="flex h-8 w-12 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-red-600 shadow-sm">
+      <span className="text-[9px] font-bold tracking-tight text-white">HIPER</span>
+    </div>
+  );
+  return (
+    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-muted">
+      <CreditCard className="h-4 w-4 text-muted-foreground" />
+    </div>
+  );
+}
+
 function PaymentCard({
   price,
   paymentMethod,
 }: {
   price: number;
-  paymentMethod?: { brand: string | null; label: string };
+  paymentMethod?: ManagedPaymentMethod;
 }) {
+  const isCard = paymentMethod?.type === 'credit_card' || paymentMethod?.type === 'debit_card';
+  const isPix = paymentMethod?.type === 'pix';
+  const typeLabel =
+    paymentMethod?.type === 'credit_card' ? 'Cartão de crédito'
+    : paymentMethod?.type === 'debit_card' ? 'Cartão de débito'
+    : 'Pix';
+
   return (
     <Card className="overflow-hidden py-0 gap-0">
       <div className="border-b border-border/60 px-5 py-3.5">
         <h2 className="text-sm font-semibold text-foreground">Pagamento</h2>
       </div>
       <CardContent className="p-5 space-y-4">
+
+        {/* Total */}
         <div className="flex items-center justify-between rounded-xl border border-primary/20 bg-primary/5 px-4 py-3.5">
-          <span className="text-sm font-semibold text-foreground">Total</span>
+          <span className="text-sm font-semibold text-foreground">Total pago</span>
           <span className="text-xl font-bold text-primary">{toMoney(price)}</span>
         </div>
-        {paymentMethod && (
-          <div className="flex items-center gap-3">
+
+        {/* Payment method detail */}
+        {paymentMethod ? (
+          <div className="space-y-2.5">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Forma de pagamento
+            </p>
+
+            {isCard && (
+              <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-muted/30 px-4 py-3.5">
+                <CardBrandBadge brand={paymentMethod.brand} />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-foreground">
+                    {typeLabel} &nbsp;••••&nbsp;{paymentMethod.label}
+                  </p>
+                  <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0 text-xs text-muted-foreground">
+                    {paymentMethod.holderName && (
+                      <span className="truncate">{paymentMethod.holderName}</span>
+                    )}
+                    {paymentMethod.expiresAt && (
+                      <span className="shrink-0">· Vence {paymentMethod.expiresAt}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {isPix && (
+              <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-muted/30 px-4 py-3.5">
+                <div className="flex h-8 w-12 shrink-0 items-center justify-center rounded-lg bg-[#32bcad] shadow-sm">
+                  <span className="text-[11px] font-bold tracking-wide text-white">PIX</span>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-foreground">Pix</p>
+                  <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                    {paymentMethod.label}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-muted/20 px-4 py-3.5">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted">
               <CreditCard className="h-4 w-4 text-muted-foreground" />
             </div>
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Forma de pagamento
-              </p>
-              <p className="mt-0.5 text-sm font-medium text-foreground">
-                {paymentMethod.brand ? `${paymentMethod.brand} ` : ''}{paymentMethod.label}
-              </p>
-            </div>
+            <p className="text-sm text-muted-foreground">Forma de pagamento não disponível</p>
           </div>
         )}
+
       </CardContent>
     </Card>
   );
