@@ -383,12 +383,15 @@ export default function WalkerDashboardPage() {
               <div key={req.id} className="rounded-xl border border-border/60 bg-card p-5">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="flex flex-1 min-w-0 items-start gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-xs font-bold text-primary">
+                    <Link
+                      href={req.clientId ? `/clients/${req.clientId}` : '#'}
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-xs font-bold text-primary hover:bg-primary/20 transition-colors"
+                    >
                       {getInitials(req.clientName)}
-                    </div>
+                    </Link>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="truncate text-sm font-semibold text-foreground">{req.clientName}</p>
+                        <Link href={req.clientId ? `/clients/${req.clientId}` : '#'} className="truncate text-sm font-semibold text-foreground hover:text-primary transition-colors">{req.clientName}</Link>
                         <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary/8 px-2 py-0.5 text-[10px] font-semibold text-primary">
                           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
                           {req.receivedMinutes < 2 ? "Agora" : `${req.receivedMinutes} min atrás`}

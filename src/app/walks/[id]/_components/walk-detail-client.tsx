@@ -275,6 +275,7 @@ function WalkerCard({
 
 function ClientCard({
   walkId,
+  clientId,
   clientName,
   clientAvatarUrl,
   petNames,
@@ -282,6 +283,7 @@ function ClientCard({
   showChat,
 }: {
   walkId: string;
+  clientId?: string;
   clientName: string;
   clientAvatarUrl?: string | null;
   petNames: string[];
@@ -294,23 +296,23 @@ function ClientCard({
         <h2 className="text-sm font-semibold text-foreground">Cliente</h2>
       </div>
       <CardContent className="p-5 space-y-4">
-        <div className="flex items-center gap-3">
+        <Link href={clientId ? `/clients/${clientId}` : '#'} className="flex items-center gap-3 group">
           {clientAvatarUrl ? (
-            <div className="h-14 w-14 shrink-0 rounded-xl overflow-hidden">
+            <div className="h-14 w-14 shrink-0 rounded-xl overflow-hidden ring-1 ring-border/30 group-hover:ring-primary/30 transition-all">
               <img src={clientAvatarUrl} alt={clientName} className="w-full h-full object-cover" />
             </div>
           ) : (
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-sm font-bold text-primary">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-sm font-bold text-primary ring-1 ring-primary/20 group-hover:ring-primary/40 transition-all">
               {initials(clientName)}
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-foreground truncate">{clientName}</p>
+            <p className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">{clientName}</p>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              {petNames.length} {petNames.length === 1 ? 'cão' : 'cães'} neste passeio
+              {petNames.length} {petNames.length === 1 ? 'cão' : 'cães'} neste passeio{clientId ? ' · ver perfil →' : ''}
             </p>
           </div>
-        </div>
+        </Link>
         <div className="space-y-1.5">
           {petNames.map((name) => (
             <div key={name} className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -853,6 +855,7 @@ export function WalkDetailClient({ walkId }: { walkId: string }) {
             {isWalker ? (
               <ClientCard
                 walkId={walk.id}
+                clientId={walk.clientId}
                 clientName={walk.clientName}
                 clientAvatarUrl={walk.clientAvatarUrl}
                 petNames={walk.petNames}
@@ -904,6 +907,7 @@ export function WalkDetailClient({ walkId }: { walkId: string }) {
             {isWalker ? (
               <ClientCard
                 walkId={walk.id}
+                clientId={walk.clientId}
                 clientName={walk.clientName}
                 clientAvatarUrl={walk.clientAvatarUrl}
                 petNames={walk.petNames}

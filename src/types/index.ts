@@ -36,9 +36,38 @@ export interface WalkTimelineEvent {
   note?: string;
 }
 
+export interface ClientProfile {
+  id: string;
+  name: string;
+  avatarUrl: string | null;
+  memberSince: string;
+  totalWalks: number;
+  totalDogs: number;
+  avgRatingGiven: number;
+  dogs: {
+    id: string;
+    name: string;
+    breed: string;
+    age: number;
+    size: string;
+    gender: string;
+    photoUrl?: string | null;
+  }[];
+  reviews: {
+    walkId: string;
+    rating: number;
+    comment: string | null;
+    walkerName: string;
+    walkerAvatarUrl: string | null;
+    scheduledAt: string;
+    createdAt: string;
+  }[];
+}
+
 export interface WalkRecord {
   id: string;
   walkerId: string | null;
+  clientId?: string;
   clientName: string;
   clientAvatarUrl?: string | null;
   walkerAvatarUrl?: string | null;
