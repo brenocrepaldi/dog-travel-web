@@ -141,9 +141,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.role = token.role as string;
         session.user.id = token.id as string;
       }
-      const s = session as typeof session & { accessToken?: string; error?: string };
-      s.accessToken = token.accessToken as string | undefined;
-      if (token.error) s.error = token.error as string;
+      session.accessToken = token.accessToken;
+      if (token.error) session.error = token.error as string;
       return session;
     },
   },

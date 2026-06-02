@@ -12,7 +12,7 @@ const api = axios.create({
 api.interceptors.request.use(
   async (config) => {
     if (typeof window !== "undefined") {
-      const session = await getSession() as Awaited<ReturnType<typeof getSession>> & { error?: string };
+      const session = await getSession();
 
       // If the JWT callback flagged a refresh failure, redirect immediately
       // instead of sending a request that will certainly return 401.
