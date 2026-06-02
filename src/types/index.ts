@@ -44,6 +44,7 @@ export interface WalkRecord {
   walkerAvatarUrl?: string | null;
   petIds?: string[];
   petNames: string[];
+  pets?: { name: string; photoUrl?: string | null }[];
   status: WalkStatus;
   dateLabel: string;
   scheduledAt: string;

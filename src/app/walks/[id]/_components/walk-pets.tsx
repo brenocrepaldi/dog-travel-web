@@ -3,13 +3,20 @@
 import { PawPrint } from "lucide-react";
 import { useDogs } from "@/features/dogs/hooks/use-dogs";
 
-export function WalkPets({ petNames }: { petNames: string[] }) {
+interface WalkPetsProps {
+  petNames: string[];
+  pets?: { name: string; photoUrl?: string | null }[];
+}
+
+export function WalkPets({ petNames, pets: petsProp }: WalkPetsProps) {
   const { data: allPets = [] } = useDogs();
 
-  const pets = petNames.map((name) => ({
-    name,
-    photoUrl: allPets.find((p) => p.name === name)?.photoUrl,
-  }));
+  const pets = petsProp
+    ? petsProp
+    : petNames.map((name) => ({
+        name,
+        photoUrl: allPets.find((p) => p.name === name)?.photoUrl,
+      }));
 
   return (
     <div className="flex flex-wrap gap-3">

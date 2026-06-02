@@ -825,7 +825,7 @@ export function WalkDetailClient({ walkId }: { walkId: string }) {
                         Cães
                       </p>
                       <div className="mt-3">
-                        <WalkPets petNames={walk.petNames} />
+                        <WalkPets petNames={walk.petNames} pets={walk.pets} />
                       </div>
                     </div>
                   </div>
@@ -919,7 +919,7 @@ export function WalkDetailClient({ walkId }: { walkId: string }) {
                 <h2 className="text-sm font-semibold text-foreground">Cães</h2>
               </div>
               <CardContent className="p-5">
-                <WalkPets petNames={walk.petNames} />
+                <WalkPets petNames={walk.petNames} pets={walk.pets} />
               </CardContent>
             </Card>
 
