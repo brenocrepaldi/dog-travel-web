@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import Map, { Marker } from 'react-map-gl/mapbox';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
@@ -28,12 +28,27 @@ import {
 import { useWalkLocation, useLocationBroadcast } from '@/features/tracking/hooks/use-tracking';
 import { useWalkById } from '@/features/walks/hooks/use-walks';
 import { useCompleteWalk } from '@/features/walks/hooks/use-walk-actions';
+import { useCountdown } from '@/features/tracking/hooks/use-countdown';
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 type Pet = { name: string; photoUrl?: string | null };
 
+interface ApiError {
+  response?: {
+    data?: {
+      error?: string;
+      remainingSeconds?: number;
+      distanceMeters?: number;
+    };
+  };
+}
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
 const RADIUS_M = 300;
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function haversineMeters(lat1: number, lng1: number, lat2: number, lng2: number) {
   const R = 6_371_000;
@@ -46,6 +61,23 @@ function haversineMeters(lat1: number, lng1: number, lat2: number, lng2: number)
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+export function formatCountdown(s: number) {
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+}
+
+function initials(name: string) {
+  return name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+// ─── Shared sub-components ────────────────────────────────────────────────────
+
 function DogMarker({ pets }: { pets: Pet[] }) {
   const firstPhoto = pets.find((p) => p.photoUrl)?.photoUrl ?? null;
   const count = pets.length;
@@ -54,6 +86,7 @@ function DogMarker({ pets }: { pets: Pet[] }) {
       <span className="absolute h-16 w-16 animate-ping rounded-full bg-primary/20" />
       <div className="relative h-12 w-12 overflow-hidden rounded-full border-[3px] border-white bg-amber-100 shadow-lg">
         {firstPhoto ? (
+          // eslint-disable-next-line @next/next/no-img-element
           <img src={firstPhoto} alt={pets[0]?.name ?? 'Cão'} className="h-full w-full object-cover" />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-2xl">🦮</div>
@@ -68,33 +101,80 @@ function DogMarker({ pets }: { pets: Pet[] }) {
   );
 }
 
-function initials(name: string) {
-  return name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
+function PetsRow({ pets }: { pets: Pet[] }) {
+  return (
+    <div className="flex flex-wrap items-center gap-2.5 px-5 py-3">
+      {pets.map((pet, i) => (
+        <div key={i} className="flex items-center gap-2">
+          <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full border-2 border-amber-200/80 bg-amber-50 shadow-sm">
+            {pet.photoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={pet.photoUrl} alt={pet.name} className="h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center">
+                <PawPrint className="h-3.5 w-3.5 text-amber-500" />
+              </div>
+            )}
+          </div>
+          <span className="text-sm font-semibold text-foreground">{pet.name}</span>
+        </div>
+      ))}
+    </div>
+  );
 }
 
-function formatCountdown(s: number) {
-  const m = Math.floor(s / 60);
-  const sec = s % 60;
-  return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+interface ProgressSectionProps {
+  startAddress?: string;
+  startedAt?: string | null;
+  remaining: number;
+  progress: number;
+  timeDone: boolean;
 }
 
-function useCountdown(startedAt?: string | null, durationMinutes?: number) {
-  const [remaining, setRemaining] = useState<number>(() => {
-    if (!startedAt || !durationMinutes) return 0;
-    const endMs = new Date(startedAt).getTime() + durationMinutes * 60 * 1000;
-    return Math.max(0, Math.ceil((endMs - Date.now()) / 1000));
-  });
-  const done = remaining === 0;
-  useEffect(() => {
-    if (done) return;
-    const id = setInterval(() => {
-      setRemaining((p) => { if (p <= 1) { clearInterval(id); return 0; } return p - 1; });
-    }, 1000);
-    return () => clearInterval(id);
-  }, [done]);
-  const total = (durationMinutes ?? 0) * 60;
-  const progress = total > 0 ? Math.min(100, ((total - remaining) / total) * 100) : 100;
-  return { remaining, progress, done };
+function ProgressSection({ startAddress, startedAt, remaining, progress, timeDone }: ProgressSectionProps) {
+  return (
+    <div className="space-y-2.5 px-5 py-3">
+      {startAddress && (
+        <div className="flex items-start gap-2.5">
+          <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10">
+            <MapPin className="h-3.5 w-3.5 text-emerald-600" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Ponto de partida e chegada
+            </p>
+            <p className="mt-0.5 text-sm font-medium leading-snug text-foreground">{startAddress}</p>
+          </div>
+        </div>
+      )}
+
+      {startedAt && (
+        <div className="space-y-1.5">
+          <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+            <div
+              className={cn(
+                'h-full rounded-full transition-all duration-1000 ease-linear',
+                timeDone ? 'bg-emerald-500' : 'bg-gradient-to-r from-primary to-primary/70',
+              )}
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <div className="flex items-center justify-end">
+            {timeDone ? (
+              <span className="flex items-center gap-1 text-xs font-medium text-emerald-600">
+                <CheckCircle2 className="h-3 w-3" />
+                Tempo cumprido
+              </span>
+            ) : (
+              <span className="text-xs text-muted-foreground">
+                {formatCountdown(remaining)} restantes
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -123,17 +203,18 @@ export default function MapTracker({ walkId }: { walkId: string }) {
 
   const { remaining, progress, done: timeDone } = useCountdown(walk?.startedAt, walk?.durationMinutes);
 
-  // ── Complete walk (one-time GPS check on click) ──────────────────────────────
+  // ── Complete walk ──────────────────────────────────────────────────────────
   const [showConfirm, setShowConfirm] = useState(false);
   const pendingCoordsRef = useRef<{ lat: number; lng: number } | null>(null);
 
-  const handleCompleteError = (err: any) => {
-    const code = err?.response?.data?.error;
-    const remaining = err?.response?.data?.remainingSeconds as number | undefined;
-    const distM = err?.response?.data?.distanceMeters as number | undefined;
+  const handleCompleteError = (err: unknown) => {
+    const e = err as ApiError;
+    const code = e?.response?.data?.error;
+    const secs = e?.response?.data?.remainingSeconds;
+    const distM = e?.response?.data?.distanceMeters;
     if (code === 'WALK_DURATION_NOT_REACHED') {
       toast.error('Tempo insuficiente', {
-        description: `Aguarde mais ${formatCountdown(remaining ?? 60)} para concluir.`,
+        description: `Aguarde mais ${formatCountdown(secs ?? 60)} para concluir.`,
       });
     } else if (code === 'WALK_END_TOO_FAR') {
       toast.error('Muito longe do ponto de partida', {
@@ -171,7 +252,7 @@ export default function MapTracker({ walkId }: { walkId: string }) {
     );
   };
 
-  // ── Loading state ────────────────────────────────────────────────────────────
+  // ── Loading ────────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center gap-4">
@@ -245,26 +326,32 @@ export default function MapTracker({ walkId }: { walkId: string }) {
             <ArrowLeft className="h-4 w-4" />
           </Link>
 
-          <div className={cn(
-            'pointer-events-auto flex shrink-0 items-center gap-2 rounded-xl border border-white/20 bg-background/85 px-4 py-2.5 shadow-lg backdrop-blur-md',
-            timeDone && isWalker && isInProgress && 'border-emerald-500/40 bg-emerald-500/10',
-          )}>
+          <div
+            className={cn(
+              'pointer-events-auto flex shrink-0 items-center gap-2 rounded-xl border border-white/20 bg-background/85 px-4 py-2.5 shadow-lg backdrop-blur-md',
+              timeDone && isInProgress && 'border-emerald-500/40 bg-emerald-500/10',
+            )}
+          >
             <span className="relative flex h-2 w-2 shrink-0">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
             </span>
             <span className="text-sm font-semibold text-foreground">Em andamento</span>
 
-            {isWalker && isInProgress && walk?.startedAt && (
+            {isInProgress && walk?.startedAt && (
               <>
                 <span className="h-4 w-px bg-border/60" />
-                {timeDone
-                  ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                  : <Timer className="h-3.5 w-3.5 text-muted-foreground" />}
-                <span className={cn(
-                  'font-mono text-sm font-bold tabular-nums',
-                  timeDone ? 'text-emerald-600' : 'text-foreground',
-                )}>
+                {timeDone ? (
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                ) : (
+                  <Timer className="h-3.5 w-3.5 text-muted-foreground" />
+                )}
+                <span
+                  className={cn(
+                    'font-mono text-sm font-bold tabular-nums',
+                    timeDone ? 'text-emerald-600' : 'text-foreground',
+                  )}
+                >
                   {timeDone ? '00:00' : formatCountdown(remaining)}
                 </span>
                 {walk?.durationMinutes && (
@@ -282,72 +369,21 @@ export default function MapTracker({ walkId }: { walkId: string }) {
           {isWalker ? (
 
             /* ── Walker card ─────────────────────────────────────── */
-            <div className="pointer-events-auto w-full max-w-lg space-y-0 divide-y divide-border/40 rounded-2xl border border-white/20 bg-background/95 shadow-xl backdrop-blur-md overflow-hidden">
+            <div className="pointer-events-auto w-full max-w-lg divide-y divide-border/40 rounded-2xl border border-white/20 bg-background/95 shadow-xl backdrop-blur-md overflow-hidden">
 
-              {/* Pets */}
-              <div className="flex flex-wrap items-center gap-2.5 px-5 py-3">
-                {pets.map((pet, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full border-2 border-amber-200/80 bg-amber-50 shadow-sm">
-                      {pet.photoUrl ? (
-                        <img src={pet.photoUrl} alt={pet.name} className="h-full w-full object-cover" />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center">
-                          <PawPrint className="h-3.5 w-3.5 text-amber-500" />
-                        </div>
-                      )}
-                    </div>
-                    <span className="text-sm font-semibold text-foreground">{pet.name}</span>
-                  </div>
-                ))}
-              </div>
+              {/* 1 — Pets */}
+              <PetsRow pets={pets} />
 
-              {/* Location + progress */}
-              <div className="space-y-2.5 px-5 py-3">
-                {walk?.startAddress && (
-                  <div className="flex items-start gap-2.5">
-                    <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10">
-                      <MapPin className="h-3.5 w-3.5 text-emerald-600" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                        Ponto de partida e chegada
-                      </p>
-                      <p className="mt-0.5 text-sm font-medium leading-snug text-foreground">
-                        {walk.startAddress}
-                      </p>
-                    </div>
-                  </div>
-                )}
+              {/* 2 — Location + progress */}
+              <ProgressSection
+                startAddress={walk?.startAddress}
+                startedAt={walk?.startedAt}
+                remaining={remaining}
+                progress={progress}
+                timeDone={timeDone}
+              />
 
-                {walk?.startedAt && (
-                  <div className="space-y-1.5">
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                      <div
-                        className={cn(
-                          'h-full rounded-full transition-all duration-1000 ease-linear',
-                          timeDone ? 'bg-emerald-500' : 'bg-gradient-to-r from-primary to-primary/70',
-                        )}
-                        style={{ width: `${progress}%` }}
-                      />
-                    </div>
-                    <div className="flex items-center justify-end">
-                      {timeDone ? (
-                        <span className="flex items-center gap-1 text-xs font-medium text-emerald-600">
-                          <CheckCircle2 className="h-3 w-3" />
-                          Tempo cumprido
-                        </span>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">
-                          {formatCountdown(remaining)} restantes
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Actions */}
+              {/* 3 — Actions */}
               <div className="space-y-2 px-5 py-3">
                 <div className={cn('grid gap-2', clientPhone ? 'grid-cols-3' : 'grid-cols-2')}>
                   <Link
@@ -360,7 +396,10 @@ export default function MapTracker({ walkId }: { walkId: string }) {
                   {clientPhone && (
                     <Link
                       href={`tel:${clientPhone}`}
-                      className={cn(buttonVariants({ variant: 'outline' }), 'gap-2 border-blue-600 bg-blue-600 text-white hover:bg-blue-700 hover:border-blue-700 hover:text-white')}
+                      className={cn(
+                        buttonVariants({ variant: 'outline' }),
+                        'gap-2 border-blue-600 bg-blue-600 text-white hover:bg-blue-700 hover:border-blue-700 hover:text-white',
+                      )}
                     >
                       <Phone className="h-4 w-4" />
                       Ligar
@@ -403,23 +442,26 @@ export default function MapTracker({ walkId }: { walkId: string }) {
 
           ) : (
 
-            /* ── Client card ─────────────────────────────────────── */
-            <div className="pointer-events-auto w-full max-w-lg space-y-0 divide-y divide-border/40 rounded-2xl border border-white/20 bg-background/95 shadow-xl backdrop-blur-md overflow-hidden">
+            /* ── Client card — mesma estrutura 3-seções do walker ── */
+            <div className="pointer-events-auto w-full max-w-lg divide-y divide-border/40 rounded-2xl border border-white/20 bg-background/95 shadow-xl backdrop-blur-md overflow-hidden">
 
-              {/* Walker info */}
+              {/* 1 — Walker identity (espelho da seção de pets) */}
               <div className="flex items-center gap-3 px-5 py-3">
                 {walk?.walkerAvatarUrl ? (
-                  <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full border-2 border-primary/20 shadow-sm">
-                    <img src={walk.walkerAvatarUrl} alt={walkerName} className="h-full w-full object-cover" />
-                  </div>
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={walk.walkerAvatarUrl}
+                    alt={walkerName}
+                    className="h-9 w-9 shrink-0 rounded-full border-2 border-primary/20 object-cover shadow-sm"
+                  />
                 ) : (
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-primary/10 text-sm font-bold text-primary">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-primary/10 text-sm font-bold text-primary">
                     {initials(walkerName)}
                   </div>
                 )}
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-foreground truncate">{walkerName}</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-foreground">{walkerName}</p>
+                  <p className="truncate text-xs text-muted-foreground">
                     Passeando com {walk?.petNames?.join(' & ') ?? '…'}
                   </p>
                 </div>
@@ -432,40 +474,40 @@ export default function MapTracker({ walkId }: { walkId: string }) {
                 </div>
               </div>
 
-              {/* Pets */}
-              {pets.length > 0 && (
-                <div className="flex flex-wrap items-center gap-2 px-5 py-3">
-                  {pets.map((pet, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full border-2 border-amber-200/80 bg-amber-50 shadow-sm">
-                        {pet.photoUrl ? (
-                          <img src={pet.photoUrl} alt={pet.name} className="h-full w-full object-cover" />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center">
-                            <PawPrint className="h-3.5 w-3.5 text-amber-500" />
-                          </div>
-                        )}
-                      </div>
-                      <span className="text-sm text-foreground">{pet.name}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
+              {/* 2 — Location + progress (componente idêntico ao walker) */}
+              <ProgressSection
+                startAddress={walk?.startAddress}
+                startedAt={walk?.startedAt}
+                remaining={remaining}
+                progress={progress}
+                timeDone={timeDone}
+              />
 
-              {/* Actions */}
-              <div className="grid grid-cols-2 gap-2 px-5 py-3" style={{ gridTemplateColumns: walkerPhone ? '1fr 1fr' : '1fr' }}>
+              {/* 3 — Actions */}
+              <div
+                className={cn(
+                  'grid gap-2 px-5 py-3',
+                  walkerPhone ? 'grid-cols-2' : 'grid-cols-1',
+                )}
+              >
                 {walkerPhone && (
                   <Link
                     href={`tel:${walkerPhone}`}
-                    className={cn(buttonVariants({ variant: 'outline' }), 'gap-2')}
+                    className={cn(
+                      buttonVariants({ variant: 'outline' }),
+                      'gap-2 border-blue-600 bg-blue-600 text-white hover:bg-blue-700 hover:border-blue-700 hover:text-white',
+                    )}
                   >
                     <Phone className="h-4 w-4" />
-                    Ligar
+                    Ligar para passeador
                   </Link>
                 )}
                 <Link
                   href={`/walks/${walkId}/chat`}
-                  className={cn(buttonVariants({ variant: 'default' }), 'gap-2')}
+                  className={cn(
+                    buttonVariants({ variant: walkerPhone ? 'outline' : 'default' }),
+                    'gap-2',
+                  )}
                 >
                   <MessageSquare className="h-4 w-4" />
                   Chat
