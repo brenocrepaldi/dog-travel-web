@@ -524,7 +524,14 @@ export function WalkDetailClient({ walkId }: { walkId: string }) {
             Meus passeios
           </Link>
           <div className="flex flex-wrap items-center gap-2.5">
-            <h1 className="text-2xl font-bold text-foreground">Passeio #{walk.id}</h1>
+            <h1 className="text-2xl font-bold text-foreground">
+              Passeio com{' '}
+              <span className="text-primary">
+                {walk.petNames.length > 1
+                  ? `${walk.petNames.slice(0, -1).join(', ')} & ${walk.petNames[walk.petNames.length - 1]}`
+                  : walk.petNames[0] ?? '…'}
+              </span>
+            </h1>
             <Badge variant={statusCfg.variant}>{statusCfg.label}</Badge>
           </div>
           <p className="text-sm text-muted-foreground">
@@ -695,7 +702,7 @@ export function WalkDetailClient({ walkId }: { walkId: string }) {
             </div>
             <div>
               <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
-                Passeio concluído com sucesso
+                Passeio concluído
               </p>
               <p className="mt-0.5 text-xs text-emerald-600/70 dark:text-emerald-400/70">
                 {toMoney(walk.price)} creditado
