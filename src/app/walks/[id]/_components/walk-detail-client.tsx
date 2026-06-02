@@ -11,7 +11,6 @@ import {
   FileText,
   MapPin,
   MessageSquare,
-  Navigation,
   PawPrint,
   Route,
   ShieldCheck,
@@ -557,24 +556,6 @@ export function WalkDetailClient({ walkId }: { walkId: string }) {
             </>
           ) : (
             <>
-              {isInProgress && (
-                <>
-                  <Link
-                    href={`/walks/${walk.id}/chat`}
-                    className={cn(buttonVariants({ variant: 'outline', size: 'sm' }))}
-                  >
-                    <MessageSquare className="mr-1.5 h-4 w-4" />
-                    Chat
-                  </Link>
-                  <Link
-                    href={`/walks/${walk.id}/tracking`}
-                    className={cn(buttonVariants({ variant: 'default', size: 'sm' }))}
-                  >
-                    <Navigation className="mr-1.5 h-4 w-4" />
-                    Acompanhar
-                  </Link>
-                </>
-              )}
               {isCompleted && !review && (
                 <Link
                   href={`/walks/${walk.id}/review`}
