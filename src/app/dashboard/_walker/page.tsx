@@ -323,16 +323,17 @@ export default function WalkerDashboardPage() {
           )}
         </div>
 
-        {!available ? (
+        {/* State 1: offline or profile incomplete */}
+        {!available && (
           <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border/60 py-10 text-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted">
               <ClipboardList className="h-5 w-5 text-muted-foreground" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-foreground">Nenhum pedido no momento</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
+              <p className="text-sm font-semibold text-foreground">Você está offline</p>
+              <p className="mt-0.5 text-xs text-muted-foreground max-w-[260px]">
                 {!canToggle
-                  ? "Conclua seu perfil para poder receber pedidos."
+                  ? "Conclua seu perfil para poder receber pedidos de passeio."
                   : "Ative sua disponibilidade para começar a receber pedidos."}
               </p>
             </div>
@@ -340,13 +341,38 @@ export default function WalkerDashboardPage() {
               <button
                 type="button"
                 onClick={handleAvailabilityClick}
-                className="mt-1 cursor-pointer text-xs font-semibold text-primary hover:underline"
+                className="mt-1 cursor-pointer rounded-lg border border-primary/20 bg-primary/8 px-4 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/15"
               >
-                Ativar agora
+                Ativar disponibilidade
               </button>
             )}
           </div>
-        ) : (
+        )}
+
+        {/* State 2: online, no requests yet */}
+        {available && walkerRequests.length === 0 && (
+          <div className="flex flex-col items-center gap-4 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.04] py-10 text-center">
+            <div className="relative flex h-12 w-12 items-center justify-center">
+              <span className="absolute inset-0 animate-ping rounded-full bg-emerald-500/20" />
+              <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/15 ring-1 ring-emerald-500/30">
+                <PawPrint className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              </div>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-foreground">Você está online</p>
+              <p className="mt-0.5 text-xs text-muted-foreground max-w-[260px]">
+                Aguardando novos pedidos de passeio. Você será notificado assim que chegarem.
+              </p>
+            </div>
+            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground/70">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+              Disponível para receber pedidos
+            </div>
+          </div>
+        )}
+
+        {/* State 3: has pending requests */}
+        {available && walkerRequests.length > 0 && (
           <div className="space-y-3">
             {walkerRequests.map((req) => (
               <div key={req.id} className="rounded-xl border border-border/60 bg-card p-5">
@@ -411,16 +437,16 @@ export default function WalkerDashboardPage() {
         )}
       </section>
 
-      {/* ── Recent completed walks (API-driven) ── */}
-      <section className="space-y-3.5">
-        <SectionHeader title="Últimos passeios" href="/walks" linkLabel="Ver todos" />
-        <Card className="overflow-hidden py-0 gap-0">
-          {walksLoading ? (
-            <div className="p-4 space-y-3">
-              {[1, 2, 3].map((i) => <Skeleton key={i} className="h-14 w-full rounded-xl" />)}
-            </div>
-          ) : (
-            <>
+      {/* ── Recent completed walks — only shown when there is history ── */}
+      {(walksLoading || completedWalks.length > 0) && (
+        <section className="space-y-3.5">
+          <SectionHeader title="Últimos passeios" href="/walks" linkLabel="Ver todos" />
+          <Card className="overflow-hidden py-0 gap-0">
+            {walksLoading ? (
+              <div className="p-4 space-y-3">
+                {[1, 2, 3].map((i) => <Skeleton key={i} className="h-14 w-full rounded-xl" />)}
+              </div>
+            ) : (
               <div className="divide-y divide-border/50">
                 {completedWalks.slice(0, 3).map((walk) => (
                   <div
@@ -447,16 +473,10 @@ export default function WalkerDashboardPage() {
                   </div>
                 ))}
               </div>
-
-              {completedWalks.length === 0 && (
-                <div className="px-5 py-8 text-center text-sm text-muted-foreground">
-                  Nenhum passeio concluído ainda.
-                </div>
-              )}
-            </>
-          )}
-        </Card>
-      </section>
+            )}
+          </Card>
+        </section>
+      )}
 
     </div>
   );
