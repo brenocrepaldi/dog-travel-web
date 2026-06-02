@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/tooltip";
 import type { DocStatus } from "@/types";
 import { useDocuments } from "@/features/documents/hooks/use-documents";
+import { useProfile } from "@/features/profile/hooks/use-profile";
 
 // ─── Nav items per role ───────────────────────────────────────────────────────
 
@@ -102,10 +103,11 @@ function StepRow({ icon: Icon, label, status }: Omit<Step, "href">) {
 
 // ─── Walker onboarding widget ─────────────────────────────────────────────────
 
-function WalkerOnboarding({ userImage }: { userImage?: string | null }) {
+function WalkerOnboarding() {
   const { data: docStatus } = useDocuments();
+  const { data: profile } = useProfile();
 
-  const hasPhoto = !!userImage;
+  const hasPhoto = !!profile?.avatarUrl;
 
   const requiredSteps: Step[] = [
     {
@@ -322,7 +324,7 @@ export function Sidebar() {
       </nav>
 
       {/* Walker onboarding widget */}
-      {role === "walker" && <WalkerOnboarding userImage={session?.user?.image} />}
+      {role === "walker" && <WalkerOnboarding />}
 
       <Separator />
 

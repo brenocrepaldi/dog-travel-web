@@ -17,7 +17,7 @@ import { useWalkRequests } from "@/features/walks/hooks/use-walks";
 import { useAcceptWalk, useDeclineWalk } from "@/features/walks/hooks/use-walk-actions";
 import { useWalks } from "@/features/walks/hooks/use-walks";
 import { useWalkerStats } from "@/features/stats/hooks/use-stats";
-import { useWalkerAvailability, useUpdateWalkerAvailability } from "@/features/walkers/hooks/use-walkers";
+import { useWalkerAvailability, useUpdateWalkerAvailability, useWalkerProfile } from "@/features/walkers/hooks/use-walkers";
 import { useDocuments } from "@/features/documents/hooks/use-documents";
 import { useProfile } from "@/features/profile/hooks/use-profile";
 import type { WalkRequest } from "@/types";
@@ -54,7 +54,6 @@ function SectionHeader({ title, href, linkLabel }: { title: string; href: string
 export default function WalkerDashboardPage() {
   const { data: session, status: sessionStatus } = useSession();
   const firstName = session?.user?.name?.split(" ")[0] ?? "Passeador";
-  const walkerId  = session?.user?.id;
   const greeting  = getGreeting();
   const router    = useRouter();
 
@@ -62,12 +61,15 @@ export default function WalkerDashboardPage() {
   const { mutate: acceptWalk } = useAcceptWalk();
   const { mutate: declineWalk } = useDeclineWalk();
 
-  const { data: allWalks = [], isLoading: walksLoading } = useWalks("walker", walkerId ?? "", {
-    enabled: !!walkerId,
+  const { data: walkerProfile } = useWalkerProfile();
+  const walkerProfileId = walkerProfile?.id ?? "";
+
+  const { data: allWalks = [], isLoading: walksLoading } = useWalks("walker", session?.user?.id ?? "", {
+    enabled: !!session?.user?.id,
   });
   const { data: stats } = useWalkerStats();
-  const { data: available = false } = useWalkerAvailability(walkerId ?? "");
-  const { mutate: updateAvailability, isPending: updatingAvailability } = useUpdateWalkerAvailability(walkerId ?? "");
+  const { data: available = false } = useWalkerAvailability(walkerProfileId);
+  const { mutate: updateAvailability, isPending: updatingAvailability } = useUpdateWalkerAvailability(walkerProfileId);
 
   const { data: documents, isLoading: documentsLoading } = useDocuments();
   const { data: profile, isLoading: profileLoading } = useProfile();
@@ -118,7 +120,7 @@ export default function WalkerDashboardPage() {
   function handleAccept(request: WalkRequest) {
     const walkerName = session?.user?.name ?? "Passeador";
     acceptWalk(
-      { request, walkerName, walkerId: walkerId ?? "" },
+      { request, walkerName, walkerId: walkerProfileId },
       {
         onSuccess: () => {
           toast.success("Passeio aceito!", {
