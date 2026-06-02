@@ -554,7 +554,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
               {/* Back link */}
               <button
                 onClick={() => router.back()}
-                className="flex w-full items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                className="flex w-full cursor-pointer items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 Voltar
