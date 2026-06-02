@@ -64,21 +64,21 @@ export function WalkLiveMapPreview({ walkId, startLat, startLng, petNames }: Pro
       </div>
 
       {/* ── Map area ───────────────────────────────────────────────────── */}
-      <Link
-        href={`/walks/${walkId}/tracking`}
-        className="group relative block h-[220px] overflow-hidden cursor-pointer"
-        aria-label="Abrir mapa em tela cheia"
-      >
+      <div className="group relative h-[220px] overflow-hidden cursor-default">
         <WalkLiveMapDynamic walkId={walkId} startLat={startLat} startLng={startLng} />
 
-        {/* Hover overlay */}
+        {/* Hover overlay — wrapper is non-interactive; only the pill is clickable */}
         <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-black/0 transition-all duration-200 group-hover:bg-black/20">
-          <div className="flex translate-y-1 items-center gap-2 rounded-xl border border-border/60 bg-background/90 px-4 py-2.5 text-sm font-medium text-foreground opacity-0 shadow-lg backdrop-blur-sm transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100">
+          <Link
+            href={`/walks/${walkId}/tracking`}
+            aria-label="Abrir mapa em tela cheia"
+            className="pointer-events-auto flex translate-y-1 cursor-pointer items-center gap-2 rounded-xl border border-border/60 bg-background/90 px-4 py-2.5 text-sm font-medium text-foreground opacity-0 shadow-lg backdrop-blur-sm transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100"
+          >
             <Navigation className="h-4 w-4 text-primary" />
             Ver mapa completo
-          </div>
+          </Link>
         </div>
-      </Link>
+      </div>
 
       {/* ── Footer ─────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between border-t border-border/60 bg-muted/30 px-5 py-2.5">
