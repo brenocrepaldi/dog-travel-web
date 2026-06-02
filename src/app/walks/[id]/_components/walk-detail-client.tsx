@@ -556,15 +556,6 @@ export function WalkDetailClient({ walkId }: { walkId: string }) {
             </>
           ) : (
             <>
-              {isCompleted && !review && (
-                <Link
-                  href={`/walks/${walk.id}/review`}
-                  className={cn(buttonVariants({ variant: 'default', size: 'sm' }))}
-                >
-                  <Star className="mr-1.5 h-4 w-4" />
-                  Avaliar passeio
-                </Link>
-              )}
               {isCancelled && (
                 <Link
                   href="/walks/new"
