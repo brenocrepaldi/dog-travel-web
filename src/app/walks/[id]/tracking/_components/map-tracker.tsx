@@ -118,6 +118,9 @@ export default function MapTracker({ walkId }: { walkId: string }) {
   const walkerName = walkerParticipant?.name ?? 'Passeador';
   const walkerPhone = walkerParticipant?.phone ?? null;
 
+  const clientParticipant = walk?.participants.find((p) => p.role === 'client');
+  const clientPhone = clientParticipant?.phone ?? null;
+
   const { remaining, progress, done: timeDone } = useCountdown(walk?.startedAt, walk?.durationMinutes);
 
   // ── Complete walk (one-time GPS check on click) ──────────────────────────────
@@ -242,37 +245,36 @@ export default function MapTracker({ walkId }: { walkId: string }) {
             <ArrowLeft className="h-4 w-4" />
           </Link>
 
-          <div className="pointer-events-auto flex min-w-0 flex-1 items-center gap-2.5 rounded-xl border border-white/20 bg-background/85 px-4 py-2.5 shadow-lg backdrop-blur-md">
+          <div className={cn(
+            'pointer-events-auto flex shrink-0 items-center gap-2 rounded-xl border border-white/20 bg-background/85 px-4 py-2.5 shadow-lg backdrop-blur-md',
+            timeDone && isWalker && isInProgress && 'border-emerald-500/40 bg-emerald-500/10',
+          )}>
             <span className="relative flex h-2 w-2 shrink-0">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
             </span>
-            <span className="truncate text-sm font-semibold text-foreground">
-              {walk?.petNames?.join(' & ') ?? 'Passeio em andamento'}
-            </span>
-            {walk?.durationMinutes && (
-              <span className="ml-auto shrink-0 text-xs text-muted-foreground">
-                {walk.durationMinutes} min
-              </span>
+            <span className="text-sm font-semibold text-foreground">Em andamento</span>
+
+            {isWalker && isInProgress && walk?.startedAt && (
+              <>
+                <span className="h-4 w-px bg-border/60" />
+                {timeDone
+                  ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                  : <Timer className="h-3.5 w-3.5 text-muted-foreground" />}
+                <span className={cn(
+                  'font-mono text-sm font-bold tabular-nums',
+                  timeDone ? 'text-emerald-600' : 'text-foreground',
+                )}>
+                  {timeDone ? '00:00' : formatCountdown(remaining)}
+                </span>
+                {walk?.durationMinutes && (
+                  <span className="border-l border-border/50 pl-2 text-xs text-muted-foreground">
+                    {walk.durationMinutes}min
+                  </span>
+                )}
+              </>
             )}
           </div>
-
-          {isWalker && isInProgress && walk?.startedAt && (
-            <div className={cn(
-              'pointer-events-auto flex shrink-0 items-center gap-1.5 rounded-xl border border-white/20 bg-background/85 px-3.5 py-2.5 shadow-lg backdrop-blur-md',
-              timeDone && 'border-emerald-500/40 bg-emerald-500/10',
-            )}>
-              {timeDone
-                ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                : <Timer className="h-3.5 w-3.5 text-muted-foreground" />}
-              <span className={cn(
-                'font-mono text-sm font-bold tabular-nums',
-                timeDone ? 'text-emerald-600' : 'text-foreground',
-              )}>
-                {timeDone ? '00:00' : formatCountdown(remaining)}
-              </span>
-            </div>
-          )}
         </div>
 
         {/* ── Bottom card ─────────────────────────────────────────── */}
@@ -283,15 +285,15 @@ export default function MapTracker({ walkId }: { walkId: string }) {
             <div className="pointer-events-auto w-full max-w-lg space-y-0 divide-y divide-border/40 rounded-2xl border border-white/20 bg-background/95 shadow-xl backdrop-blur-md overflow-hidden">
 
               {/* Pets */}
-              <div className="flex flex-wrap items-center gap-3 px-5 py-4">
+              <div className="flex flex-wrap items-center gap-2.5 px-5 py-3">
                 {pets.map((pet, i) => (
-                  <div key={i} className="flex items-center gap-2.5">
-                    <div className="h-11 w-11 shrink-0 overflow-hidden rounded-full border-2 border-amber-200/80 bg-amber-50 shadow-sm">
+                  <div key={i} className="flex items-center gap-2">
+                    <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full border-2 border-amber-200/80 bg-amber-50 shadow-sm">
                       {pet.photoUrl ? (
                         <img src={pet.photoUrl} alt={pet.name} className="h-full w-full object-cover" />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center">
-                          <PawPrint className="h-4 w-4 text-amber-500" />
+                          <PawPrint className="h-3.5 w-3.5 text-amber-500" />
                         </div>
                       )}
                     </div>
@@ -301,7 +303,7 @@ export default function MapTracker({ walkId }: { walkId: string }) {
               </div>
 
               {/* Location + progress */}
-              <div className="space-y-3 px-5 py-4">
+              <div className="space-y-2.5 px-5 py-3">
                 {walk?.startAddress && (
                   <div className="flex items-start gap-2.5">
                     <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10">
@@ -346,8 +348,8 @@ export default function MapTracker({ walkId }: { walkId: string }) {
               </div>
 
               {/* Actions */}
-              <div className="space-y-2.5 px-5 py-4">
-                <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-2 px-5 py-3">
+                <div className={cn('grid gap-2', clientPhone ? 'grid-cols-3' : 'grid-cols-2')}>
                   <Link
                     href={`/walks/${walkId}`}
                     className={cn(buttonVariants({ variant: 'outline' }), 'gap-2')}
@@ -355,6 +357,15 @@ export default function MapTracker({ walkId }: { walkId: string }) {
                     <ArrowLeft className="h-4 w-4" />
                     Voltar
                   </Link>
+                  {clientPhone && (
+                    <Link
+                      href={`tel:${clientPhone}`}
+                      className={cn(buttonVariants({ variant: 'outline' }), 'gap-2 border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 dark:border-blue-800/50 dark:bg-blue-900/20 dark:text-blue-400')}
+                    >
+                      <Phone className="h-4 w-4" />
+                      Ligar
+                    </Link>
+                  )}
                   <Link
                     href={`/walks/${walkId}/chat`}
                     className={cn(buttonVariants({ variant: 'outline' }), 'gap-2')}
@@ -385,7 +396,7 @@ export default function MapTracker({ walkId }: { walkId: string }) {
                     ? 'Concluindo…'
                     : timeDone
                       ? 'Concluir passeio'
-                      : `Disponível em ${formatCountdown(remaining)}`}
+                      : 'Disponível no final do passeio'}
                 </Button>
               </div>
             </div>
@@ -396,7 +407,7 @@ export default function MapTracker({ walkId }: { walkId: string }) {
             <div className="pointer-events-auto w-full max-w-lg space-y-0 divide-y divide-border/40 rounded-2xl border border-white/20 bg-background/95 shadow-xl backdrop-blur-md overflow-hidden">
 
               {/* Walker info */}
-              <div className="flex items-center gap-3 px-5 py-4">
+              <div className="flex items-center gap-3 px-5 py-3">
                 {walk?.walkerAvatarUrl ? (
                   <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full border-2 border-primary/20 shadow-sm">
                     <img src={walk.walkerAvatarUrl} alt={walkerName} className="h-full w-full object-cover" />
@@ -423,10 +434,10 @@ export default function MapTracker({ walkId }: { walkId: string }) {
 
               {/* Pets */}
               {pets.length > 0 && (
-                <div className="flex flex-wrap items-center gap-2.5 px-5 py-4">
+                <div className="flex flex-wrap items-center gap-2 px-5 py-3">
                   {pets.map((pet, i) => (
                     <div key={i} className="flex items-center gap-2">
-                      <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border-2 border-amber-200/80 bg-amber-50 shadow-sm">
+                      <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full border-2 border-amber-200/80 bg-amber-50 shadow-sm">
                         {pet.photoUrl ? (
                           <img src={pet.photoUrl} alt={pet.name} className="h-full w-full object-cover" />
                         ) : (
@@ -442,7 +453,7 @@ export default function MapTracker({ walkId }: { walkId: string }) {
               )}
 
               {/* Actions */}
-              <div className="grid grid-cols-2 gap-2 px-5 py-4" style={{ gridTemplateColumns: walkerPhone ? '1fr 1fr' : '1fr' }}>
+              <div className="grid grid-cols-2 gap-2 px-5 py-3" style={{ gridTemplateColumns: walkerPhone ? '1fr 1fr' : '1fr' }}>
                 {walkerPhone && (
                   <Link
                     href={`tel:${walkerPhone}`}
