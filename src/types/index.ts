@@ -366,9 +366,10 @@ export interface RegisterDto {
 
 export interface LoginResponseDto {
   accessToken: string;
-  refreshToken?: string;
-  /** Unix timestamp (seconds) when accessToken expires. Backend should always return this. */
-  expiresAt?: number;
+  /** Backend always rotates and returns a new refresh token on every login/refresh. */
+  refreshToken: string;
+  /** Unix timestamp (seconds) when the accessToken expires — always returned by backend. */
+  expiresAt: number;
   user: User;
 }
 

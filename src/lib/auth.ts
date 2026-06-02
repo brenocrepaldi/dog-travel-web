@@ -94,9 +94,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         };
         if (u.accessToken) token.accessToken = u.accessToken;
         if (u.refreshToken) token.refreshToken = u.refreshToken;
-        // expiresAt is a Unix timestamp (seconds). Backend returns it from the
-        // JWT exp claim; fall back to 15 min from now if missing.
-        token.expiresAt = u.expiresAt ?? Math.floor(Date.now() / 1000) + 900;
+        // expiresAt is the JWT exp claim (Unix seconds). Always provided by backend.
+        token.expiresAt = u.expiresAt;
         return token;
       }
 
@@ -126,8 +125,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return {
           ...token,
           accessToken: refreshed.accessToken,
-          refreshToken: refreshed.refreshToken ?? token.refreshToken,
-          expiresAt: refreshed.expiresAt ?? Math.floor(Date.now() / 1000) + 900,
+          refreshToken: refreshed.refreshToken,
+          expiresAt: refreshed.expiresAt,
+          // Propagate role in case it changed on the backend (e.g. profile upgrade)
+          role: refreshed.user?.role ?? token.role,
           error: undefined,
         };
       } catch {
