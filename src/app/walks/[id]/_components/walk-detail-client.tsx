@@ -33,7 +33,7 @@ import { WalkRouteMapClient } from './walk-route-map-client';
 import { WalkPets } from './walk-pets';
 import { WalkStartSection } from './walk-start-section';
 import { ClientCodeBanner } from './client-code-banner';
-import { WalkCompleteButton } from './walk-complete-button';
+import { WalkInProgressPanel } from './walk-inprogress-panel';
 import type { WalkRecord, WalkerProfile, WalkTimelineEvent, WalkStatus } from '@/types';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -536,7 +536,7 @@ export function WalkDetailClient({ walkId }: { walkId: string }) {
         <div className="flex shrink-0 flex-wrap gap-2">
           {isWalker ? (
             <>
-              {(isInProgress || isAccepted) && (
+              {isAccepted && (
                 <Link
                   href={`/walks/${walk.id}/chat`}
                   className={cn(buttonVariants({ variant: 'outline', size: 'sm' }))}
@@ -545,16 +545,6 @@ export function WalkDetailClient({ walkId }: { walkId: string }) {
                   Chat com cliente
                 </Link>
               )}
-              {isInProgress && (
-                <Link
-                  href={`/walks/${walk.id}/tracking`}
-                  className={cn(buttonVariants({ variant: 'outline', size: 'sm' }))}
-                >
-                  <Navigation className="mr-1.5 h-4 w-4" />
-                  Acompanhar
-                </Link>
-              )}
-              {isInProgress && <WalkCompleteButton walk={walk} />}
             </>
           ) : (
             <>
@@ -609,7 +599,9 @@ export function WalkDetailClient({ walkId }: { walkId: string }) {
 
       {/* ── Banners ────────────────────────────────────────────────────────── */}
 
-      {isInProgress && (
+      {isWalker && isInProgress && <WalkInProgressPanel walk={walk} />}
+
+      {!isWalker && isInProgress && (
         <div className="flex items-center justify-between gap-4 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.08] px-5 py-4">
           <div className="flex items-center gap-3">
             <span className="relative flex h-3 w-3 shrink-0">
@@ -621,9 +613,7 @@ export function WalkDetailClient({ walkId }: { walkId: string }) {
                 Passeio em andamento agora
               </p>
               <p className="mt-0.5 text-xs text-emerald-600/70 dark:text-emerald-400/70">
-                {isWalker
-                  ? `Você está passeando com ${walk.petNames.join(' & ')} · cliente ${walk.clientName}`
-                  : `${walk.petNames.join(' & ')} está${walk.petNames.length > 1 ? 'o' : ''} com ${walker?.name ?? 'o passeador'}`}
+                {`${walk.petNames.join(' & ')} está${walk.petNames.length > 1 ? 'o' : ''} com ${walker?.name ?? 'o passeador'}`}
               </p>
             </div>
           </div>
