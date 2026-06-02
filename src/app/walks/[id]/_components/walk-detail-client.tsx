@@ -34,6 +34,7 @@ import { WalkPets } from './walk-pets';
 import { WalkStartSection } from './walk-start-section';
 import { ClientCodeBanner } from './client-code-banner';
 import { WalkInProgressPanel } from './walk-inprogress-panel';
+import { WalkLiveMapPreview } from './walk-live-map-preview';
 import type { WalkRecord, WalkerProfile, WalkTimelineEvent, WalkStatus } from '@/types';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -752,6 +753,14 @@ export function WalkDetailClient({ walkId }: { walkId: string }) {
       {hasRoute ? (
         <div className="grid gap-5 lg:grid-cols-3">
           <div className="space-y-5 lg:col-span-2">
+            {isWalker && isInProgress && (
+              <WalkLiveMapPreview
+                walkId={walk.id}
+                startLat={walk.startLat}
+                startLng={walk.startLng}
+                petNames={walk.petNames}
+              />
+            )}
             <Card className="overflow-hidden py-0 gap-0">
               <div className="flex items-center justify-between border-b border-border/60 px-5 py-3.5">
                 <div>
@@ -852,6 +861,14 @@ export function WalkDetailClient({ walkId }: { walkId: string }) {
         /* ── Layout B — sem trajeto GPS ──────────────────────────────────── */
         <div className="grid gap-5 lg:grid-cols-3">
           <div className="space-y-5 lg:col-span-2">
+            {isWalker && isInProgress && (
+              <WalkLiveMapPreview
+                walkId={walk.id}
+                startLat={walk.startLat}
+                startLng={walk.startLng}
+                petNames={walk.petNames}
+              />
+            )}
             <Card className="overflow-hidden py-0 gap-0">
               <div className="border-b border-border/60 px-5 py-4">
                 <h2 className="text-sm font-semibold text-foreground">Detalhes do passeio</h2>
