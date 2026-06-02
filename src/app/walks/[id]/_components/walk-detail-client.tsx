@@ -759,6 +759,7 @@ export function WalkDetailClient({ walkId }: { walkId: string }) {
                 startLat={walk.startLat}
                 startLng={walk.startLng}
                 petNames={walk.petNames}
+                pets={walk.pets}
               />
             )}
             <Card className="overflow-hidden py-0 gap-0">
@@ -867,6 +868,7 @@ export function WalkDetailClient({ walkId }: { walkId: string }) {
                 startLat={walk.startLat}
                 startLng={walk.startLng}
                 petNames={walk.petNames}
+                pets={walk.pets}
               />
             )}
             <Card className="overflow-hidden py-0 gap-0">

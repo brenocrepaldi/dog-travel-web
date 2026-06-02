@@ -23,6 +23,7 @@ interface Props {
   startLat?: number | null;
   startLng?: number | null;
   petNames: string[];
+  pets?: { name: string; photoUrl?: string | null }[];
 }
 
 function timeAgo(iso: string) {
@@ -32,7 +33,7 @@ function timeAgo(iso: string) {
   return `há ${Math.floor(diff / 60)}min`;
 }
 
-export function WalkLiveMapPreview({ walkId, startLat, startLng, petNames }: Props) {
+export function WalkLiveMapPreview({ walkId, startLat, startLng, petNames, pets }: Props) {
   const { data: location } = useWalkLocation(walkId);
 
   return (
@@ -65,7 +66,7 @@ export function WalkLiveMapPreview({ walkId, startLat, startLng, petNames }: Pro
 
       {/* ── Map area ───────────────────────────────────────────────────── */}
       <div className="group relative h-[220px] overflow-hidden cursor-default">
-        <WalkLiveMapDynamic walkId={walkId} startLat={startLat} startLng={startLng} />
+        <WalkLiveMapDynamic walkId={walkId} startLat={startLat} startLng={startLng} pets={pets} />
 
         {/* Hover overlay — wrapper is non-interactive; only the pill is clickable */}
         <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-black/0 transition-all duration-200 group-hover:bg-black/20">
