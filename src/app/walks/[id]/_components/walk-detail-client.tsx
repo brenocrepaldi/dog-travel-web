@@ -196,6 +196,7 @@ function WalkerCard({
   walker: WalkerProfile;
   compact?: boolean;
 }) {
+  const size = compact ? 'h-12 w-12' : 'h-14 w-14';
   return (
     <Card className="overflow-hidden py-0 gap-0">
       <div className="border-b border-border/60 px-5 py-3.5">
@@ -203,14 +204,20 @@ function WalkerCard({
       </div>
       <CardContent className="p-5 space-y-4">
         <div className="flex items-center gap-3">
-          <div
-            className={cn(
-              'flex shrink-0 items-center justify-center rounded-xl bg-primary/10 text-sm font-bold text-primary',
-              compact ? 'h-12 w-12' : 'h-14 w-14',
-            )}
-          >
-            {initials(walker.name)}
-          </div>
+          {walker.avatarUrl ? (
+            <div className={cn('shrink-0 rounded-xl overflow-hidden', size)}>
+              <img src={walker.avatarUrl} alt={walker.name} className="w-full h-full object-cover" />
+            </div>
+          ) : (
+            <div
+              className={cn(
+                'flex shrink-0 items-center justify-center rounded-xl bg-primary/10 text-sm font-bold text-primary',
+                size,
+              )}
+            >
+              {initials(walker.name)}
+            </div>
+          )}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5">
               <p className="truncate font-semibold text-foreground">{walker.name}</p>
@@ -269,12 +276,14 @@ function WalkerCard({
 function ClientCard({
   walkId,
   clientName,
+  clientAvatarUrl,
   petNames,
   address,
   showChat,
 }: {
   walkId: string;
   clientName: string;
+  clientAvatarUrl?: string | null;
   petNames: string[];
   address: string;
   showChat: boolean;
@@ -286,9 +295,15 @@ function ClientCard({
       </div>
       <CardContent className="p-5 space-y-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-sm font-bold text-primary">
-            {initials(clientName)}
-          </div>
+          {clientAvatarUrl ? (
+            <div className="h-14 w-14 shrink-0 rounded-xl overflow-hidden">
+              <img src={clientAvatarUrl} alt={clientName} className="w-full h-full object-cover" />
+            </div>
+          ) : (
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-sm font-bold text-primary">
+              {initials(clientName)}
+            </div>
+          )}
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-foreground truncate">{clientName}</p>
             <p className="mt-0.5 text-xs text-muted-foreground">
@@ -839,6 +854,7 @@ export function WalkDetailClient({ walkId }: { walkId: string }) {
               <ClientCard
                 walkId={walk.id}
                 clientName={walk.clientName}
+                clientAvatarUrl={walk.clientAvatarUrl}
                 petNames={walk.petNames}
                 address={walk.startAddress}
                 showChat={isInProgress || isAccepted}
@@ -889,6 +905,7 @@ export function WalkDetailClient({ walkId }: { walkId: string }) {
               <ClientCard
                 walkId={walk.id}
                 clientName={walk.clientName}
+                clientAvatarUrl={walk.clientAvatarUrl}
                 petNames={walk.petNames}
                 address={walk.startAddress}
                 showChat={isInProgress || isAccepted}

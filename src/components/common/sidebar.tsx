@@ -19,7 +19,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import {
   Tooltip,
@@ -272,13 +272,14 @@ function WalkerOnboarding() {
 export function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const { data: profile } = useProfile();
 
   const role = session?.user?.role ?? "client";
   const navItems = role === "walker" ? walkerNav : clientNav;
 
-  const userInitials = session?.user?.name
-    ? session.user.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()
-    : "?";
+  const userName = session?.user?.name ?? "Usuário";
+  const userInitials = userName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
+  const avatarUrl = profile?.avatarUrl ?? null;
 
   const activeHref = navItems
     .filter(({ href }) => pathname === href || pathname.startsWith(href + "/"))
@@ -340,13 +341,14 @@ export function Sidebar() {
           )}
         >
           <Avatar className="h-8 w-8 ring-2 ring-background shadow-sm">
+            {avatarUrl && <AvatarImage src={avatarUrl} alt={userName} className="object-cover" />}
             <AvatarFallback className="text-xs bg-primary/10 text-primary font-semibold">
               {userInitials}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate text-foreground">
-              {session?.user?.name ?? "Usuário"}
+              {userName}
             </p>
             <p className="text-xs text-muted-foreground truncate">
               {role === "walker" ? "Passeador" : "Cliente"}

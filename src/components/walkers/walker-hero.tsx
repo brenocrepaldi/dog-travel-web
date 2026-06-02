@@ -25,6 +25,7 @@ export function walkerInitials(name: string) {
 
 type WalkerHeroProps = {
   name: string;
+  avatarUrl?: string | null;
   description: string;
   rating: number;
   reviews: number;
@@ -36,6 +37,7 @@ type WalkerHeroProps = {
 
 export function WalkerHero({
   name,
+  avatarUrl,
   description,
   rating,
   reviews,
@@ -46,14 +48,20 @@ export function WalkerHero({
   return (
     <div className="flex flex-col sm:flex-row items-start gap-6">
       {/* Avatar */}
-      <div
-        className={cn(
-          'w-20 h-20 rounded-2xl bg-gradient-to-br flex items-center justify-center shrink-0 ring-2 ring-border/30',
-          walkerGradient(name)
-        )}
-      >
-        <span className="text-2xl font-bold text-foreground/70">{walkerInitials(name)}</span>
-      </div>
+      {avatarUrl ? (
+        <div className="w-20 h-20 rounded-2xl shrink-0 ring-2 ring-border/30 overflow-hidden">
+          <img src={avatarUrl} alt={name} className="w-full h-full object-cover" />
+        </div>
+      ) : (
+        <div
+          className={cn(
+            'w-20 h-20 rounded-2xl bg-gradient-to-br flex items-center justify-center shrink-0 ring-2 ring-border/30',
+            walkerGradient(name)
+          )}
+        >
+          <span className="text-2xl font-bold text-foreground/70">{walkerInitials(name)}</span>
+        </div>
+      )}
 
       {/* Info */}
       <div className="flex-1 min-w-0">

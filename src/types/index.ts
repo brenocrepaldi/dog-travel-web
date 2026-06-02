@@ -40,6 +40,8 @@ export interface WalkRecord {
   id: string;
   walkerId: string | null;
   clientName: string;
+  clientAvatarUrl?: string | null;
+  walkerAvatarUrl?: string | null;
   petIds?: string[];
   petNames: string[];
   status: WalkStatus;
@@ -78,6 +80,7 @@ export interface WalkerCertification {
 export interface WalkerProfile {
   id: string;
   name: string;
+  avatarUrl?: string | null;
   rating: number;
   reviews: number;
   location: string;

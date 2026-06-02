@@ -161,9 +161,15 @@ function WalkCard({
 					</div>
 				) : (
 					<div className="flex items-start gap-3 min-w-0">
-						<div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 text-xs font-bold ring-1 bg-primary/8 text-primary ring-primary/15">
-							{walkerInitials}
-						</div>
+						{walk.walkerAvatarUrl ? (
+							<div className="w-10 h-10 rounded-2xl shrink-0 ring-1 ring-border/30 overflow-hidden">
+								<img src={walk.walkerAvatarUrl} alt={walkerName} className="w-full h-full object-cover" />
+							</div>
+						) : (
+							<div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 text-xs font-bold ring-1 bg-primary/8 text-primary ring-primary/15">
+								{walkerInitials}
+							</div>
+						)}
 						<div className="min-w-0">
 							<p className="text-sm font-semibold text-foreground leading-tight truncate">
 								{walkerName}

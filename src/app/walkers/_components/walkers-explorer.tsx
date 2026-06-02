@@ -40,7 +40,7 @@ const WALKER_GRADIENTS = [
 	'from-cyan-400/30 to-sky-500/30',
 ];
 
-function WalkerAvatar({ name }: { name: string }) {
+function WalkerAvatar({ name, avatarUrl }: { name: string; avatarUrl?: string | null }) {
 	const idx = name.charCodeAt(0) % WALKER_GRADIENTS.length;
 	const initials = name
 		.split(' ')
@@ -48,6 +48,14 @@ function WalkerAvatar({ name }: { name: string }) {
 		.join('')
 		.slice(0, 2)
 		.toUpperCase();
+
+	if (avatarUrl) {
+		return (
+			<div className="w-14 h-14 rounded-2xl shrink-0 ring-2 ring-border/30 overflow-hidden">
+				<img src={avatarUrl} alt={name} className="w-full h-full object-cover" />
+			</div>
+		);
+	}
 
 	return (
 		<div
@@ -92,7 +100,7 @@ function WalkerCard({ walker, index }: { walker: WalkerProfile; index: number })
 				<div className="flex flex-col flex-1 p-5 gap-4">
 					{/* Avatar + nome + avaliação */}
 					<div className="flex items-center gap-4">
-						<WalkerAvatar name={walker.name} />
+						<WalkerAvatar name={walker.name} avatarUrl={walker.avatarUrl} />
 
 						<div className="flex-1 min-w-0">
 							<div className="flex items-center gap-1.5 flex-wrap" title="Verificado">

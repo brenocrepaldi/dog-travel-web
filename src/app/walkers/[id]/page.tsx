@@ -94,7 +94,14 @@ function SectionHeader({
 	);
 }
 
-function SidebarAvatar({ name }: { name: string }) {
+function SidebarAvatar({ name, avatarUrl }: { name: string; avatarUrl?: string | null }) {
+	if (avatarUrl) {
+		return (
+			<div className="w-10 h-10 rounded-xl shrink-0 ring-2 ring-border/30 overflow-hidden">
+				<img src={avatarUrl} alt={name} className="w-full h-full object-cover" />
+			</div>
+		);
+	}
 	return (
 		<div
 			className={cn(
@@ -180,6 +187,7 @@ export default async function WalkerDetailPage({ params }: { params: Promise<{ i
 						<CardContent className="p-6">
 							<WalkerHero
 								name={walker.name}
+								avatarUrl={walker.avatarUrl}
 								description={walker.description}
 								rating={walker.rating}
 								reviews={walker.reviews}
@@ -330,7 +338,7 @@ export default async function WalkerDetailPage({ params }: { params: Promise<{ i
 						<CardContent className="p-5 space-y-4">
 							{/* Mini perfil */}
 							<div className="flex items-center gap-3">
-								<SidebarAvatar name={walker.name} />
+								<SidebarAvatar name={walker.name} avatarUrl={walker.avatarUrl} />
 								<div className="min-w-0">
 									<p className="font-semibold text-sm text-foreground truncate">{walker.name}</p>
 									<div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
