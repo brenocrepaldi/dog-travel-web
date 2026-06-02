@@ -5,61 +5,118 @@ import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   CalendarDays,
-  Dog,
+  Heart,
   PawPrint,
   Star,
   Trophy,
   User,
+  MessageCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 import { useClientProfile } from "@/features/clients/hooks/use-clients";
 import type { ClientProfile } from "@/types";
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Constants ────────────────────────────────────────────────────────────────
 
 const SIZE_LABEL: Record<string, string> = {
-  small: "Pequeno",
-  medium: "Médio",
-  large: "Grande",
-  giant: "Gigante",
+  small: "Porte Pequeno",
+  medium: "Porte Médio",
+  large: "Porte Grande",
+  giant: "Porte Gigante",
 };
 
-const GENDER_LABEL: Record<string, string> = {
-  male: "Macho",
-  female: "Fêmea",
+const SIZE_COLOR: Record<string, string> = {
+  small:  "bg-sky-500/10 text-sky-700 dark:text-sky-400",
+  medium: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+  large:  "bg-amber-500/10 text-amber-700 dark:text-amber-400",
+  giant:  "bg-rose-500/10 text-rose-700 dark:text-rose-400",
 };
 
-function clientInitials(name: string) {
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
+const GENDER_LABEL: Record<string, string> = { male: "Macho", female: "Fêmea" };
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+const CLIENT_GRADIENTS = [
+  "from-violet-400/30 to-purple-500/30",
+  "from-sky-400/30 to-blue-500/30",
+  "from-emerald-400/30 to-teal-500/30",
+  "from-rose-400/30 to-pink-500/30",
+  "from-amber-400/30 to-orange-500/30",
+  "from-indigo-400/30 to-violet-500/30",
+];
 
 function clientGradient(name: string) {
-  const gradients = [
-    "from-violet-400 to-purple-600",
-    "from-sky-400 to-blue-600",
-    "from-emerald-400 to-teal-600",
-    "from-rose-400 to-pink-600",
-    "from-amber-400 to-orange-500",
-    "from-indigo-400 to-violet-600",
-  ];
-  const i = name.charCodeAt(0) % gradients.length;
-  return gradients[i];
+  return CLIENT_GRADIENTS[name.charCodeAt(0) % CLIENT_GRADIENTS.length];
+}
+
+function clientInitials(name: string) {
+  return name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
 }
 
 function memberSinceLabel(iso: string) {
-  return new Date(iso).toLocaleDateString("pt-BR", {
-    month: "long",
-    year: "numeric",
-  });
+  return new Date(iso).toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+}
+
+// ─── StatCard ─────────────────────────────────────────────────────────────────
+
+function StatCard({
+  icon: Icon,
+  label,
+  value,
+  className,
+}: {
+  icon: React.ElementType;
+  label: string;
+  value: string;
+  className?: string;
+}) {
+  return (
+    <div className={cn(
+      "flex flex-col gap-1.5 rounded-xl border border-border/50 bg-card px-4 py-3.5",
+      className,
+    )}>
+      <div className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+        <Icon className="w-3.5 h-3.5 shrink-0" />
+        {label}
+      </div>
+      <p className="text-sm font-semibold text-foreground leading-snug">{value}</p>
+    </div>
+  );
+}
+
+// ─── SectionHeader ────────────────────────────────────────────────────────────
+
+function SectionHeader({
+  icon: Icon,
+  iconColor = "text-primary",
+  iconBg = "bg-primary/10",
+  title,
+  description,
+}: {
+  icon: React.ElementType;
+  iconColor?: string;
+  iconBg?: string;
+  title: string;
+  description: string;
+}) {
+  return (
+    <CardHeader className="pt-5">
+      <div className="flex items-center gap-2.5">
+        <div className={cn("w-8 h-8 rounded-xl flex items-center justify-center shrink-0", iconBg)}>
+          <Icon className={cn("w-4 h-4", iconColor)} />
+        </div>
+        <div>
+          <CardTitle className="text-sm font-semibold">{title}</CardTitle>
+          <CardDescription className="text-xs mt-0.5">{description}</CardDescription>
+        </div>
+      </div>
+    </CardHeader>
+  );
 }
 
 // ─── Avatar ───────────────────────────────────────────────────────────────────
@@ -71,54 +128,26 @@ function ClientAvatar({
 }: {
   name: string;
   avatarUrl?: string | null;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "lg";
 }) {
-  const sizeCls = size === "lg" ? "h-24 w-24 text-2xl" : size === "md" ? "h-12 w-12 text-sm" : "h-9 w-9 text-xs";
+  const sizeCls = size === "lg"
+    ? "w-20 h-20 text-2xl rounded-2xl ring-2 ring-border/30"
+    : "w-10 h-10 text-sm rounded-xl ring-2 ring-border/30";
+
   if (avatarUrl) {
     return (
-      <div className={cn("shrink-0 overflow-hidden rounded-2xl ring-2 ring-background shadow-md", sizeCls)}>
+      <div className={cn("shrink-0 overflow-hidden", sizeCls)}>
         <img src={avatarUrl} alt={name} className="h-full w-full object-cover" />
       </div>
     );
   }
   return (
-    <div
-      className={cn(
-        "shrink-0 flex items-center justify-center rounded-2xl bg-gradient-to-br ring-2 ring-background shadow-md font-bold text-white",
-        clientGradient(name),
-        sizeCls,
-      )}
-    >
-      {clientInitials(name)}
-    </div>
-  );
-}
-
-// ─── Stat chip ────────────────────────────────────────────────────────────────
-
-function StatChip({
-  icon: Icon,
-  label,
-  value,
-  accent = false,
-}: {
-  icon: React.ElementType;
-  label: string;
-  value: string;
-  accent?: boolean;
-}) {
-  return (
     <div className={cn(
-      "flex flex-col gap-1 rounded-xl border px-4 py-3.5",
-      accent ? "border-primary/20 bg-primary/5" : "border-border/50 bg-card",
+      "shrink-0 bg-gradient-to-br flex items-center justify-center font-bold text-foreground/70",
+      clientGradient(name),
+      sizeCls,
     )}>
-      <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-        <Icon className="h-3 w-3 shrink-0" />
-        {label}
-      </div>
-      <p className={cn("text-base font-bold", accent ? "text-primary" : "text-foreground")}>
-        {value}
-      </p>
+      {clientInitials(name)}
     </div>
   );
 }
@@ -127,21 +156,34 @@ function StatChip({
 
 function DogCard({ dog }: { dog: ClientProfile["dogs"][number] }) {
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-3 hover:border-border transition-colors">
-      <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl">
+    <div className={cn(
+      "group relative overflow-hidden rounded-xl border border-border/60 bg-card",
+      "transition-all duration-300 hover:shadow-md hover:border-border",
+    )}>
+      {/* Photo */}
+      <div className="relative h-36 w-full overflow-hidden bg-amber-500/5">
         {dog.photoUrl ? (
-          <img src={dog.photoUrl} alt={dog.name} className="h-full w-full object-cover" />
+          <img
+            src={dog.photoUrl}
+            alt={dog.name}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-amber-500/10">
-            <PawPrint className="h-6 w-6 text-amber-500" />
+          <div className="flex h-full w-full flex-col items-center justify-center gap-2">
+            <PawPrint className="h-10 w-10 text-amber-400/60" />
           </div>
         )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+        <div className="absolute bottom-2 left-3">
+          <p className="text-sm font-bold text-white drop-shadow-sm">{dog.name}</p>
+        </div>
       </div>
-      <div className="min-w-0 flex-1">
-        <p className="truncate font-semibold text-foreground text-sm">{dog.name}</p>
-        <p className="truncate text-xs text-muted-foreground mt-0.5">{dog.breed}</p>
-        <div className="mt-1.5 flex flex-wrap gap-1">
-          <span className="inline-flex items-center rounded-full bg-primary/8 px-2 py-0.5 text-[10px] font-semibold text-primary">
+
+      {/* Info */}
+      <div className="space-y-2 p-3">
+        <p className="text-xs text-muted-foreground">{dog.breed}</p>
+        <div className="flex flex-wrap gap-1.5">
+          <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold", SIZE_COLOR[dog.size] ?? "bg-muted text-muted-foreground")}>
             {SIZE_LABEL[dog.size] ?? dog.size}
           </span>
           <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
@@ -166,69 +208,105 @@ function ReviewCard({ review }: { review: ClientProfile["reviews"][number] }) {
   });
 
   return (
-    <div className="flex gap-3">
-      {review.walkerAvatarUrl ? (
-        <div className="h-9 w-9 shrink-0 overflow-hidden rounded-xl">
-          <img src={review.walkerAvatarUrl} alt={review.walkerName} className="h-full w-full object-cover" />
-        </div>
-      ) : (
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-[11px] font-bold text-primary">
-          {clientInitials(review.walkerName || "?")}
-        </div>
-      )}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between gap-2 flex-wrap">
-          <p className="text-sm font-semibold text-foreground truncate">{review.walkerName}</p>
-          <span className="text-[11px] text-muted-foreground shrink-0">{date}</span>
-        </div>
-        <div className="mt-0.5 flex items-center gap-0.5">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Star
-              key={i}
-              className={cn(
-                "h-3 w-3",
-                i < review.rating ? "fill-amber-400 text-amber-400" : "fill-muted text-muted-foreground/30",
-              )}
-            />
-          ))}
-        </div>
-        {review.comment && (
-          <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
-            &quot;{review.comment}&quot;
-          </p>
+    <div className={cn(
+      "rounded-xl border border-border/60 bg-card p-4",
+      "transition-all duration-300 hover:border-border hover:shadow-sm",
+    )}>
+      <div className="flex items-start gap-3">
+        {review.walkerAvatarUrl ? (
+          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-xl ring-1 ring-border/40">
+            <img src={review.walkerAvatarUrl} alt={review.walkerName} className="h-full w-full object-cover" />
+          </div>
+        ) : (
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-xs font-bold text-primary">
+            {clientInitials(review.walkerName || "?")}
+          </div>
         )}
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2 flex-wrap">
+            <div>
+              <p className="text-sm font-semibold text-foreground leading-none">{review.walkerName}</p>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">Passeador avaliado</p>
+            </div>
+            <span className="shrink-0 text-[11px] text-muted-foreground">{date}</span>
+          </div>
+
+          <div className="mt-2 flex items-center gap-1">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Star
+                key={i}
+                className={cn(
+                  "h-3.5 w-3.5",
+                  i < review.rating
+                    ? "fill-amber-400 text-amber-400"
+                    : "fill-muted text-muted-foreground/30",
+                )}
+              />
+            ))}
+            <span className="ml-1.5 text-xs font-semibold text-foreground">{review.rating.toFixed(1)}</span>
+          </div>
+
+          {review.comment && (
+            <p className="mt-2 text-sm text-muted-foreground leading-relaxed border-l-2 border-border/60 pl-3 italic">
+              &ldquo;{review.comment}&rdquo;
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
-// ─── Skeleton ─────────────────────────────────────────────────────────────────
+// ─── Sidebar mini-dog row ─────────────────────────────────────────────────────
+
+function SidebarDogRow({ dog }: { dog: ClientProfile["dogs"][number] }) {
+  return (
+    <div className="flex items-center gap-2.5">
+      <div className="h-8 w-8 shrink-0 overflow-hidden rounded-lg">
+        {dog.photoUrl ? (
+          <img src={dog.photoUrl} alt={dog.name} className="h-full w-full object-cover" />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-amber-500/10">
+            <PawPrint className="h-3.5 w-3.5 text-amber-500" />
+          </div>
+        )}
+      </div>
+      <div className="min-w-0">
+        <p className="text-xs font-semibold text-foreground truncate">{dog.name}</p>
+        <p className="text-[10px] text-muted-foreground truncate">{dog.breed}</p>
+      </div>
+      <Badge variant="outline" className="ml-auto shrink-0 text-[9px] px-1.5 py-0">
+        {SIZE_LABEL[dog.size]?.split(" ")[1] ?? dog.size}
+      </Badge>
+    </div>
+  );
+}
+
+// ─── Loading skeleton ─────────────────────────────────────────────────────────
 
 function ClientDetailSkeleton() {
   return (
-    <div className="space-y-6 pb-10 animate-pulse">
+    <div className="flex flex-col gap-6 pb-10 animate-pulse">
       <Skeleton className="h-8 w-24 rounded-lg" />
-      <Card className="overflow-hidden">
-        <div className="h-1 w-full bg-muted" />
-        <CardContent className="p-6">
-          <div className="flex gap-4">
-            <Skeleton className="h-24 w-24 rounded-2xl shrink-0" />
-            <div className="flex-1 space-y-2 pt-1">
-              <Skeleton className="h-6 w-40" />
-              <Skeleton className="h-4 w-28" />
-            </div>
+      <div className="flex flex-col lg:flex-row lg:items-start gap-8">
+        <div className="flex flex-1 flex-col gap-6">
+          <Skeleton className="h-48 rounded-2xl" />
+          <div className="grid grid-cols-3 gap-3">
+            {[1, 2, 3].map((i) => <Skeleton key={i} className="h-16 rounded-xl" />)}
           </div>
-        </CardContent>
-      </Card>
-      <div className="grid grid-cols-3 gap-3">
-        {[1, 2, 3].map((i) => <Skeleton key={i} className="h-20 rounded-xl" />)}
+          <Skeleton className="h-64 rounded-2xl" />
+          <Skeleton className="h-48 rounded-2xl" />
+        </div>
+        <div className="w-full lg:w-72">
+          <Skeleton className="h-64 rounded-2xl" />
+        </div>
       </div>
-      <Skeleton className="h-48 rounded-2xl" />
     </div>
   );
 }
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -239,13 +317,15 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
 
   if (isError || !client) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
+      <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
         <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
           <User className="h-8 w-8 text-muted-foreground" />
         </div>
         <div>
-          <p className="text-sm font-semibold text-foreground">Cliente não encontrado</p>
-          <p className="text-xs text-muted-foreground mt-1">Este perfil pode não existir ou ter sido removido.</p>
+          <p className="font-semibold text-foreground">Cliente não encontrado</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Este perfil pode não existir ou ter sido removido.
+          </p>
         </div>
         <Button variant="outline" size="sm" onClick={() => router.back()}>
           <ArrowLeft className="mr-1.5 h-4 w-4" />
@@ -260,7 +340,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
   return (
     <div className="flex flex-col gap-6 pb-10">
 
-      {/* Back */}
+      {/* ── Back ── */}
       <Button
         variant="ghost"
         size="sm"
@@ -271,105 +351,220 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
         Voltar
       </Button>
 
-      {/* Hero card */}
-      <Card className="overflow-hidden py-0 gap-0">
-        <div className="h-1 w-full bg-gradient-to-r from-primary/60 via-primary to-primary/40" />
-        <CardContent className="p-6">
-          <div className="flex items-start gap-5">
-            <ClientAvatar name={client.name} avatarUrl={client.avatarUrl} size="lg" />
-            <div className="min-w-0 flex-1 pt-1">
-              <h1 className="text-xl font-bold text-foreground leading-tight truncate">{client.name}</h1>
-              <div className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
-                <CalendarDays className="h-3.5 w-3.5 shrink-0" />
-                <span>Membro desde {joinedLabel}</span>
+      {/* ── Two-column layout ── */}
+      <div className="flex flex-col lg:flex-row lg:items-start gap-8 lg:gap-10">
+
+        {/* ── Main content ── */}
+        <div className="flex min-w-0 flex-1 flex-col gap-6">
+
+          {/* Hero */}
+          <Card className="overflow-hidden">
+            <div className="h-1 w-full bg-gradient-to-r from-primary/60 via-primary to-primary/40" />
+            <CardContent className="p-6">
+              <div className="flex flex-col sm:flex-row items-start gap-6">
+                <ClientAvatar name={client.name} avatarUrl={client.avatarUrl} size="lg" />
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                    {client.name}
+                  </h1>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Membro desde {joinedLabel}
+                  </p>
+                  <div className="mt-4 flex flex-wrap items-center gap-4 text-sm">
+                    <span className="flex items-center gap-1.5">
+                      <Trophy className="h-4 w-4 text-primary" />
+                      <span className="font-semibold text-foreground">{client.totalWalks}</span>
+                      <span className="text-muted-foreground text-xs">
+                        {client.totalWalks === 1 ? "passeio concluído" : "passeios concluídos"}
+                      </span>
+                    </span>
+                    {client.avgRatingGiven > 0 && (
+                      <span className="flex items-center gap-1.5">
+                        <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                        <span className="font-semibold text-foreground">
+                          {client.avgRatingGiven.toFixed(1)}
+                        </span>
+                        <span className="text-muted-foreground text-xs">
+                          média nas avaliações
+                        </span>
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <span className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary/8 px-2.5 py-1 text-[11px] font-semibold text-primary">
-                  <Dog className="h-3 w-3" />
-                  {client.totalDogs} {client.totalDogs === 1 ? "cão" : "cães"}
-                </span>
-                <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
-                  <Trophy className="h-3 w-3" />
-                  {client.totalWalks} passeios concluídos
-                </span>
-              </div>
-            </div>
+            </CardContent>
+          </Card>
+
+          {/* Stats */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <StatCard icon={Trophy} label="Passeios concluídos" value={`${client.totalWalks}`} />
+            <StatCard icon={PawPrint} label="Cães cadastrados" value={`${client.totalDogs}`} />
+            <StatCard
+              icon={Star}
+              label="Média nas avaliações"
+              value={client.avgRatingGiven > 0 ? `${client.avgRatingGiven.toFixed(1)} / 5.0` : "Sem avaliações"}
+              className="col-span-2 sm:col-span-1"
+            />
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-3">
-        <StatChip icon={Trophy} label="Passeios" value={String(client.totalWalks)} />
-        <StatChip icon={PawPrint} label="Cães" value={String(client.totalDogs)} />
-        <StatChip
-          icon={Star}
-          label="Média dada"
-          value={client.avgRatingGiven > 0 ? client.avgRatingGiven.toFixed(1) : "—"}
-          accent={client.avgRatingGiven > 0}
-        />
-      </div>
+          {/* Dogs */}
+          {client.dogs.length > 0 && (
+            <Card className="overflow-hidden pt-1">
+              <SectionHeader
+                icon={PawPrint}
+                iconBg="bg-amber-500/10"
+                iconColor="text-amber-600 dark:text-amber-400"
+                title="Cães"
+                description={`${client.dogs.length} ${client.dogs.length === 1 ? "cão cadastrado nesta conta" : "cães cadastrados nesta conta"}`}
+              />
+              <Separator />
+              <CardContent className="p-5">
+                <div className="grid gap-3 grid-cols-2 sm:grid-cols-3">
+                  {client.dogs.map((dog) => (
+                    <DogCard key={dog.id} dog={dog} />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-      {/* Dogs */}
-      {client.dogs.length > 0 && (
-        <Card className="overflow-hidden py-0 gap-0">
-          <div className="flex items-center gap-2.5 border-b border-border/60 px-5 py-3.5">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/10">
-              <PawPrint className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+          {/* Reviews given */}
+          <Card className="overflow-hidden pt-1">
+            <SectionHeader
+              icon={Star}
+              iconBg="bg-amber-500/10"
+              iconColor="text-amber-500"
+              title="Avaliações dadas"
+              description={
+                client.reviews.length > 0
+                  ? `${client.reviews.length} avaliação${client.reviews.length > 1 ? "ões" : ""} · média ${client.avgRatingGiven.toFixed(1)}`
+                  : "Nenhuma avaliação enviada ainda"
+              }
+            />
+            <Separator />
+            <CardContent className="p-5">
+              {client.reviews.length === 0 ? (
+                <div className="flex flex-col items-center gap-3 py-8 text-center">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted">
+                    <MessageCircle className="h-6 w-6 text-muted-foreground/50" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Nenhuma avaliação ainda</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      As avaliações aparecerão aqui após passeios concluídos
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {client.reviews.map((review) => (
+                    <ReviewCard key={review.walkId} review={review} />
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Bottom note */}
+          <div className="rounded-2xl border border-primary/15 bg-primary/5 px-5 py-5 sm:px-6 flex items-start gap-4">
+            <div className="hidden sm:flex w-10 h-10 rounded-xl bg-primary/10 items-center justify-center shrink-0">
+              <Heart className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-foreground">Cães</h2>
-              <p className="text-[11px] text-muted-foreground">
-                {client.dogs.length} {client.dogs.length === 1 ? "cão cadastrado" : "cães cadastrados"}
+              <p className="font-semibold text-foreground text-sm">Cuide bem dos pets deste cliente</p>
+              <p className="text-sm text-muted-foreground mt-0.5 leading-relaxed">
+                Mantenha o cliente informado durante o passeio e garanta a segurança e bem-estar de cada cão.
               </p>
             </div>
           </div>
-          <CardContent className="p-4">
-            <div className="grid gap-2.5 sm:grid-cols-2">
-              {client.dogs.map((dog) => (
-                <DogCard key={dog.id} dog={dog} />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
-      {/* Reviews given */}
-      <Card className="overflow-hidden py-0 gap-0">
-        <div className="flex items-center gap-2.5 border-b border-border/60 px-5 py-3.5">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/10">
-            <Star className="h-3.5 w-3.5 text-amber-500" />
-          </div>
-          <div>
-            <h2 className="text-sm font-semibold text-foreground">Avaliações dadas</h2>
-            <p className="text-[11px] text-muted-foreground">
-              {client.reviews.length > 0
-                ? `${client.reviews.length} avaliação${client.reviews.length > 1 ? "ões" : ""} · média ${client.avgRatingGiven.toFixed(1)}`
-                : "Nenhuma avaliação ainda"}
-            </p>
-          </div>
         </div>
-        <CardContent className="p-5">
-          {client.reviews.length === 0 ? (
-            <div className="flex flex-col items-center gap-2 py-6 text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-muted">
-                <Star className="h-5 w-5 text-muted-foreground/50" />
-              </div>
-              <p className="text-sm text-muted-foreground">Nenhuma avaliação feita ainda</p>
-            </div>
-          ) : (
-            <div className="space-y-5">
-              {client.reviews.map((review, i) => (
-                <div key={review.walkId}>
-                  <ReviewCard review={review} />
-                  {i < client.reviews.length - 1 && <Separator className="mt-5 opacity-50" />}
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
+        {/* ── Sidebar ── */}
+        <aside className="w-full shrink-0 lg:w-72 lg:sticky lg:top-8 lg:self-start">
+          <Card className="overflow-hidden">
+            <div className="h-1 w-full bg-gradient-to-r from-primary/60 via-primary to-primary/40" />
+            <CardContent className="p-5 space-y-4">
+
+              {/* Mini profile */}
+              <div className="flex items-center gap-3">
+                <ClientAvatar name={client.name} avatarUrl={client.avatarUrl} size="sm" />
+                <div className="min-w-0">
+                  <p className="font-semibold text-sm text-foreground truncate">{client.name}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5 truncate">Membro desde {joinedLabel}</p>
+                </div>
+              </div>
+
+              <div className="h-px bg-border/40" />
+
+              {/* Quick stats */}
+              <div className="space-y-2.5">
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  Resumo
+                </p>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="flex items-center gap-1.5 text-muted-foreground text-xs">
+                      <Trophy className="h-3.5 w-3.5 shrink-0" />
+                      Passeios concluídos
+                    </span>
+                    <span className="font-semibold text-foreground text-xs">{client.totalWalks}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-1.5 text-muted-foreground text-xs">
+                      <PawPrint className="h-3.5 w-3.5 shrink-0" />
+                      Cães cadastrados
+                    </span>
+                    <span className="font-semibold text-foreground text-xs">{client.totalDogs}</span>
+                  </div>
+                  {client.avgRatingGiven > 0 && (
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center gap-1.5 text-muted-foreground text-xs">
+                        <Star className="h-3.5 w-3.5 shrink-0" />
+                        Média das notas dadas
+                      </span>
+                      <span className="flex items-center gap-0.5">
+                        <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                        <span className="font-semibold text-foreground text-xs">{client.avgRatingGiven.toFixed(1)}</span>
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Dogs list */}
+              {client.dogs.length > 0 && (
+                <>
+                  <div className="h-px bg-border/40" />
+                  <div className="space-y-2.5">
+                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                      Cães nesta conta
+                    </p>
+                    <div className="space-y-2">
+                      {client.dogs.map((dog) => (
+                        <SidebarDogRow key={dog.id} dog={dog} />
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              <div className="h-px bg-border/40" />
+
+              {/* Back link */}
+              <button
+                onClick={() => router.back()}
+                className="flex w-full items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                Voltar
+              </button>
+
+            </CardContent>
+          </Card>
+        </aside>
+
+      </div>
     </div>
   );
 }
