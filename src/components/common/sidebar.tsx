@@ -278,7 +278,9 @@ export function Sidebar() {
   const navItems = role === "walker" ? walkerNav : clientNav;
 
   const userName = session?.user?.name ?? "Usuário";
-  const userInitials = userName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
+  const userInitials = session?.user?.name
+    ? session.user.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()
+    : "?";
   const avatarUrl = profile?.avatarUrl ?? null;
 
   const activeHref = navItems
