@@ -31,6 +31,7 @@ export function useAcceptWalk() {
       queryClient.invalidateQueries({ queryKey: ["walks"] });
       queryClient.invalidateQueries({ queryKey: ["walk-requests"] });
     },
+    onError: () => {},
   });
 }
 

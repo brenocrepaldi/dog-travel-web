@@ -58,7 +58,7 @@ export default function WalkerDashboardPage() {
   const router    = useRouter();
 
   const { data: walkerRequests = [] } = useWalkRequests();
-  const { mutate: acceptWalk } = useAcceptWalk();
+  const { mutate: acceptWalk, isPending: isAccepting } = useAcceptWalk();
   const { mutate: declineWalk } = useDeclineWalk();
 
   const { data: walkerProfile } = useWalkerProfile();
@@ -126,6 +126,11 @@ export default function WalkerDashboardPage() {
           toast.success("Passeio aceito!", {
             description: `${request.clientName} foi notificado. Veja em Meus passeios.`,
             action: { label: "Ver passeios", onClick: () => router.push("/walks") },
+          });
+        },
+        onError: () => {
+          toast.error("Erro ao aceitar o passeio.", {
+            description: "Tente novamente. Se o problema persistir, recarregue a página.",
           });
         },
       },
@@ -424,6 +429,7 @@ export default function WalkerDashboardPage() {
                         size="sm"
                         className="rounded-lg gap-1.5 bg-emerald-600 text-white hover:bg-emerald-700"
                         onClick={() => handleAccept(req)}
+                        disabled={isAccepting}
                       >
                         <CheckCircle2 className="h-3.5 w-3.5" />
                         Aceitar
