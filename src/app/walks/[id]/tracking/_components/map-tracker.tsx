@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Map, { Marker } from 'react-map-gl/mapbox';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
@@ -14,14 +14,37 @@ import {
   Phone,
   Timer,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { buttonVariants } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { useWalkLocation, useLocationBroadcast } from '@/features/tracking/hooks/use-tracking';
 import { useWalkById } from '@/features/walks/hooks/use-walks';
+import { useCompleteWalk } from '@/features/walks/hooks/use-walk-actions';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 type Pet = { name: string; photoUrl?: string | null };
+
+const RADIUS_M = 300;
+
+function haversineMeters(lat1: number, lng1: number, lat2: number, lng2: number) {
+  const R = 6_371_000;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
 
 function DogMarker({ pets }: { pets: Pet[] }) {
   const firstPhoto = pets.find((p) => p.photoUrl)?.photoUrl ?? null;
@@ -61,20 +84,14 @@ function useCountdown(startedAt?: string | null, durationMinutes?: number) {
     const endMs = new Date(startedAt).getTime() + durationMinutes * 60 * 1000;
     return Math.max(0, Math.ceil((endMs - Date.now()) / 1000));
   });
-
   const done = remaining === 0;
-
   useEffect(() => {
     if (done) return;
     const id = setInterval(() => {
-      setRemaining((prev) => {
-        if (prev <= 1) { clearInterval(id); return 0; }
-        return prev - 1;
-      });
+      setRemaining((p) => { if (p <= 1) { clearInterval(id); return 0; } return p - 1; });
     }, 1000);
     return () => clearInterval(id);
   }, [done]);
-
   const total = (durationMinutes ?? 0) * 60;
   const progress = total > 0 ? Math.min(100, ((total - remaining) / total) * 100) : 100;
   return { remaining, progress, done };
@@ -86,6 +103,7 @@ export default function MapTracker({ walkId }: { walkId: string }) {
   const { data: session } = useSession();
   const { data: walk } = useWalkById(walkId);
   const { data: location, isLoading } = useWalkLocation(walkId);
+  const { mutate: completeWalk, isPending: completing } = useCompleteWalk();
 
   const isWalker = session?.user?.role === 'walker';
   const isInProgress = walk?.status === 'in_progress';
@@ -102,7 +120,55 @@ export default function MapTracker({ walkId }: { walkId: string }) {
 
   const { remaining, progress, done: timeDone } = useCountdown(walk?.startedAt, walk?.durationMinutes);
 
-  // ── Loading state ────────────────────────────────────────────────
+  // ── Complete walk (one-time GPS check on click) ──────────────────────────────
+  const [showConfirm, setShowConfirm] = useState(false);
+  const pendingCoordsRef = useRef<{ lat: number; lng: number } | null>(null);
+
+  const handleCompleteError = (err: any) => {
+    const code = err?.response?.data?.error;
+    const remaining = err?.response?.data?.remainingSeconds as number | undefined;
+    const distM = err?.response?.data?.distanceMeters as number | undefined;
+    if (code === 'WALK_DURATION_NOT_REACHED') {
+      toast.error('Tempo insuficiente', {
+        description: `Aguarde mais ${formatCountdown(remaining ?? 60)} para concluir.`,
+      });
+    } else if (code === 'WALK_END_TOO_FAR') {
+      toast.error('Muito longe do ponto de partida', {
+        description: `Você está a ${distM}m. Aproxime-se a menos de ${RADIUS_M}m.`,
+      });
+    } else {
+      toast.error('Erro ao concluir passeio', { description: 'Tente novamente.' });
+    }
+  };
+
+  const handleCompleteClick = () => {
+    if (!navigator.geolocation) {
+      setShowConfirm(true);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude: lat, longitude: lng } = pos.coords;
+        if (walk?.startLat != null && walk?.startLng != null) {
+          const dist = haversineMeters(walk.startLat, walk.startLng, lat, lng);
+          if (dist > RADIUS_M) {
+            toast.error('Muito longe do ponto de partida', {
+              description: `Você está a ${Math.round(dist)}m. Aproxime-se a menos de ${RADIUS_M}m para finalizar.`,
+            });
+            return;
+          }
+        }
+        completeWalk({ walkId, coords: { lat, lng } }, { onError: handleCompleteError });
+      },
+      () => {
+        pendingCoordsRef.current = null;
+        setShowConfirm(true);
+      },
+      { enableHighAccuracy: true, timeout: 8_000 },
+    );
+  };
+
+  // ── Loading state ────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center gap-4">
@@ -122,251 +188,309 @@ export default function MapTracker({ walkId }: { walkId: string }) {
   const mapLng = location?.lng ?? walk?.startLng ?? -46.63;
 
   return (
-    <div className="relative h-full w-full flex-1">
+    <>
+      <div className="relative h-full w-full flex-1">
 
-      {/* ── Map ───────────────────────────────────────────────────── */}
-      <Map
-        mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
-        initialViewState={{ longitude: mapLng, latitude: mapLat, zoom: hasLocation ? 17 : 15 }}
-        mapStyle="mapbox://styles/mapbox/streets-v12"
-        style={{ width: '100%', height: '100%', position: 'absolute', inset: 0 }}
-        attributionControl={false}
-      >
-        {/* Start location pin */}
-        {walk?.startLat != null && walk?.startLng != null && (
-          <Marker longitude={walk.startLng} latitude={walk.startLat} anchor="bottom">
-            <div className="group relative flex flex-col items-center">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-emerald-500 shadow-md">
-                <MapPin className="h-4 w-4 text-white" />
-              </div>
-              {/* label */}
-              <div className="mt-1 whitespace-nowrap rounded-md bg-white/90 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 shadow backdrop-blur-sm">
-                Partida
-              </div>
-            </div>
-          </Marker>
-        )}
-
-        {/* Dog/walker marker */}
-        {location && (
-          <Marker longitude={location.lng} latitude={location.lat} anchor="center">
-            <DogMarker pets={pets} />
-          </Marker>
-        )}
-      </Map>
-
-      {/* ── No-location overlay (shows over the static start-centred map) ── */}
-      {!hasLocation && (
-        <div className="pointer-events-none absolute inset-0 z-[500] flex items-center justify-center">
-          <div className="flex flex-col items-center gap-2.5 rounded-2xl border border-white/20 bg-background/90 px-6 py-5 text-center shadow-xl backdrop-blur-md">
-            <PawPrint className="h-8 w-8 text-muted-foreground/50" />
-            <p className="text-sm font-semibold text-foreground">Aguardando localização…</p>
-            <p className="max-w-[220px] text-xs leading-relaxed text-muted-foreground">
-              O mapa será atualizado assim que o passeador enviar sua posição
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* ── Top bar ───────────────────────────────────────────────── */}
-      <div className="pointer-events-none absolute left-4 right-4 top-4 z-[1000] flex items-center gap-2.5">
-
-        {/* Back button */}
-        <Link
-          href={`/walks/${walkId}`}
-          aria-label="Voltar"
-          className="pointer-events-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/20 bg-background/85 shadow-lg backdrop-blur-md text-muted-foreground transition-colors hover:text-foreground"
+        {/* ── Map ─────────────────────────────────────────────────── */}
+        <Map
+          mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
+          initialViewState={{ longitude: mapLng, latitude: mapLat, zoom: hasLocation ? 17 : 15 }}
+          mapStyle="mapbox://styles/mapbox/streets-v12"
+          style={{ width: '100%', height: '100%', position: 'absolute', inset: 0 }}
+          attributionControl={false}
         >
-          <ArrowLeft className="h-4 w-4" />
-        </Link>
+          {walk?.startLat != null && walk?.startLng != null && (
+            <Marker longitude={walk.startLng} latitude={walk.startLat} anchor="bottom">
+              <div className="flex flex-col items-center gap-0.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-emerald-500 shadow-md">
+                  <MapPin className="h-4 w-4 text-white" />
+                </div>
+                <div className="whitespace-nowrap rounded-md bg-white/90 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 shadow backdrop-blur-sm">
+                  Partida
+                </div>
+              </div>
+            </Marker>
+          )}
 
-        {/* Status pill */}
-        <div className="pointer-events-auto flex min-w-0 flex-1 items-center gap-2.5 rounded-xl border border-white/20 bg-background/85 px-4 py-2.5 shadow-lg backdrop-blur-md">
-          <span className="relative flex h-2 w-2 shrink-0">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-          </span>
-          <span className="truncate text-sm font-semibold text-foreground">
-            {walk?.petNames?.join(' & ') ?? 'Passeio em andamento'}
-          </span>
-          {walk?.durationMinutes && (
-            <span className="ml-auto shrink-0 text-xs text-muted-foreground">
-              {walk.durationMinutes} min
+          {location && (
+            <Marker longitude={location.lng} latitude={location.lat} anchor="center">
+              <DogMarker pets={pets} />
+            </Marker>
+          )}
+        </Map>
+
+        {/* ── No-location overlay ────────────────────────────────── */}
+        {!hasLocation && (
+          <div className="pointer-events-none absolute inset-0 z-[500] flex items-center justify-center">
+            <div className="flex flex-col items-center gap-2.5 rounded-2xl border border-white/20 bg-background/90 px-6 py-5 text-center shadow-xl backdrop-blur-md">
+              <PawPrint className="h-8 w-8 text-muted-foreground/50" />
+              <p className="text-sm font-semibold text-foreground">Aguardando localização…</p>
+              <p className="max-w-[220px] text-xs leading-relaxed text-muted-foreground">
+                O mapa será atualizado assim que o passeador enviar sua posição
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ── Top bar ─────────────────────────────────────────────── */}
+        <div className="pointer-events-none absolute left-4 right-4 top-4 z-[1000] flex items-center gap-2.5">
+          <Link
+            href={`/walks/${walkId}`}
+            aria-label="Voltar"
+            className="pointer-events-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/20 bg-background/85 shadow-lg backdrop-blur-md text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+
+          <div className="pointer-events-auto flex min-w-0 flex-1 items-center gap-2.5 rounded-xl border border-white/20 bg-background/85 px-4 py-2.5 shadow-lg backdrop-blur-md">
+            <span className="relative flex h-2 w-2 shrink-0">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
             </span>
+            <span className="truncate text-sm font-semibold text-foreground">
+              {walk?.petNames?.join(' & ') ?? 'Passeio em andamento'}
+            </span>
+            {walk?.durationMinutes && (
+              <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+                {walk.durationMinutes} min
+              </span>
+            )}
+          </div>
+
+          {isWalker && isInProgress && walk?.startedAt && (
+            <div className={cn(
+              'pointer-events-auto flex shrink-0 items-center gap-1.5 rounded-xl border border-white/20 bg-background/85 px-3.5 py-2.5 shadow-lg backdrop-blur-md',
+              timeDone && 'border-emerald-500/40 bg-emerald-500/10',
+            )}>
+              {timeDone
+                ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                : <Timer className="h-3.5 w-3.5 text-muted-foreground" />}
+              <span className={cn(
+                'font-mono text-sm font-bold tabular-nums',
+                timeDone ? 'text-emerald-600' : 'text-foreground',
+              )}>
+                {timeDone ? '00:00' : formatCountdown(remaining)}
+              </span>
+            </div>
           )}
         </div>
 
-        {/* Countdown chip (walker only) */}
-        {isWalker && isInProgress && walk?.startedAt && (
-          <div className={cn(
-            'pointer-events-auto flex shrink-0 items-center gap-1.5 rounded-xl border border-white/20 bg-background/85 px-3.5 py-2.5 shadow-lg backdrop-blur-md',
-            timeDone && 'border-emerald-500/40 bg-emerald-500/10',
-          )}>
-            {timeDone
-              ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-              : <Timer className="h-3.5 w-3.5 text-muted-foreground" />}
-            <span className={cn(
-              'font-mono text-sm font-bold tabular-nums',
-              timeDone ? 'text-emerald-600' : 'text-foreground',
-            )}>
-              {timeDone ? '00:00' : formatCountdown(remaining)}
-            </span>
-          </div>
-        )}
-      </div>
+        {/* ── Bottom card ─────────────────────────────────────────── */}
+        <div className="pointer-events-none absolute bottom-4 left-4 right-4 z-[1000] flex justify-center">
+          {isWalker ? (
 
-      {/* ── Bottom card ───────────────────────────────────────────── */}
-      <div className="pointer-events-none absolute bottom-4 left-4 right-4 z-[1000] flex justify-center">
-        {isWalker ? (
-          /* ── Walker card ── */
-          <div className="pointer-events-auto w-full max-w-md space-y-4 rounded-2xl border border-white/20 bg-background/92 p-5 shadow-xl backdrop-blur-md">
+            /* ── Walker card ─────────────────────────────────────── */
+            <div className="pointer-events-auto w-full max-w-lg space-y-0 divide-y divide-border/40 rounded-2xl border border-white/20 bg-background/95 shadow-xl backdrop-blur-md overflow-hidden">
 
-            {/* Pet row */}
-            <div className="flex flex-wrap items-center gap-3">
-              {pets.map((pet, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border-2 border-amber-200 bg-amber-50 shadow-sm">
-                    {pet.photoUrl ? (
-                      <img src={pet.photoUrl} alt={pet.name} className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center">
-                        <PawPrint className="h-4 w-4 text-amber-500" />
-                      </div>
-                    )}
-                  </div>
-                  <span className="text-sm font-semibold text-foreground">{pet.name}</span>
-                </div>
-              ))}
-              {walk?.startAddress && (
-                <div className="flex min-w-0 items-center gap-1.5 ml-auto">
-                  <MapPin className="h-3 w-3 shrink-0 text-muted-foreground" />
-                  <span className="truncate text-xs text-muted-foreground">{walk.startAddress}</span>
-                </div>
-              )}
-            </div>
-
-            {/* Progress bar */}
-            {walk?.startedAt && (
-              <div className="space-y-1.5">
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                  <div
-                    className={cn(
-                      'h-full rounded-full transition-all duration-1000 ease-linear',
-                      timeDone ? 'bg-emerald-500' : 'bg-gradient-to-r from-primary to-primary/70',
-                    )}
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>{Math.round(progress)}% do passeio concluído</span>
-                  {timeDone
-                    ? <span className="font-medium text-emerald-600">Tempo cumprido ✓</span>
-                    : <span>{formatCountdown(remaining)} restantes</span>}
-                </div>
-              </div>
-            )}
-
-            {/* Actions */}
-            <div className="flex gap-2">
-              <Link
-                href={`/walks/${walkId}`}
-                className={cn(
-                  buttonVariants({ variant: 'outline', size: 'sm' }),
-                  'flex-1 gap-1.5 bg-background/60',
-                )}
-              >
-                <ArrowLeft className="h-3.5 w-3.5" />
-                Voltar
-              </Link>
-              <Link
-                href={`/walks/${walkId}/chat`}
-                className={cn(buttonVariants({ size: 'sm' }), 'flex-1 gap-1.5')}
-              >
-                <MessageSquare className="h-3.5 w-3.5" />
-                Chat com cliente
-              </Link>
-            </div>
-          </div>
-        ) : (
-          /* ── Client card ── */
-          <div className="pointer-events-auto w-full max-w-md space-y-4 rounded-2xl border border-white/20 bg-background/92 p-5 shadow-xl backdrop-blur-md">
-
-            {/* Walker info */}
-            <div className="flex items-center gap-3">
-              {walk?.walkerAvatarUrl ? (
-                <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full border-2 border-primary/20 shadow-sm">
-                  <img src={walk.walkerAvatarUrl} alt={walkerName} className="h-full w-full object-cover" />
-                </div>
-              ) : (
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-primary/10 text-sm font-bold text-primary">
-                  {initials(walkerName)}
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-foreground truncate">{walkerName}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  Passeando com {walk?.petNames?.join(' & ') ?? '…'}
-                </p>
-              </div>
-              {/* Live indicator */}
-              <div className="flex shrink-0 items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
-                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                </span>
-                Ao vivo
-              </div>
-            </div>
-
-            {/* Pet row */}
-            {pets.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2.5">
+              {/* Pets */}
+              <div className="flex flex-wrap items-center gap-3 px-5 py-4">
                 {pets.map((pet, i) => (
-                  <div key={i} className="flex items-center gap-1.5">
-                    <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full border-2 border-amber-200 bg-amber-50 shadow-sm">
+                  <div key={i} className="flex items-center gap-2.5">
+                    <div className="h-11 w-11 shrink-0 overflow-hidden rounded-full border-2 border-amber-200/80 bg-amber-50 shadow-sm">
                       {pet.photoUrl ? (
                         <img src={pet.photoUrl} alt={pet.name} className="h-full w-full object-cover" />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center">
-                          <PawPrint className="h-3 w-3 text-amber-500" />
+                          <PawPrint className="h-4 w-4 text-amber-500" />
                         </div>
                       )}
                     </div>
-                    <span className="text-sm text-foreground">{pet.name}</span>
+                    <span className="text-sm font-semibold text-foreground">{pet.name}</span>
                   </div>
                 ))}
               </div>
-            )}
 
-            {/* Actions */}
-            <div className="flex gap-2">
-              {walkerPhone && (
-                <Link
-                  href={`tel:${walkerPhone}`}
-                  className={cn(
-                    buttonVariants({ variant: 'outline', size: 'sm' }),
-                    'flex-1 gap-1.5 bg-background/60',
-                  )}
-                >
-                  <Phone className="h-3.5 w-3.5" />
-                  Ligar
-                </Link>
-              )}
-              <Link
-                href={`/walks/${walkId}/chat`}
-                className={cn(
-                  buttonVariants({ variant: walkerPhone ? 'default' : 'outline', size: 'sm' }),
-                  'flex-1 gap-1.5',
-                  !walkerPhone && 'bg-background/60',
+              {/* Location + progress */}
+              <div className="space-y-3 px-5 py-4">
+                {walk?.startAddress && (
+                  <div className="flex items-start gap-2.5">
+                    <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10">
+                      <MapPin className="h-3.5 w-3.5 text-emerald-600" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        Ponto de partida e chegada
+                      </p>
+                      <p className="mt-0.5 text-sm font-medium leading-snug text-foreground">
+                        {walk.startAddress}
+                      </p>
+                    </div>
+                  </div>
                 )}
-              >
-                <MessageSquare className="h-3.5 w-3.5" />
-                Chat
-              </Link>
+
+                {walk?.startedAt && (
+                  <div className="space-y-1.5">
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                      <div
+                        className={cn(
+                          'h-full rounded-full transition-all duration-1000 ease-linear',
+                          timeDone ? 'bg-emerald-500' : 'bg-gradient-to-r from-primary to-primary/70',
+                        )}
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-end">
+                      {timeDone ? (
+                        <span className="flex items-center gap-1 text-xs font-medium text-emerald-600">
+                          <CheckCircle2 className="h-3 w-3" />
+                          Tempo cumprido
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">
+                          {formatCountdown(remaining)} restantes
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="space-y-2.5 px-5 py-4">
+                <div className="grid grid-cols-2 gap-2">
+                  <Link
+                    href={`/walks/${walkId}`}
+                    className={cn(buttonVariants({ variant: 'outline' }), 'gap-2')}
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Voltar
+                  </Link>
+                  <Link
+                    href={`/walks/${walkId}/chat`}
+                    className={cn(buttonVariants({ variant: 'outline' }), 'gap-2')}
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                    Chat
+                  </Link>
+                </div>
+
+                <Button
+                  className={cn(
+                    'w-full gap-2 font-semibold transition-all',
+                    timeDone
+                      ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-500/20'
+                      : 'bg-muted text-muted-foreground hover:bg-muted',
+                  )}
+                  disabled={completing || !timeDone}
+                  onClick={handleCompleteClick}
+                >
+                  {completing ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : timeDone ? (
+                    <CheckCircle2 className="h-4 w-4" />
+                  ) : (
+                    <Timer className="h-4 w-4" />
+                  )}
+                  {completing
+                    ? 'Concluindo…'
+                    : timeDone
+                      ? 'Concluir passeio'
+                      : `Disponível em ${formatCountdown(remaining)}`}
+                </Button>
+              </div>
             </div>
-          </div>
-        )}
+
+          ) : (
+
+            /* ── Client card ─────────────────────────────────────── */
+            <div className="pointer-events-auto w-full max-w-lg space-y-0 divide-y divide-border/40 rounded-2xl border border-white/20 bg-background/95 shadow-xl backdrop-blur-md overflow-hidden">
+
+              {/* Walker info */}
+              <div className="flex items-center gap-3 px-5 py-4">
+                {walk?.walkerAvatarUrl ? (
+                  <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full border-2 border-primary/20 shadow-sm">
+                    <img src={walk.walkerAvatarUrl} alt={walkerName} className="h-full w-full object-cover" />
+                  </div>
+                ) : (
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-primary/10 text-sm font-bold text-primary">
+                    {initials(walkerName)}
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-foreground truncate">{walkerName}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Passeando com {walk?.petNames?.join(' & ') ?? '…'}
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
+                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  </span>
+                  Ao vivo
+                </div>
+              </div>
+
+              {/* Pets */}
+              {pets.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2.5 px-5 py-4">
+                  {pets.map((pet, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border-2 border-amber-200/80 bg-amber-50 shadow-sm">
+                        {pet.photoUrl ? (
+                          <img src={pet.photoUrl} alt={pet.name} className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center">
+                            <PawPrint className="h-3.5 w-3.5 text-amber-500" />
+                          </div>
+                        )}
+                      </div>
+                      <span className="text-sm text-foreground">{pet.name}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="grid grid-cols-2 gap-2 px-5 py-4" style={{ gridTemplateColumns: walkerPhone ? '1fr 1fr' : '1fr' }}>
+                {walkerPhone && (
+                  <Link
+                    href={`tel:${walkerPhone}`}
+                    className={cn(buttonVariants({ variant: 'outline' }), 'gap-2')}
+                  >
+                    <Phone className="h-4 w-4" />
+                    Ligar
+                  </Link>
+                )}
+                <Link
+                  href={`/walks/${walkId}/chat`}
+                  className={cn(buttonVariants({ variant: 'default' }), 'gap-2')}
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  Chat
+                </Link>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+
+      {/* ── GPS unavailable confirmation ──────────────────────────────────────── */}
+      <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>GPS indisponível</DialogTitle>
+            <DialogDescription>
+              Não foi possível verificar sua localização. O passeio deve ser
+              encerrado no ponto de partida. Deseja concluir mesmo assim?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowConfirm(false)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => {
+                setShowConfirm(false);
+                completeWalk({ walkId }, { onError: handleCompleteError });
+              }}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            >
+              Concluir mesmo assim
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

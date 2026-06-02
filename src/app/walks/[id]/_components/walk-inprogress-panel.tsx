@@ -226,7 +226,7 @@ export function WalkInProgressPanel({ walk }: { walk: WalkRecord }) {
                 />
               </div>
               <p className="text-xs text-muted-foreground">
-                {Math.round(progress)}% de {walk.durationMinutes} min concluídos
+                {walk.durationMinutes} min contratados
               </p>
             </div>
           </div>
