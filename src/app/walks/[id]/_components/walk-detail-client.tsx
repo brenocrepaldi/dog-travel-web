@@ -34,6 +34,7 @@ import { WalkPets } from './walk-pets';
 import { WalkStartSection } from './walk-start-section';
 import { ClientCodeBanner } from './client-code-banner';
 import { WalkInProgressPanel } from './walk-inprogress-panel';
+import { WalkClientInProgressPanel } from './walk-client-inprogress-panel';
 import { WalkLiveMapPreview } from './walk-live-map-preview';
 import type { WalkRecord, WalkerProfile, WalkTimelineEvent, WalkStatus } from '@/types';
 
@@ -610,32 +611,7 @@ export function WalkDetailClient({ walkId }: { walkId: string }) {
       {isWalker && isInProgress && <WalkInProgressPanel walk={walk} />}
 
       {!isWalker && isInProgress && (
-        <div className="flex items-center justify-between gap-4 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.08] px-5 py-4">
-          <div className="flex items-center gap-3">
-            <span className="relative flex h-3 w-3 shrink-0">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
-              <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-500" />
-            </span>
-            <div>
-              <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
-                Passeio em andamento agora
-              </p>
-              <p className="mt-0.5 text-xs text-emerald-600/70 dark:text-emerald-400/70">
-                {`${walk.petNames.join(' & ')} está${walk.petNames.length > 1 ? 'o' : ''} com ${walker?.name ?? 'o passeador'}`}
-              </p>
-            </div>
-          </div>
-          <Link
-            href={`/walks/${walk.id}/tracking`}
-            className={cn(
-              buttonVariants({ variant: 'outline', size: 'sm' }),
-              'shrink-0 border-emerald-500/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/10',
-            )}
-          >
-            <Navigation className="mr-1.5 h-3.5 w-3.5" />
-            Acompanhar
-          </Link>
-        </div>
+        <WalkClientInProgressPanel walk={walk} walker={walker} />
       )}
 
       {!isWalker && isCompleted && !review && (
@@ -760,7 +736,7 @@ export function WalkDetailClient({ walkId }: { walkId: string }) {
       {hasRoute ? (
         <div className="grid gap-5 lg:grid-cols-3">
           <div className="space-y-5 lg:col-span-2">
-            {isWalker && isInProgress && (
+            {isInProgress && (
               <WalkLiveMapPreview
                 walkId={walk.id}
                 startLat={walk.startLat}
@@ -869,7 +845,7 @@ export function WalkDetailClient({ walkId }: { walkId: string }) {
         /* ── Layout B — sem trajeto GPS ──────────────────────────────────── */
         <div className="grid gap-5 lg:grid-cols-3">
           <div className="space-y-5 lg:col-span-2">
-            {isWalker && isInProgress && (
+            {isInProgress && (
               <WalkLiveMapPreview
                 walkId={walk.id}
                 startLat={walk.startLat}
