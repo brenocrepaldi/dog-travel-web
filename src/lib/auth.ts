@@ -23,16 +23,23 @@ function refreshWithLock(userId: string, refreshToken: string): Promise<LoginRes
 
   const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api";
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8_000);
+
   const promise = fetch(`${apiBase}/auth/refresh`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ refreshToken }),
+    signal: controller.signal,
   })
     .then(async (res) => {
       if (!res.ok) throw new Error("REFRESH_FAILED");
       return res.json() as Promise<LoginResponseDto>;
     })
-    .finally(() => refreshLocks.delete(userId));
+    .finally(() => {
+      clearTimeout(timeoutId);
+      refreshLocks.delete(userId);
+    });
 
   refreshLocks.set(userId, promise);
   return promise;
