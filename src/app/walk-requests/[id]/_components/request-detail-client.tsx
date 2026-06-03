@@ -256,17 +256,34 @@ export function RequestDetailClient({ requestId }: { requestId: string }) {
           {/* Map card */}
           {hasMap && (
             <Card className="overflow-hidden py-0 gap-0">
-              <div className="flex items-center gap-2.5 border-b border-border/60 px-5 py-3.5">
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/10">
-                  <MapPin className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+              <div className="flex items-center justify-between border-b border-border/60 px-5 py-3.5">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/10">
+                    <MapPin className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-semibold text-foreground">Local de partida</h2>
+                    <p className="text-xs text-muted-foreground mt-0.5">{req.startAddress}</p>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-sm font-semibold text-foreground">Local de partida</h2>
-                  <p className="text-xs text-muted-foreground mt-0.5">{req.startAddress}</p>
+                <div className="hidden sm:flex items-center gap-4 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                    Partida
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-full bg-primary" />
+                    Você
+                  </span>
                 </div>
               </div>
-              <div className="relative h-[280px] sm:h-[320px]">
-                <RequestStartMap lat={req.startLat!} lng={req.startLng!} />
+              <div className="relative h-[300px] sm:h-[340px]">
+                <RequestStartMap
+                  lat={req.startLat!}
+                  lng={req.startLng!}
+                  walkerAvatarUrl={walkerProfile?.avatarUrl}
+                  walkerName={session?.user?.name ?? undefined}
+                />
               </div>
             </Card>
           )}
