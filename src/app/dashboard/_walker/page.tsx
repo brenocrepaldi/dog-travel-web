@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
   CheckCircle2, ChevronRight, ClipboardList, Clock,
-  FileCheck2, Lock, MapPin, PawPrint, Star, TrendingUp,
+  FileCheck2, Info, Lock, MapPin, PawPrint, Star, TrendingUp,
   Wallet, User, XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -380,62 +380,98 @@ export default function WalkerDashboardPage() {
         {available && walkerRequests.length > 0 && (
           <div className="space-y-3">
             {walkerRequests.map((req) => (
-              <div key={req.id} className="rounded-xl border border-border/60 bg-card p-5">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="flex flex-1 min-w-0 items-start gap-3">
-                    <Link
-                      href={req.clientId ? `/clients/${req.clientId}` : '#'}
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-xs font-bold text-primary hover:bg-primary/20 transition-colors"
-                    >
-                      {getInitials(req.clientName)}
-                    </Link>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <Link href={req.clientId ? `/clients/${req.clientId}` : '#'} className="truncate text-sm font-semibold text-foreground hover:text-primary transition-colors">{req.clientName}</Link>
-                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary/8 px-2 py-0.5 text-[10px] font-semibold text-primary">
-                          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
-                          {req.receivedMinutes < 2 ? "Agora" : `${req.receivedMinutes} min atrás`}
-                        </span>
-                      </div>
-                      <p className="mt-0.5 text-xs text-muted-foreground">{req.petNames.join(", ")}</p>
-                      <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1.5">
-                        <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <Clock className="h-3.5 w-3.5 shrink-0" />
-                          {req.scheduledLabel}
-                        </span>
-                        <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <PawPrint className="h-3.5 w-3.5 shrink-0" />
-                          {req.durationMinutes} min
-                        </span>
-                        <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <MapPin className="h-3.5 w-3.5 shrink-0" />
-                          {req.startAddress}
-                        </span>
+              <div
+                key={req.id}
+                className="relative overflow-hidden rounded-2xl border border-emerald-500/25 bg-gradient-to-br from-emerald-500/[0.05] via-card to-card shadow-sm transition-all duration-200 hover:border-emerald-500/40 hover:shadow-md hover:shadow-emerald-500/5"
+              >
+                {/* Left accent bar */}
+                <div className="absolute inset-y-0 left-0 w-1 rounded-l-2xl bg-gradient-to-b from-emerald-400 to-emerald-600" />
+
+                <div className="px-5 py-4 pl-6">
+                  {/* Top row: avatar + name/pets + price */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Link
+                        href={req.clientId ? `/clients/${req.clientId}` : '#'}
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-sm font-bold text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-500/20 hover:bg-emerald-500/20 transition-colors"
+                      >
+                        {getInitials(req.clientName)}
+                      </Link>
+                      <div className="min-w-0">
+                        <Link
+                          href={req.clientId ? `/clients/${req.clientId}` : '#'}
+                          className="block truncate text-sm font-semibold text-foreground hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
+                        >
+                          {req.clientName}
+                        </Link>
+                        <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
+                          <PawPrint className="h-3 w-3 shrink-0" />
+                          {req.petNames.join(", ")}
+                        </p>
                       </div>
                     </div>
+
+                    {/* Price — main motivator, visually dominant */}
+                    <div className="shrink-0 text-right">
+                      <p className="text-2xl font-bold leading-none text-emerald-600 dark:text-emerald-400">
+                        R$ {req.price.toFixed(2).replace(".", ",")}
+                      </p>
+                      <p className="mt-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/70">
+                        ganho estimado
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between gap-3 sm:flex-col sm:items-end">
-                    <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
-                      R$ {req.price.toFixed(2).replace(".", ",")}
+
+                  {/* Detail badges */}
+                  <div className="mt-3.5 flex flex-wrap gap-2">
+                    <span className="flex items-center gap-1.5 rounded-lg bg-muted/70 px-2.5 py-1.5 text-xs text-foreground/70">
+                      <Clock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      {req.scheduledLabel}
                     </span>
-                    <div className="flex gap-2">
+                    <span className="flex items-center gap-1.5 rounded-lg bg-muted/70 px-2.5 py-1.5 text-xs text-foreground/70">
+                      <PawPrint className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      {req.durationMinutes} min
+                    </span>
+                    <span className="flex items-center gap-1.5 rounded-lg bg-muted/70 px-2.5 py-1.5 text-xs text-foreground/70">
+                      <MapPin className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      {req.startAddress}
+                    </span>
+                  </div>
+
+                  {/* Divider */}
+                  <div className="mt-4 border-t border-border/40" />
+
+                  {/* Action row: timestamp + buttons */}
+                  <div className="mt-3.5 flex items-center justify-between gap-3">
+                    <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground/80">
+                      <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+                      {req.receivedMinutes < 2 ? "Recebido agora" : `Recebido há ${req.receivedMinutes} min`}
+                    </span>
+
+                    <div className="flex items-center gap-2">
+                      <Link href={`/walk-requests/${req.id}`}>
+                        <Button size="sm" variant="ghost" className="h-8 rounded-lg px-3 text-xs text-muted-foreground hover:text-foreground hover:bg-muted">
+                          <Info className="h-3.5 w-3.5 mr-1.5" />
+                          Detalhes
+                        </Button>
+                      </Link>
                       <Button
                         size="sm"
-                        variant="outline"
-                        className="rounded-lg gap-1.5 border-destructive/30 text-destructive hover:border-destructive hover:bg-destructive/10"
+                        variant="ghost"
+                        className="h-8 rounded-lg px-3 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/8"
                         onClick={() => handleDecline(req)}
                       >
-                        <XCircle className="h-3.5 w-3.5" />
+                        <XCircle className="h-3.5 w-3.5 mr-1.5" />
                         Recusar
                       </Button>
                       <Button
                         size="sm"
-                        className="rounded-lg gap-1.5 bg-emerald-600 text-white hover:bg-emerald-700"
+                        className="h-8 rounded-lg px-4 text-xs bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 shadow-sm shadow-emerald-500/25"
                         onClick={() => handleAccept(req)}
                         disabled={isAccepting}
                       >
                         <CheckCircle2 className="h-3.5 w-3.5" />
-                        Aceitar
+                        Aceitar passeio
                       </Button>
                     </div>
                   </div>

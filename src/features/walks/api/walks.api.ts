@@ -11,6 +11,7 @@ import {
 import type {
   WalkRecord,
   WalkRequest,
+  WalkRequestDetail,
   UserRole,
   WalkEstimateRequest,
   WalkEstimateResult,
@@ -57,6 +58,10 @@ export const WalksApi = {
       return [...walkRequestsStore];
     }
     return api.get<WalkRequest[]>("/walk-requests").then((r) => r.data);
+  },
+
+  getRequestById: async (id: string): Promise<WalkRequestDetail> => {
+    return api.get<WalkRequestDetail>(`/walk-requests/${id}`).then((r) => r.data);
   },
 
   // Delegates to ReviewsApi — kept here for backwards-compat call sites

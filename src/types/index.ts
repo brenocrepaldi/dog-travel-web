@@ -7,6 +7,36 @@ export type UserRole = "client" | "walker";
 
 // ─── Walk Domain (formerly in mock-data) ─────────────────────────────────────
 
+export interface WalkRequestDog {
+  id: string;
+  name: string;
+  breed: string;
+  age: number;
+  size: string;
+  gender: string;
+  photoUrl: string | null;
+  notes: string | null;
+}
+
+export interface WalkRequestDetail {
+  id: string;
+  clientId: string;
+  clientName: string;
+  clientAvatarUrl: string | null;
+  clientMemberSince: string;
+  petNames: string[];
+  petIds: string[];
+  dogs: WalkRequestDog[];
+  durationMinutes: number;
+  price: number;
+  scheduledAt: string;
+  scheduledLabel: string;
+  startAddress: string;
+  startLat: number | null;
+  startLng: number | null;
+  receivedMinutes: number;
+}
+
 export interface WalkRequest {
   id: string;
   clientId: string;

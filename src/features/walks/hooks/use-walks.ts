@@ -26,6 +26,14 @@ export function useWalkRequests() {
   });
 }
 
+export function useWalkRequestById(id: string) {
+  return useQuery({
+    queryKey: ["walk-requests", id],
+    queryFn: () => WalksApi.getRequestById(id),
+    enabled: Boolean(id),
+  });
+}
+
 export function useWalkEstimate(input: WalkEstimateRequest, enabled = true) {
   return useQuery({
     queryKey: ["walks", "estimate", input],
