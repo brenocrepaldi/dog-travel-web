@@ -78,7 +78,7 @@ function initials(name: string) {
 
 // ─── Shared sub-components ────────────────────────────────────────────────────
 
-function DogMarker({ pets }: { pets: Pet[] }) {
+function DogMarker({ pets, walkerAvatarUrl }: { pets: Pet[]; walkerAvatarUrl?: string | null }) {
   const firstPhoto = pets.find((p) => p.photoUrl)?.photoUrl ?? null;
   const count = pets.length;
   return (
@@ -92,7 +92,14 @@ function DogMarker({ pets }: { pets: Pet[] }) {
           <div className="flex h-full w-full items-center justify-center text-2xl">🦮</div>
         )}
       </div>
-      {count > 1 && (
+      {/* Walker avatar — overlaid bottom-right of the dog bubble */}
+      {walkerAvatarUrl && (
+        <div className="absolute -bottom-1 -right-1 h-6 w-6 overflow-hidden rounded-full border-2 border-white shadow-sm">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={walkerAvatarUrl} alt="Passeador" className="h-full w-full object-cover" />
+        </div>
+      )}
+      {count > 1 && !walkerAvatarUrl && (
         <div className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-primary text-[10px] font-bold text-primary-foreground shadow">
           {count}
         </div>
@@ -298,7 +305,7 @@ export default function MapTracker({ walkId }: { walkId: string }) {
 
           {location && (
             <Marker longitude={location.lng} latitude={location.lat} anchor="center">
-              <DogMarker pets={pets} />
+              <DogMarker pets={pets} walkerAvatarUrl={walk?.walkerAvatarUrl} />
             </Marker>
           )}
         </Map>
