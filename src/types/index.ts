@@ -41,8 +41,10 @@ export interface WalkRequest {
   id: string;
   clientId: string;
   clientName: string;
+  clientAvatarUrl: string | null;
   petNames: string[];
   petIds: string[];
+  petPhotos: { id: string; photoUrl: string | null }[];
   durationMinutes: number;
   price: number;
   scheduledAt: string;

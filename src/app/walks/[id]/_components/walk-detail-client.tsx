@@ -9,6 +9,7 @@ import {
   Clock,
   CreditCard,
   FileText,
+  Info,
   MapPin,
   MessageSquare,
   PawPrint,
@@ -310,7 +311,7 @@ function ClientCard({
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">{clientName}</p>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              {petNames.length} {petNames.length === 1 ? 'cão' : 'cães'} neste passeio{clientId ? ' · ver perfil →' : ''}
+              {petNames.length} {petNames.length === 1 ? 'cão' : 'cães'} neste passeio
             </p>
           </div>
         </Link>
@@ -536,7 +537,7 @@ function EarningCard({ price, status }: { price: number; status: WalkStatus }) {
 
         {isPending && (
           <div className="flex items-center gap-2.5 rounded-lg border border-border/60 bg-muted/40 px-3.5 py-2.5">
-            <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <Info className="h-4 w-4 shrink-0 text-muted-foreground" />
             <p className="text-xs text-muted-foreground">Creditado ao concluir o passeio</p>
           </div>
         )}

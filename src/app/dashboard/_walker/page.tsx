@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
   CheckCircle2, ChevronRight, ClipboardList, Clock,
-  FileCheck2, Info, Lock, MapPin, PawPrint, Star, TrendingUp,
+  FileCheck2, Lock, MapPin, PawPrint, Star, Timer, TrendingUp,
   Wallet, User, XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -382,7 +382,11 @@ export default function WalkerDashboardPage() {
             {walkerRequests.map((req) => (
               <div
                 key={req.id}
-                className="relative overflow-hidden rounded-2xl border border-emerald-500/25 bg-gradient-to-br from-emerald-500/[0.05] via-card to-card shadow-sm transition-all duration-200 hover:border-emerald-500/40 hover:shadow-md hover:shadow-emerald-500/5"
+                role="button"
+                tabIndex={0}
+                onClick={() => router.push(`/walk-requests/${req.id}`)}
+                onKeyDown={(e) => e.key === 'Enter' && router.push(`/walk-requests/${req.id}`)}
+                className="relative cursor-pointer overflow-hidden rounded-2xl border border-emerald-500/25 bg-gradient-to-br from-emerald-500/[0.05] via-card to-card shadow-sm"
               >
                 {/* Left accent bar */}
                 <div className="absolute inset-y-0 left-0 w-1 rounded-l-2xl bg-gradient-to-b from-emerald-400 to-emerald-600" />
@@ -391,23 +395,45 @@ export default function WalkerDashboardPage() {
                   {/* Top row: avatar + name/pets + price */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
-                      <Link
-                        href={req.clientId ? `/clients/${req.clientId}` : '#'}
-                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-sm font-bold text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-500/20 hover:bg-emerald-500/20 transition-colors"
-                      >
-                        {getInitials(req.clientName)}
-                      </Link>
+                      {/* Client avatar */}
+                      <div className="h-11 w-11 shrink-0 overflow-hidden rounded-xl ring-1 ring-emerald-500/20">
+                        {req.clientAvatarUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={req.clientAvatarUrl} alt={req.clientName} className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center bg-emerald-500/10 text-sm font-bold text-emerald-700 dark:text-emerald-400">
+                            {getInitials(req.clientName)}
+                          </div>
+                        )}
+                      </div>
                       <div className="min-w-0">
-                        <Link
-                          href={req.clientId ? `/clients/${req.clientId}` : '#'}
-                          className="block truncate text-sm font-semibold text-foreground hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
-                        >
+                        <p className="block truncate text-sm font-semibold text-foreground">
                           {req.clientName}
-                        </Link>
-                        <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
-                          <PawPrint className="h-3 w-3 shrink-0" />
-                          {req.petNames.join(", ")}
                         </p>
+                        {/* Dog photo bubbles + names */}
+                        <div className="mt-0.5 flex items-center gap-1.5">
+                          <div className="flex items-center">
+                            {req.petPhotos.slice(0, 3).map((pet, i) => (
+                              <div
+                                key={pet.id}
+                                style={{ zIndex: req.petPhotos.length - i, marginLeft: i === 0 ? 0 : '-6px' }}
+                                className="h-5 w-5 overflow-hidden rounded-full ring-[1.5px] ring-card"
+                              >
+                                {pet.photoUrl ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img src={pet.photoUrl} alt="" className="h-full w-full object-cover" />
+                                ) : (
+                                  <div className="flex h-full w-full items-center justify-center bg-amber-500/15">
+                                    <PawPrint className="h-2.5 w-2.5 text-amber-500" />
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {req.petNames.join(", ")}
+                          </p>
+                        </div>
                       </div>
                     </div>
 
@@ -429,7 +455,7 @@ export default function WalkerDashboardPage() {
                       {req.scheduledLabel}
                     </span>
                     <span className="flex items-center gap-1.5 rounded-lg bg-muted/70 px-2.5 py-1.5 text-xs text-foreground/70">
-                      <PawPrint className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      <Timer className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                       {req.durationMinutes} min
                     </span>
                     <span className="flex items-center gap-1.5 rounded-lg bg-muted/70 px-2.5 py-1.5 text-xs text-foreground/70">
@@ -449,17 +475,11 @@ export default function WalkerDashboardPage() {
                     </span>
 
                     <div className="flex items-center gap-2">
-                      <Link href={`/walk-requests/${req.id}`}>
-                        <Button size="sm" variant="ghost" className="h-8 rounded-lg px-3 text-xs text-muted-foreground hover:text-foreground hover:bg-muted">
-                          <Info className="h-3.5 w-3.5 mr-1.5" />
-                          Detalhes
-                        </Button>
-                      </Link>
                       <Button
                         size="sm"
                         variant="ghost"
                         className="h-8 rounded-lg px-3 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/8"
-                        onClick={() => handleDecline(req)}
+                        onClick={(e) => { e.stopPropagation(); handleDecline(req); }}
                       >
                         <XCircle className="h-3.5 w-3.5 mr-1.5" />
                         Recusar
@@ -467,7 +487,7 @@ export default function WalkerDashboardPage() {
                       <Button
                         size="sm"
                         className="h-8 rounded-lg px-4 text-xs bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 shadow-sm shadow-emerald-500/25"
-                        onClick={() => handleAccept(req)}
+                        onClick={(e) => { e.stopPropagation(); handleAccept(req); }}
                         disabled={isAccepting}
                       >
                         <CheckCircle2 className="h-3.5 w-3.5" />

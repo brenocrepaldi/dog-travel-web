@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import {
@@ -9,8 +10,10 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
+  Info,
   Loader2,
   MapPin,
+  Navigation,
   PawPrint,
   Timer,
   TrendingUp,
@@ -151,6 +154,16 @@ export function RequestDetailClient({ requestId }: { requestId: string }) {
   const { data: walkerProfile } = useWalkerProfile();
   const walkerProfileId = walkerProfile?.id ?? '';
 
+  const [walkerPos, setWalkerPos] = useState<{ lat: number; lng: number } | null>(null);
+
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setWalkerPos({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => { /* permission denied or unavailable — map works without walker pin */ },
+    );
+  }, []);
+
   const { mutate: acceptWalk, isPending: isAccepting } = useAcceptWalk();
   const { mutate: declineWalk, isPending: isDeclining } = useDeclineWalk();
 
@@ -278,9 +291,24 @@ export function RequestDetailClient({ requestId }: { requestId: string }) {
                 </div>
               </div>
               <div className="relative h-[300px] sm:h-[340px]">
+                {walkerPos && (
+                  <a
+                    href={`https://www.google.com/maps/dir/?api=1&origin=${walkerPos.lat},${walkerPos.lng}&destination=${req.startLat},${req.startLng}&travelmode=walking`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="absolute bottom-3 right-3 z-10"
+                  >
+                    <Button size="sm" className="gap-1.5 rounded-lg text-xs h-8 bg-white text-foreground border border-border/60 shadow-md hover:bg-muted">
+                      <Navigation className="h-3.5 w-3.5 text-emerald-600" />
+                      Como chegar
+                    </Button>
+                  </a>
+                )}
                 <RequestStartMap
                   lat={req.startLat!}
                   lng={req.startLng!}
+                  walkerLat={walkerPos?.lat}
+                  walkerLng={walkerPos?.lng}
                   walkerAvatarUrl={walkerProfile?.avatarUrl}
                   walkerName={session?.user?.name ?? undefined}
                 />
@@ -327,7 +355,7 @@ export function RequestDetailClient({ requestId }: { requestId: string }) {
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">{req.clientName}</p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    {req.dogs.length} {req.dogs.length === 1 ? 'cão' : 'cães'} neste passeio · ver perfil →
+                    {req.dogs.length} {req.dogs.length === 1 ? 'cão' : 'cães'} neste passeio
                   </p>
                   {req.clientMemberSince && (
                     <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
@@ -351,12 +379,7 @@ export function RequestDetailClient({ requestId }: { requestId: string }) {
           {/* Dogs card */}
           <Card className="overflow-hidden py-0 gap-0">
             <div className="border-b border-border/60 px-5 py-3.5">
-              <h2 className="text-sm font-semibold text-foreground">
-                Cães
-                <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500/15 px-1.5 text-[11px] font-bold text-amber-600 dark:text-amber-400">
-                  {req.dogs.length}
-                </span>
-              </h2>
+              <h2 className="text-sm font-semibold text-foreground">Cães</h2>
             </div>
             <CardContent className="p-4 space-y-3">
               {req.dogs.length > 0 ? (
@@ -391,7 +414,7 @@ export function RequestDetailClient({ requestId }: { requestId: string }) {
                 </div>
               </div>
               <div className="flex items-center gap-2.5 rounded-lg border border-border/60 bg-muted/40 px-3.5 py-2.5">
-                <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <Info className="h-4 w-4 shrink-0 text-muted-foreground" />
                 <p className="text-xs text-muted-foreground">Creditado ao concluir o passeio</p>
               </div>
             </CardContent>
@@ -401,8 +424,8 @@ export function RequestDetailClient({ requestId }: { requestId: string }) {
       </div>
 
       {/* ── Action bar ─────────────────────────────────────────────────────── */}
-      <div className="sticky bottom-0 -mx-4 sm:-mx-6 lg:-mx-8 border-t border-border/60 bg-background/95 backdrop-blur-sm px-4 sm:px-6 lg:px-8 py-4">
-        <div className="flex items-center justify-between gap-4 max-w-6xl mx-auto">
+      <div className="sticky bottom-0 rounded-2xl border border-border/60 bg-card shadow-lg shadow-black/5 px-5 py-4">
+        <div className="flex items-center justify-between gap-4">
           <p className="hidden sm:block text-sm text-muted-foreground">
             Responda ao pedido de <span className="font-medium text-foreground">{req.clientName}</span>
           </p>
