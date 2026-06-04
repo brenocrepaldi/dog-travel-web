@@ -116,7 +116,7 @@ function TimelineCard({
       </div>
       <CardContent className="px-5 py-5">
         {timeline.map((event, i) => (
-          <div key={event.id} className="flex gap-4">
+          <div key={i} className="flex gap-4">
             <div className="flex flex-col items-center">
               <div
                 className={cn(
