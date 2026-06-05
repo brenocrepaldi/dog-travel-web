@@ -147,7 +147,8 @@ export type DayKey =
 
 export interface AvailabilitySlot {
   day: DayKey;
-  slots: string[];
+  start: string; // "07:00"
+  end: string;   // "19:00"
 }
 
 export interface WalkerCertification {

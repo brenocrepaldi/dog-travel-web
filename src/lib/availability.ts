@@ -1,48 +1,40 @@
 import type { AvailabilitySlot, DayKey } from '@/types';
 
 export const DAYS: { key: DayKey; label: string; short: string }[] = [
-  { key: 'monday', label: 'Segunda-feira', short: 'Seg' },
-  { key: 'tuesday', label: 'Terça-feira', short: 'Ter' },
-  { key: 'wednesday', label: 'Quarta-feira', short: 'Qua' },
-  { key: 'thursday', label: 'Quinta-feira', short: 'Qui' },
-  { key: 'friday', label: 'Sexta-feira', short: 'Sex' },
-  { key: 'saturday', label: 'Sábado', short: 'Sáb' },
-  { key: 'sunday', label: 'Domingo', short: 'Dom' },
+  { key: 'monday',    label: 'Segunda-feira', short: 'Seg' },
+  { key: 'tuesday',   label: 'Terça-feira',   short: 'Ter' },
+  { key: 'wednesday', label: 'Quarta-feira',  short: 'Qua' },
+  { key: 'thursday',  label: 'Quinta-feira',  short: 'Qui' },
+  { key: 'friday',    label: 'Sexta-feira',   short: 'Sex' },
+  { key: 'saturday',  label: 'Sábado',        short: 'Sáb' },
+  { key: 'sunday',    label: 'Domingo',       short: 'Dom' },
 ];
 
-export const TIME_SLOTS: { label: string; value: string }[] = [
-  { label: '07–09h', value: '07:00-09:00' },
-  { label: '09–11h', value: '09:00-11:00' },
-  { label: '11–13h', value: '11:00-13:00' },
-  { label: '13–15h', value: '13:00-15:00' },
-  { label: '15–17h', value: '15:00-17:00' },
-  { label: '17–19h', value: '17:00-19:00' },
-  { label: '19–21h', value: '19:00-21:00' },
-];
+// 30-minute increments from 05:00 to 23:30
+export const TIMES: string[] = Array.from({ length: 38 }, (_, i) => {
+  const h = Math.floor(i / 2) + 5;
+  const m = i % 2 === 0 ? '00' : '30';
+  return `${String(h).padStart(2, '0')}:${m}`;
+});
 
-export function formatSlotLabel(slot: string): string {
-  const [start, end] = slot.split('-');
-  return `${start.slice(0, 2)}–${end.slice(0, 2)}h`;
+export function endTimes(start: string): string[] {
+  const idx = TIMES.indexOf(start);
+  return idx === -1 ? TIMES.slice(1) : TIMES.slice(idx + 1);
 }
 
 export function formatAvailabilityLabel(slots: AvailabilitySlot[]): string {
-  const active = slots.filter((s) => s.slots.length > 0);
+  const active = slots.filter((s) => s.start && s.end);
   if (active.length === 0) return 'Sem horários configurados';
 
   const dayShort: Record<DayKey, string> = Object.fromEntries(
     DAYS.map((d) => [d.key, d.short]),
   ) as Record<DayKey, string>;
 
-  // If all active days share the same slots, collapse the time part
-  const firstSlotsSorted = [...active[0].slots].sort().join(',');
-  const allSame = active.every((s) => [...s.slots].sort().join(',') === firstSlotsSorted);
+  const firstKey = `${active[0].start}–${active[0].end}`;
+  const allSame = active.every((s) => `${s.start}–${s.end}` === firstKey);
 
   const dayList = active.map((s) => dayShort[s.day]).join(', ');
 
-  if (allSame) {
-    const times = active[0].slots.map(formatSlotLabel).join(', ');
-    return `${dayList} · ${times}`;
-  }
-
-  return `${active.length} dia${active.length > 1 ? 's' : ''}`;
+  if (allSame) return `${dayList} · ${firstKey}`;
+  return `${active.length} dia${active.length > 1 ? 's' : ''} configurado${active.length > 1 ? 's' : ''}`;
 }

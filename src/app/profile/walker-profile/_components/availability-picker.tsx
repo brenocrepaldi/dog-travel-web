@@ -1,8 +1,57 @@
 'use client';
 
+import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { DAYS, TIME_SLOTS } from '@/lib/availability';
+import { DAYS, TIMES, endTimes } from '@/lib/availability';
 import type { AvailabilitySlot, DayKey } from '@/types';
+
+// ─── Time Select ──────────────────────────────────────────────────────────────
+
+interface TimeSelectProps {
+  id?: string;
+  value: string;
+  options: string[];
+  placeholder: string;
+  disabled?: boolean;
+  onChange: (v: string) => void;
+}
+
+function TimeSelect({ id, value, options, placeholder, disabled, onChange }: TimeSelectProps) {
+  return (
+    <div className="relative">
+      <select
+        id={id}
+        value={value}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.value)}
+        className={cn(
+          'w-full cursor-pointer appearance-none rounded-lg border bg-background px-3 py-2 pr-8 text-sm transition-colors',
+          'focus:outline-none focus:ring-2 focus:ring-primary/20',
+          disabled
+            ? 'cursor-not-allowed border-border/30 bg-muted/40 text-muted-foreground/50'
+            : value
+              ? 'border-border text-foreground hover:border-primary/40 focus:border-primary/50'
+              : 'border-border text-muted-foreground hover:border-primary/40 focus:border-primary/50',
+        )}
+      >
+        <option value="">{placeholder}</option>
+        {options.map((t) => (
+          <option key={t} value={t}>
+            {t}
+          </option>
+        ))}
+      </select>
+      <ChevronDown
+        className={cn(
+          'pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 transition-colors',
+          disabled ? 'text-muted-foreground/30' : 'text-muted-foreground',
+        )}
+      />
+    </div>
+  );
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
 
 interface Props {
   value: AvailabilitySlot[];
@@ -10,65 +59,75 @@ interface Props {
 }
 
 export function AvailabilityPicker({ value, onChange }: Props) {
-  function getSlots(day: DayKey): string[] {
-    return value.find((s) => s.day === day)?.slots ?? [];
+  function getEntry(day: DayKey) {
+    return value.find((s) => s.day === day);
   }
 
-  function isDayActive(day: DayKey): boolean {
+  function isDayActive(day: DayKey) {
     return value.some((s) => s.day === day);
   }
 
   function toggleDay(day: DayKey, active: boolean) {
     if (active) {
-      onChange([...value, { day, slots: [] }]);
+      onChange([...value, { day, start: '', end: '' }]);
     } else {
       onChange(value.filter((s) => s.day !== day));
     }
   }
 
-  function toggleSlot(day: DayKey, slot: string) {
-    const existing = value.find((s) => s.day === day);
-    if (!existing) return;
-    const hasSlot = existing.slots.includes(slot);
-    const newSlots = hasSlot
-      ? existing.slots.filter((s) => s !== slot)
-      : [...existing.slots, slot];
-    onChange(value.map((s) => (s.day === day ? { ...s, slots: newSlots } : s)));
+  function setStart(day: DayKey, start: string) {
+    onChange(
+      value.map((s) => {
+        if (s.day !== day) return s;
+        // If the current end is no longer valid, clear it
+        const validEnd = start && s.end > start ? s.end : '';
+        return { ...s, start, end: validEnd };
+      }),
+    );
+  }
+
+  function setEnd(day: DayKey, end: string) {
+    onChange(value.map((s) => (s.day === day ? { ...s, end } : s)));
   }
 
   return (
     <div className="space-y-2">
       {DAYS.map((day) => {
         const active = isDayActive(day.key);
-        const slots = getSlots(day.key);
+        const entry = getEntry(day.key);
+        const availableEndTimes = entry?.start ? endTimes(entry.start) : TIMES.slice(1);
+        const hasConflict = active && entry?.start && entry?.end && entry.end <= entry.start;
 
         return (
           <div
             key={day.key}
             className={cn(
-              'rounded-xl border px-4 py-3 transition-colors',
+              'overflow-hidden rounded-xl border transition-all duration-200',
               active
-                ? 'border-primary/25 bg-primary/[0.03]'
-                : 'border-border/50 bg-muted/20',
+                ? 'border-primary/20 bg-primary/[0.025] shadow-sm'
+                : 'border-border/50 bg-muted/10',
             )}
           >
-            {/* Day row */}
-            <div className="flex items-center justify-between gap-3">
+            {/* ── Day header ───────────────────────────────────── */}
+            <button
+              type="button"
+              onClick={() => toggleDay(day.key, !active)}
+              className={cn(
+                'flex w-full cursor-pointer items-center justify-between px-4 py-3 transition-colors',
+                active ? 'hover:bg-primary/5' : 'hover:bg-muted/30',
+              )}
+            >
               <span
                 className={cn(
-                  'text-sm font-medium',
+                  'text-sm font-medium transition-colors',
                   active ? 'text-foreground' : 'text-muted-foreground',
                 )}
               >
                 {day.label}
               </span>
 
-              {/* Custom toggle switch */}
-              <button
-                type="button"
-                role="switch"
-                aria-checked={active}
-                onClick={() => toggleDay(day.key, !active)}
+              {/* Toggle pill */}
+              <span
                 className={cn(
                   'relative h-5 w-9 shrink-0 rounded-full border-2 transition-all duration-200',
                   active ? 'border-primary bg-primary' : 'border-border bg-muted',
@@ -80,33 +139,76 @@ export function AvailabilityPicker({ value, onChange }: Props) {
                     active ? 'left-[18px]' : 'left-0.5',
                   )}
                 />
-              </button>
-            </div>
+              </span>
+            </button>
 
-            {/* Time slots — shown when day is active */}
+            {/* ── Time selectors ────────────────────────────────── */}
             {active && (
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {TIME_SLOTS.map((ts) => {
-                  const selected = slots.includes(ts.value);
-                  return (
-                    <button
-                      key={ts.value}
-                      type="button"
-                      onClick={() => toggleSlot(day.key, ts.value)}
-                      className={cn(
-                        'rounded-lg border px-2.5 py-1 text-xs font-medium transition-all duration-150',
-                        selected
-                          ? 'border-primary bg-primary text-primary-foreground shadow-sm'
-                          : 'border-border/60 text-muted-foreground hover:border-primary/40 hover:text-foreground',
-                      )}
+              <div className="border-t border-border/40 px-4 pb-4 pt-3">
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Start */}
+                  <div className="space-y-1.5">
+                    <label
+                      htmlFor={`start-${day.key}`}
+                      className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
                     >
-                      {ts.label}
-                    </button>
-                  );
-                })}
-                {slots.length === 0 && (
-                  <p className="text-xs text-muted-foreground/60 italic">
-                    Selecione pelo menos um horário
+                      Início
+                    </label>
+                    <TimeSelect
+                      id={`start-${day.key}`}
+                      value={entry?.start ?? ''}
+                      options={TIMES.slice(0, -1)} // up to 23:00 so there's room for an end time
+                      placeholder="-- : --"
+                      onChange={(v) => setStart(day.key, v)}
+                    />
+                  </div>
+
+                  {/* End */}
+                  <div className="space-y-1.5">
+                    <label
+                      htmlFor={`end-${day.key}`}
+                      className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+                    >
+                      Término
+                    </label>
+                    <TimeSelect
+                      id={`end-${day.key}`}
+                      value={entry?.end ?? ''}
+                      options={availableEndTimes}
+                      placeholder={entry?.start ? '-- : --' : 'Selecione o início'}
+                      disabled={!entry?.start}
+                      onChange={(v) => setEnd(day.key, v)}
+                    />
+                  </div>
+                </div>
+
+                {/* Conflict warning (should never happen with filtered options, but just in case) */}
+                {hasConflict && (
+                  <p className="mt-2 text-xs font-medium text-destructive">
+                    O horário de término deve ser após o horário de início.
+                  </p>
+                )}
+
+                {/* Friendly summary */}
+                {entry?.start && entry?.end && (
+                  <p className="mt-2.5 text-xs text-muted-foreground">
+                    Expediente de{' '}
+                    <span className="font-semibold text-foreground">
+                      {entry.start}
+                    </span>{' '}
+                    às{' '}
+                    <span className="font-semibold text-foreground">
+                      {entry.end}
+                    </span>
+                    {' '}·{' '}
+                    {(() => {
+                      const [sh, sm] = entry.start.split(':').map(Number);
+                      const [eh, em] = entry.end.split(':').map(Number);
+                      const total = (eh * 60 + em) - (sh * 60 + sm);
+                      const h = Math.floor(total / 60);
+                      const m = total % 60;
+                      return m === 0 ? `${h}h de trabalho` : `${h}h${m}min de trabalho`;
+                    })()}
                   </p>
                 )}
               </div>
