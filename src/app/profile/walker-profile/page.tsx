@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import {
   ArrowLeft,
   Briefcase,
+  Calendar,
   CheckSquare,
   Loader2,
   MapPin,
@@ -24,7 +25,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useWalkerProfile, useUpdateWalkerProfile } from "@/features/walkers/hooks/use-walkers";
-import type { DogSize, WalkerProfileUpdate } from "@/types";
+import type { AvailabilitySlot, DogSize, WalkerProfileUpdate } from "@/types";
+import { AvailabilityPicker } from "./_components/availability-picker";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -196,7 +198,7 @@ export default function WalkerProfilePage() {
     description: "",
     location: "",
     serviceArea: "",
-    availability: "",
+    availability: [],
     tags: [],
     supportedSizes: [],
     behaviorExpertise: [],
@@ -304,17 +306,17 @@ export default function WalkerProfilePage() {
             className="rounded-lg"
           />
         </div>
-        <div className="space-y-1.5">
-          <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Disponibilidade
-          </Label>
-          <Input
-            value={form.availability}
-            placeholder="Ex: Seg–Sex, 7h–19h"
-            onChange={(e) => setForm((f) => ({ ...f, availability: e.target.value }))}
-            className="rounded-lg"
-          />
-        </div>
+      </Section>
+
+      {/* Disponibilidade */}
+      <Section icon={Calendar} title="Disponibilidade semanal">
+        <p className="text-xs text-muted-foreground -mt-1">
+          Ative os dias em que você trabalha e selecione os horários disponíveis em cada um.
+        </p>
+        <AvailabilityPicker
+          value={(form.availability as AvailabilitySlot[]) ?? []}
+          onChange={(v) => setForm((f) => ({ ...f, availability: v }))}
+        />
       </Section>
 
       {/* Portes atendidos */}

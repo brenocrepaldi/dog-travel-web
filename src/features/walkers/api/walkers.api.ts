@@ -66,7 +66,13 @@ export const WalkersApi = {
       if (base) myWalkerProfileStore = { ...base, ...data };
       return;
     }
-    await api.patch("/walkers/me", data);
+    const payload = {
+      ...data,
+      ...(data.availability !== undefined && {
+        availability: JSON.stringify(data.availability),
+      }),
+    };
+    await api.patch("/walkers/me", payload);
   },
 
   getEarnings: async (params?: EarningsParams): Promise<PaymentHistoryItem[]> => {

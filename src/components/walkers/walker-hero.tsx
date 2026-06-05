@@ -31,7 +31,7 @@ type WalkerHeroProps = {
   reviews: number;
   location: string;
   verified: boolean;
-  availability: string;
+  availability: import('@/types').AvailabilitySlot[];
   joinedDate?: string;
 };
 

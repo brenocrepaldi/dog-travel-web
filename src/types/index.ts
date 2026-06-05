@@ -136,6 +136,20 @@ export interface WalkReview {
 
 // ─── Walker Domain ────────────────────────────────────────────────────────────
 
+export type DayKey =
+  | 'monday'
+  | 'tuesday'
+  | 'wednesday'
+  | 'thursday'
+  | 'friday'
+  | 'saturday'
+  | 'sunday';
+
+export interface AvailabilitySlot {
+  day: DayKey;
+  slots: string[];
+}
+
 export interface WalkerCertification {
   title: string;
   verified: boolean;
@@ -152,7 +166,7 @@ export interface WalkerProfile {
   description: string;
   tags: string[];
   verified: boolean;
-  availability: string;
+  availability: AvailabilitySlot[];
   completedWalks: number;
   joinedAt: string;
   trustChecks: {
@@ -168,7 +182,7 @@ export interface WalkerProfileUpdate {
   description?: string;
   location?: string;
   serviceArea?: string;
-  availability?: string;
+  availability?: AvailabilitySlot[];
   tags?: string[];
   supportedSizes?: DogSize[];
   behaviorExpertise?: string[];

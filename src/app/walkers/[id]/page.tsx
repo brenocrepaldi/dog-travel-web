@@ -23,6 +23,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { WalkerHero, walkerGradient, walkerInitials } from '@/components/walkers/walker-hero';
 import { TrustItemCard } from '@/components/walkers/trust-item-card';
 import { WalkersApi } from '@/features/walkers/api/walkers.api';
+import { DAYS, formatSlotLabel } from '@/lib/availability';
 import type { DogSize } from '@/types';
 import { Separator } from '@/components/ui/separator';
 import { WalkerReviewsSection } from './_components/walker-reviews-section';
@@ -200,20 +201,54 @@ export default async function WalkerDetailPage({ params }: { params: Promise<{ i
 					</Card>
 
 					{/* Stats */}
-					<div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+					<div className="grid grid-cols-2 gap-3">
 						<StatCard icon={MapPin} label="Área de atendimento" value={walker.serviceArea} />
 						<StatCard
 							icon={Clock3}
 							label="Passeios realizados"
 							value={`${walker.completedWalks}+`}
 						/>
-						<StatCard
-							icon={Calendar}
-							label="Disponibilidade"
-							value={walker.availability}
-							className="col-span-2 sm:col-span-1"
-						/>
 					</div>
+
+					{/* Horários disponíveis */}
+					<Card className="overflow-hidden pt-1">
+						<SectionHeader
+							icon={CalendarClock}
+							title="Horários disponíveis"
+							description="Dias e janelas de horário abertas para novas reservas"
+						/>
+						<Separator />
+						<CardContent className="py-5">
+							{walker.availability.filter((s) => s.slots.length > 0).length === 0 ? (
+								<p className="text-sm text-muted-foreground">Horários não configurados.</p>
+							) : (
+								<div className="space-y-2.5">
+									{DAYS.filter((d) =>
+										walker.availability.some((s) => s.day === d.key && s.slots.length > 0),
+									).map((d) => {
+										const entry = walker.availability.find((s) => s.day === d.key)!;
+										return (
+											<div key={d.key} className="flex items-center gap-3">
+												<span className="w-8 shrink-0 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+													{d.short}
+												</span>
+												<div className="flex flex-wrap gap-1.5">
+													{entry.slots.map((slot) => (
+														<span
+															key={slot}
+															className="rounded-md border border-border/60 bg-muted/40 px-2.5 py-0.5 text-xs font-medium"
+														>
+															{formatSlotLabel(slot)}
+														</span>
+													))}
+												</div>
+											</div>
+										);
+									})}
+								</div>
+							)}
+						</CardContent>
+					</Card>
 
 					{/* Especialidades */}
 					<Card className="overflow-hidden pt-1">

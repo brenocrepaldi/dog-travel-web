@@ -19,6 +19,7 @@ import {
 import { useDogs } from '@/features/dogs/hooks/use-dogs';
 import { useWalkers } from '@/features/walkers/hooks/use-walkers';
 import { cn } from '@/lib/utils';
+import { formatAvailabilityLabel } from '@/lib/availability';
 import type { DogSize, WalkerProfile } from '@/types';
 import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -162,7 +163,7 @@ function WalkerCard({ walker, index }: { walker: WalkerProfile; index: number })
 						</span>
 						<span className="flex items-center gap-1.5 text-muted-foreground">
 							<Calendar className="h-3.5 w-3.5 shrink-0" />
-							<span className="truncate">{walker.availability}</span>
+							<span className="truncate">{formatAvailabilityLabel(walker.availability)}</span>
 						</span>
 					</div>
 

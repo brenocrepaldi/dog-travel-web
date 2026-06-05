@@ -1,11 +1,13 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { formatAvailabilityLabel } from "@/lib/availability";
 import { useWalkerAvailability } from "@/features/walkers/hooks/use-walkers";
+import type { AvailabilitySlot } from "@/types";
 
 interface Props {
   walkerId: string;
-  scheduleLabel: string;
+  scheduleLabel: AvailabilitySlot[];
 }
 
 export function WalkerAvailabilityBadge({ walkerId, scheduleLabel }: Props) {
@@ -38,7 +40,7 @@ export function WalkerAvailabilityBadge({ walkerId, scheduleLabel }: Props) {
         {available ? (
           <span className="font-semibold text-emerald-700 dark:text-emerald-400">Disponível agora</span>
         ) : (
-          scheduleLabel
+          formatAvailabilityLabel(scheduleLabel)
         )}
       </span>
     </div>
