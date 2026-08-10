@@ -320,7 +320,7 @@ export function Sidebar() {
   const avatarUrl = profile?.avatarUrl ?? null;
 
   return (
-    <aside className="hidden lg:flex flex-col w-60 shrink-0 border-r border-border bg-background h-screen sticky top-0">
+    <aside className="hidden lg:flex flex-col w-60 shrink-0 border-r border-border bg-background h-dvh sticky top-0">
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-5 py-5">
         <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">

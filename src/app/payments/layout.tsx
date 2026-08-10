@@ -17,7 +17,7 @@ export default async function PaymentsLayout({
   if (!session) redirect("/login");
 
   return (
-    <div className="flex h-screen bg-muted/30 overflow-hidden">
+    <div className="flex h-dvh bg-muted/30 overflow-hidden">
       <MobileTopBar />
       <Sidebar />
       <div className="flex-1 overflow-y-auto pt-14 lg:pt-0">

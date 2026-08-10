@@ -28,7 +28,7 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="flex h-screen bg-muted/30 overflow-hidden">
+    <div className="flex h-dvh bg-muted/30 overflow-hidden">
       <MobileTopBar />
 
       {/* Fixed sidebar */}
