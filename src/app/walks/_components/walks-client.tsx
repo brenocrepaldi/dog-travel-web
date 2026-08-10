@@ -538,7 +538,7 @@ export function WalksClient() {
 						placeholder="Pet, passeador ou endereço..."
 						value={search}
 						onChange={(e) => setSearch(e.target.value)}
-						className="pl-9 rounded-lg bg-background h-9 text-sm"
+						className="pl-9 rounded-lg bg-background h-9"
 					/>
 				</div>
 			</div>
