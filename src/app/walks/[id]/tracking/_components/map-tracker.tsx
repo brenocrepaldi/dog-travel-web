@@ -324,7 +324,7 @@ export default function MapTracker({ walkId }: { walkId: string }) {
         )}
 
         {/* ── Top bar ─────────────────────────────────────────────── */}
-        <div className="pointer-events-none absolute left-4 right-4 top-4 z-[1000] flex items-center gap-2.5">
+        <div className="pointer-events-none absolute left-4 right-4 top-[calc(1rem+env(safe-area-inset-top))] z-[1000] flex items-center gap-2.5">
           <Link
             href={`/walks/${walkId}`}
             aria-label="Voltar"
@@ -372,7 +372,7 @@ export default function MapTracker({ walkId }: { walkId: string }) {
         </div>
 
         {/* ── Bottom card ─────────────────────────────────────────── */}
-        <div className="pointer-events-none absolute bottom-4 left-4 right-4 z-[1000] flex justify-center">
+        <div className="pointer-events-none absolute bottom-[calc(1rem+env(safe-area-inset-bottom))] left-4 right-4 z-[1000] flex justify-center">
           {isWalker ? (
 
             /* ── Walker card ─────────────────────────────────────── */

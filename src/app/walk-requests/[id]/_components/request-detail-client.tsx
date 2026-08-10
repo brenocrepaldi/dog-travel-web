@@ -426,7 +426,7 @@ export function RequestDetailClient({ requestId }: { requestId: string }) {
       </div>
 
       {/* ── Action bar ─────────────────────────────────────────────────────── */}
-      <div className="sticky bottom-0 rounded-2xl border border-border/60 bg-card shadow-lg shadow-black/5 px-5 py-4">
+      <div className="sticky bottom-0 rounded-2xl border border-border/60 bg-card shadow-lg shadow-black/5 px-5 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
         <div className="flex items-center justify-between gap-4">
           <p className="hidden sm:block text-sm text-muted-foreground">
             Responda ao pedido de <span className="font-medium text-foreground">{req.clientName}</span>
