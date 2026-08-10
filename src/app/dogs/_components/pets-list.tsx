@@ -289,7 +289,7 @@ function PetCard({
 
 							<button
 								onClick={() => onEdit(pet)}
-								className="shrink-0 w-8 h-8 rounded-xl border border-border/50 bg-muted/40 flex items-center justify-center text-muted-foreground opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-primary/5 hover:border-primary/30 hover:text-primary focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 cursor-pointer"
+								className="shrink-0 w-8 h-8 rounded-xl border border-border/50 bg-muted/40 flex items-center justify-center text-muted-foreground opacity-0 pointer-coarse:opacity-100 group-hover:opacity-100 transition-all duration-200 hover:bg-primary/5 hover:border-primary/30 hover:text-primary focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 cursor-pointer"
 								aria-label={`Editar ${pet.name}`}
 							>
 								<Edit2 className="w-3.5 h-3.5" />
