@@ -33,7 +33,7 @@ import { useProfile } from "@/features/profile/hooks/use-profile";
 
 // ─── Nav items per role ───────────────────────────────────────────────────────
 
-const clientNav = [
+export const clientNav = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard"     },
   { href: "/walks",     icon: ClipboardList,   label: "Meus passeios" },
   { href: "/walkers",   icon: PawPrint,         label: "Passeadores"  },
@@ -41,11 +41,47 @@ const clientNav = [
   { href: "/profile",   icon: User,             label: "Perfil"       },
 ];
 
-const walkerNav = [
+export const walkerNav = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard"     },
   { href: "/walks",     icon: ClipboardList,   label: "Meus passeios" },
   { href: "/profile",   icon: User,            label: "Perfil"        },
 ];
+
+// ─── Nav links (shared between desktop sidebar and mobile drawer) ─────────────
+
+export function SidebarNavLinks({
+  navItems,
+  pathname,
+}: {
+  navItems: typeof clientNav;
+  pathname: string;
+}) {
+  return (
+    <div className="space-y-1">
+      {navItems.map((item) => {
+        const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={cn(
+              "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 min-h-[44px]",
+              isActive
+                ? "bg-primary text-primary-foreground shadow-md ring-1 ring-primary/20"
+                : "text-muted-foreground hover:text-foreground hover:bg-accent/50 active:bg-accent"
+            )}
+          >
+            <item.icon className={cn(
+              "h-5 w-5 shrink-0 transition-transform duration-200",
+              isActive && "scale-110"
+            )} />
+            <span className="truncate">{item.label}</span>
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
 
 // ─── Step row ─────────────────────────────────────────────────────────────────
 
@@ -283,10 +319,6 @@ export function Sidebar() {
     : "?";
   const avatarUrl = profile?.avatarUrl ?? null;
 
-  const activeHref = navItems
-    .filter(({ href }) => pathname === href || pathname.startsWith(href + "/"))
-    .sort((a, b) => b.href.length - a.href.length)[0]?.href ?? null;
-
   return (
     <aside className="hidden lg:flex flex-col w-60 shrink-0 border-r border-border bg-background h-screen sticky top-0">
       {/* Logo */}
@@ -302,28 +334,8 @@ export function Sidebar() {
       <Separator />
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {navItems.map((item) => {
-          const isActive = item.href === activeHref;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 min-h-[44px]",
-                isActive
-                  ? "bg-primary text-primary-foreground shadow-md ring-1 ring-primary/20"
-                  : "text-muted-foreground hover:text-foreground hover:bg-accent/50 active:bg-accent"
-              )}
-            >
-              <item.icon className={cn(
-                "h-5 w-5 shrink-0 transition-transform duration-200",
-                isActive && "scale-110"
-              )} />
-              <span className="truncate">{item.label}</span>
-            </Link>
-          );
-        })}
+      <nav className="flex-1 px-3 py-4 overflow-y-auto">
+        <SidebarNavLinks navItems={navItems} pathname={pathname} />
       </nav>
 
       {/* Walker onboarding widget */}

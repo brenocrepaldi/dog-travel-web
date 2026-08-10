@@ -2,6 +2,7 @@
 
 import { Menu, X } from 'lucide-react';
 import { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,13 @@ interface MobileNavProps {
 
 export function MobileNav({ children, className }: MobileNavProps) {
 	const [open, setOpen] = useState(false);
+	const pathname = usePathname();
+	const [lastPathname, setLastPathname] = useState(pathname);
+
+	if (pathname !== lastPathname) {
+		setLastPathname(pathname);
+		setOpen(false);
+	}
 
 	return (
 		<Sheet open={open} onOpenChange={setOpen}>
