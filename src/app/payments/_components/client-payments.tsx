@@ -127,18 +127,18 @@ function TransactionRow({ item }: { item: PaymentHistoryItem }) {
         </div>
         <div className="flex items-center gap-3 shrink-0">
           {item.status === 'paid' && (
-            <div className="hidden sm:flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
+            <div className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
               <CheckCircle2 className="w-3 h-3" />
               {STATUS_LABEL[item.status]}
             </div>
           )}
           {item.status === 'pending' && (
-            <div className="hidden sm:flex items-center gap-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 text-[11px] font-medium text-amber-700 dark:text-amber-400">
+            <div className="flex items-center gap-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 text-[11px] font-medium text-amber-700 dark:text-amber-400">
               {STATUS_LABEL[item.status]}
             </div>
           )}
           {item.status === 'failed' && (
-            <div className="hidden sm:flex items-center gap-1.5 rounded-full bg-red-500/10 border border-red-500/20 px-2.5 py-1 text-[11px] font-medium text-red-700 dark:text-red-400">
+            <div className="flex items-center gap-1.5 rounded-full bg-red-500/10 border border-red-500/20 px-2.5 py-1 text-[11px] font-medium text-red-700 dark:text-red-400">
               {STATUS_LABEL[item.status]}
             </div>
           )}
