@@ -330,14 +330,14 @@ function PetCard({
 							<button
 								type="button"
 								onClick={() => setConfirmingDelete(false)}
-								className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted/60 transition-colors cursor-pointer"
+								className="relative rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted/60 transition-colors cursor-pointer after:absolute after:left-1/2 after:top-1/2 after:h-11 after:w-full after:-translate-x-1/2 after:-translate-y-1/2 after:content-['']"
 							>
 								Cancelar
 							</button>
 							<button
 								type="button"
 								onClick={() => { setConfirmingDelete(false); onRemove(pet); }}
-								className="rounded-lg bg-destructive px-3 py-1.5 text-xs font-medium text-destructive-foreground hover:bg-destructive/90 transition-colors cursor-pointer"
+								className="relative rounded-lg bg-destructive px-3 py-1.5 text-xs font-medium text-destructive-foreground hover:bg-destructive/90 transition-colors cursor-pointer after:absolute after:left-1/2 after:top-1/2 after:h-11 after:w-full after:-translate-x-1/2 after:-translate-y-1/2 after:content-['']"
 							>
 								Sim, remover
 							</button>
