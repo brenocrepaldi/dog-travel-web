@@ -8,6 +8,7 @@ const WALKER_ONLY_PREFIXES = [
   "/profile/walker-profile",
   "/profile/documents",
   "/profile/bank-account",
+  "/walk-requests",
 ];
 
 export async function middleware(req: NextRequest) {
