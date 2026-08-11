@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   ArrowLeft,
   BadgeCheck,
@@ -207,8 +208,8 @@ function WalkerCard({
       <CardContent className="p-5 space-y-4">
         <div className="flex items-center gap-3">
           {walker.avatarUrl ? (
-            <div className={cn('shrink-0 rounded-xl overflow-hidden', size)}>
-              <img src={walker.avatarUrl} alt={walker.name} className="w-full h-full object-cover" />
+            <div className={cn('relative shrink-0 rounded-xl overflow-hidden', size)}>
+              <Image src={walker.avatarUrl} alt={walker.name} fill sizes="56px" className="object-cover" />
             </div>
           ) : (
             <div
@@ -300,8 +301,8 @@ function ClientCard({
       <CardContent className="p-5 space-y-4">
         <Link href={clientId ? `/clients/${clientId}` : '#'} className="flex items-center gap-3 group">
           {clientAvatarUrl ? (
-            <div className="h-14 w-14 shrink-0 rounded-xl overflow-hidden ring-1 ring-border/30 group-hover:ring-primary/30 transition-all">
-              <img src={clientAvatarUrl} alt={clientName} className="w-full h-full object-cover" />
+            <div className="relative h-14 w-14 shrink-0 rounded-xl overflow-hidden ring-1 ring-border/30 group-hover:ring-primary/30 transition-all">
+              <Image src={clientAvatarUrl} alt={clientName} fill sizes="56px" className="object-cover" />
             </div>
           ) : (
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-sm font-bold text-primary ring-1 ring-primary/20 group-hover:ring-primary/40 transition-all">

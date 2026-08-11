@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import type { ElementType } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import {
 	ArrowLeft,
@@ -98,8 +99,8 @@ function SectionHeader({
 function SidebarAvatar({ name, avatarUrl }: { name: string; avatarUrl?: string | null }) {
 	if (avatarUrl) {
 		return (
-			<div className="w-10 h-10 rounded-xl shrink-0 ring-2 ring-border/30 overflow-hidden">
-				<img src={avatarUrl} alt={name} className="w-full h-full object-cover" />
+			<div className="relative w-10 h-10 rounded-xl shrink-0 ring-2 ring-border/30 overflow-hidden">
+				<Image src={avatarUrl} alt={name} fill sizes="40px" className="object-cover" />
 			</div>
 		);
 	}

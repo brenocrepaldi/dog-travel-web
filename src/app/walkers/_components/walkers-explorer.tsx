@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
 import {
 	Calendar,
@@ -52,8 +53,8 @@ function WalkerAvatar({ name, avatarUrl }: { name: string; avatarUrl?: string | 
 
 	if (avatarUrl) {
 		return (
-			<div className="w-14 h-14 rounded-2xl shrink-0 ring-2 ring-border/30 overflow-hidden">
-				<img src={avatarUrl} alt={name} className="w-full h-full object-cover" />
+			<div className="relative w-14 h-14 rounded-2xl shrink-0 ring-2 ring-border/30 overflow-hidden">
+				<Image src={avatarUrl} alt={name} fill sizes="56px" className="object-cover" />
 			</div>
 		);
 	}

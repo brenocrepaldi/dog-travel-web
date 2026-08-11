@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import {
   BadgeCheck,
@@ -137,8 +138,8 @@ export function WalkClientInProgressPanel({ walk, walker }: Props) {
             {walker ? (
               <div className="flex items-center gap-3">
                 {walker.avatarUrl ? (
-                  <div className="h-13 w-13 shrink-0 overflow-hidden rounded-xl">
-                    <img src={walker.avatarUrl} alt={walker.name} className="h-full w-full object-cover" />
+                  <div className="relative h-13 w-13 shrink-0 overflow-hidden rounded-xl">
+                    <Image src={walker.avatarUrl} alt={walker.name} fill sizes="52px" className="object-cover" />
                   </div>
                 ) : (
                   <div className="flex h-13 w-13 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-sm font-bold text-primary">

@@ -1,6 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -115,10 +116,9 @@ function InfoRow({ icon: Icon, label, value }: { icon: React.ElementType; label:
 function DogCard({ dog }: { dog: WalkRequestDog }) {
   return (
     <div className="flex items-start gap-3 rounded-xl border border-border/60 bg-muted/20 p-3.5">
-      <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl ring-1 ring-border/40">
+      <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl ring-1 ring-border/40">
         {dog.photoUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={dog.photoUrl} alt={dog.name} className="h-full w-full object-cover" />
+          <Image src={dog.photoUrl} alt={dog.name} fill sizes="56px" className="object-cover" />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-amber-500/10">
             <PawPrint className="h-6 w-6 text-amber-500" />
@@ -345,9 +345,8 @@ export function RequestDetailClient({ requestId }: { requestId: string }) {
             <CardContent className="p-5 space-y-4">
               <Link href={`/clients/${req.clientId}`} className="flex items-center gap-3 group">
                 {req.clientAvatarUrl ? (
-                  <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl ring-1 ring-border/30 group-hover:ring-primary/30 transition-all">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={req.clientAvatarUrl} alt={req.clientName} className="h-full w-full object-cover" />
+                  <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl ring-1 ring-border/30 group-hover:ring-primary/30 transition-all">
+                    <Image src={req.clientAvatarUrl} alt={req.clientName} fill sizes="56px" className="object-cover" />
                   </div>
                 ) : (
                   <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-sm font-bold text-primary ring-1 ring-primary/20 group-hover:ring-primary/40 transition-all">

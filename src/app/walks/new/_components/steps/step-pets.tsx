@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight, Check, PawPrint } from "lucide-react";
 import { useDogs } from "@/features/dogs/hooks/use-dogs";
 import { DOG_SIZE_LABEL } from "@/lib/pets";
@@ -58,10 +59,9 @@ export function StepPets({ data, updateData, onNext, onCancel }: Props) {
                   selected ? "border-primary bg-primary/5 ring-1 ring-primary/30" : "border-border bg-background"
                 )}
               >
-                <div className="w-20 h-20 rounded-xl overflow-hidden shrink-0 ring-1 ring-border/30">
+                <div className="relative w-20 h-20 rounded-xl overflow-hidden shrink-0 ring-1 ring-border/30">
                   {pet.photoUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={pet.photoUrl} alt={pet.name} className="h-full w-full object-cover" />
+                    <Image src={pet.photoUrl} alt={pet.name} fill sizes="80px" className="object-cover" />
                   ) : (
                     <div className="w-full h-full bg-amber-500/10 flex items-center justify-center">
                       <PawPrint className="h-7 w-7 text-amber-600 dark:text-amber-400" />

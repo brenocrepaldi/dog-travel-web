@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Plus, PawPrint, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDogs } from "@/features/dogs/hooks/use-dogs";
@@ -8,9 +9,8 @@ import { useDogs } from "@/features/dogs/hooks/use-dogs";
 function PetAvatar({ name, photoUrl }: { name: string; photoUrl?: string }) {
   if (photoUrl) {
     return (
-      <div className="flex h-12 w-12 shrink-0 overflow-hidden rounded-xl ring-2 ring-border/30">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={photoUrl} alt={name} className="h-full w-full object-cover" />
+      <div className="relative flex h-12 w-12 shrink-0 overflow-hidden rounded-xl ring-2 ring-border/30">
+        <Image src={photoUrl} alt={name} fill sizes="48px" className="object-cover" />
       </div>
     );
   }

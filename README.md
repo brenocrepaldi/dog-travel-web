@@ -175,6 +175,10 @@ NEXTAUTH_SECRET=seu-segredo-aqui
 # URL do servidor WebSocket
 NEXT_PUBLIC_WS_URL=ws://localhost:3001
 
+# URL pública do armazenamento de mídia (MinIO) — deve coincidir com
+# MINIO_PUBLIC_URL do backend. Usada para liberar o host em next/image.
+NEXT_PUBLIC_MEDIA_URL=http://localhost:9000
+
 # Token de acesso público do Mapbox
 NEXT_PUBLIC_MAPBOX_TOKEN=pk.eyJ1...
 ```

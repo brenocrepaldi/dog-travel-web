@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import Image from "next/image";
 import {
   Sheet,
   SheetContent,
@@ -190,18 +191,19 @@ function PhotoUpload({ value, onChange }: PhotoUploadProps) {
       >
         <div
           className={cn(
-            "w-16 h-16 rounded-2xl overflow-hidden shrink-0 ring-1 transition-colors",
+            "relative w-16 h-16 rounded-2xl overflow-hidden shrink-0 ring-1 transition-colors",
             value
               ? "ring-border/60"
               : "bg-primary/8 ring-primary/15 group-hover:bg-primary/12"
           )}
         >
           {value ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={value}
               alt="Pré-visualização da foto do pet"
-              className="h-full w-full object-cover"
+              fill
+              sizes="64px"
+              className="object-cover"
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center">

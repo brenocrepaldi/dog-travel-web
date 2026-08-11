@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { buttonVariants } from '@/components/ui/button';
@@ -162,8 +163,8 @@ function WalkCard({
 				) : (
 					<div className="flex items-start gap-3 min-w-0">
 						{walk.walkerAvatarUrl ? (
-							<div className="w-10 h-10 rounded-2xl shrink-0 ring-1 ring-border/30 overflow-hidden">
-								<img src={walk.walkerAvatarUrl} alt={walkerName} className="w-full h-full object-cover" />
+							<div className="relative w-10 h-10 rounded-2xl shrink-0 ring-1 ring-border/30 overflow-hidden">
+								<Image src={walk.walkerAvatarUrl} alt={walkerName} fill sizes="40px" className="object-cover" />
 							</div>
 						) : (
 							<div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 text-xs font-bold ring-1 bg-primary/8 text-primary ring-primary/15">

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
 import { useSession } from "next-auth/react";
 import {
 	Edit2,
@@ -45,9 +46,8 @@ function PetAvatar({ pet, size = "md" }: { pet: Pet; size?: "md" | "lg" }) {
 
 	if (pet.photoUrl) {
 		return (
-			<div className={cn("rounded-2xl overflow-hidden shrink-0 ring-2 ring-border/30", sizeClass)}>
-				{/* eslint-disable-next-line @next/next/no-img-element */}
-				<img src={pet.photoUrl} alt={pet.name} className="h-full w-full object-cover" />
+			<div className={cn("relative rounded-2xl overflow-hidden shrink-0 ring-2 ring-border/30", sizeClass)}>
+				<Image src={pet.photoUrl} alt={pet.name} fill sizes="80px" className="object-cover" />
 			</div>
 		);
 	}

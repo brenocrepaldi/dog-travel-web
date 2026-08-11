@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import {
   BadgeCheck,
   BadgePercent,
@@ -121,10 +122,9 @@ export function StepConfirm({ data, onBack, onSubmit, submitting }: Props) {
             <div className="mt-2 flex flex-wrap gap-3">
               {selectedPets.map((pet) => (
                 <div key={pet.id} className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 ring-1 ring-border/30">
+                  <div className="relative w-8 h-8 rounded-lg overflow-hidden shrink-0 ring-1 ring-border/30">
                     {pet.photoUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={pet.photoUrl} alt={pet.name} className="h-full w-full object-cover" />
+                      <Image src={pet.photoUrl} alt={pet.name} fill sizes="32px" className="object-cover" />
                     ) : (
                       <div className="w-full h-full bg-amber-500/10 flex items-center justify-center">
                         <PawPrint className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />

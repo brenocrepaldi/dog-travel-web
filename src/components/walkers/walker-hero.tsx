@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import { MapPin, ShieldCheck, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -49,8 +50,8 @@ export function WalkerHero({
     <div className="flex flex-col sm:flex-row items-start gap-6">
       {/* Avatar */}
       {avatarUrl ? (
-        <div className="w-20 h-20 rounded-2xl shrink-0 ring-2 ring-border/30 overflow-hidden">
-          <img src={avatarUrl} alt={name} className="w-full h-full object-cover" />
+        <div className="relative w-20 h-20 rounded-2xl shrink-0 ring-2 ring-border/30 overflow-hidden">
+          <Image src={avatarUrl} alt={name} fill sizes="80px" className="object-cover" />
         </div>
       ) : (
         <div

@@ -1,24 +1,37 @@
 import type { NextConfig } from "next";
 
+const remotePatterns: NonNullable<NextConfig["images"]>["remotePatterns"] = [
+  {
+    protocol: "https",
+    hostname: "*.gravatar.com",
+  },
+  {
+    protocol: "https",
+    hostname: "avatars.githubusercontent.com",
+  },
+  {
+    protocol: "https",
+    hostname: "lh3.googleusercontent.com",
+  },
+];
+
+// Allow the media storage (MinIO) host — serves avatars, pet photos and
+// verification documents — so next/image can optimize them.
+if (process.env.NEXT_PUBLIC_MEDIA_URL) {
+  const mediaUrl = new URL(process.env.NEXT_PUBLIC_MEDIA_URL);
+  remotePatterns.push({
+    protocol: mediaUrl.protocol.replace(":", "") as "http" | "https",
+    hostname: mediaUrl.hostname,
+    port: mediaUrl.port || undefined,
+  });
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image domains (used for user avatars, pet photos, map tiles, etc.)
    */
   images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "*.gravatar.com",
-      },
-      {
-        protocol: "https",
-        hostname: "avatars.githubusercontent.com",
-      },
-      {
-        protocol: "https",
-        hostname: "lh3.googleusercontent.com",
-      },
-    ],
+    remotePatterns,
   },
 
   /**

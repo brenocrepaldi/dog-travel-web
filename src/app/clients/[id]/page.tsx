@@ -2,6 +2,7 @@
 
 import { use } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   ArrowLeft,
   CalendarDays,
@@ -136,8 +137,8 @@ function ClientAvatar({
 
   if (avatarUrl) {
     return (
-      <div className={cn("shrink-0 overflow-hidden", sizeCls)}>
-        <img src={avatarUrl} alt={name} className="h-full w-full object-cover" />
+      <div className={cn("relative shrink-0 overflow-hidden", sizeCls)}>
+        <Image src={avatarUrl} alt={name} fill sizes="80px" className="object-cover" />
       </div>
     );
   }
@@ -158,12 +159,14 @@ function DogCard({ dog }: { dog: ClientProfile["dogs"][number] }) {
   return (
     <div className="group flex items-center gap-3 rounded-xl border border-border/60 bg-card p-3 transition-all duration-200 hover:border-border hover:shadow-sm">
       {/* Square avatar */}
-      <div className="aspect-square h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-amber-500/8">
+      <div className="relative aspect-square h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-amber-500/8">
         {dog.photoUrl ? (
-          <img
+          <Image
             src={dog.photoUrl}
             alt={dog.name}
-            className="h-full w-full object-cover"
+            fill
+            sizes="64px"
+            className="object-cover"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
@@ -208,8 +211,8 @@ function ReviewCard({ review }: { review: ClientProfile["reviews"][number] }) {
     )}>
       <div className="flex items-start gap-3">
         {review.walkerAvatarUrl ? (
-          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-xl ring-1 ring-border/40">
-            <img src={review.walkerAvatarUrl} alt={review.walkerName} className="h-full w-full object-cover" />
+          <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl ring-1 ring-border/40">
+            <Image src={review.walkerAvatarUrl} alt={review.walkerName} fill sizes="40px" className="object-cover" />
           </div>
         ) : (
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-xs font-bold text-primary">
@@ -473,9 +476,9 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
                   {client.dogs.map((dog) => (
                     <div key={dog.id} className="rounded-xl border border-border/50 bg-muted/30 p-3 space-y-2">
                       <div className="flex items-center gap-2">
-                        <div className="h-8 w-8 shrink-0 overflow-hidden rounded-lg">
+                        <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-lg">
                           {dog.photoUrl ? (
-                            <img src={dog.photoUrl} alt={dog.name} className="h-full w-full object-cover" />
+                            <Image src={dog.photoUrl} alt={dog.name} fill sizes="32px" className="object-cover" />
                           ) : (
                             <div className="flex h-full w-full items-center justify-center bg-amber-500/10">
                               <PawPrint className="h-3.5 w-3.5 text-amber-500" />

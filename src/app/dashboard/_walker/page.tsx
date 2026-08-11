@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
@@ -396,10 +397,9 @@ export default function WalkerDashboardPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
                       {/* Client avatar */}
-                      <div className="h-11 w-11 shrink-0 overflow-hidden rounded-xl ring-1 ring-emerald-500/20">
+                      <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl ring-1 ring-emerald-500/20">
                         {req.clientAvatarUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={req.clientAvatarUrl} alt={req.clientName} className="h-full w-full object-cover" />
+                          <Image src={req.clientAvatarUrl} alt={req.clientName} fill sizes="44px" className="object-cover" />
                         ) : (
                           <div className="flex h-full w-full items-center justify-center bg-emerald-500/10 text-sm font-bold text-emerald-700 dark:text-emerald-400">
                             {getInitials(req.clientName)}
@@ -417,11 +417,10 @@ export default function WalkerDashboardPage() {
                               <div
                                 key={pet.id}
                                 style={{ zIndex: req.petPhotos.length - i, marginLeft: i === 0 ? 0 : '-6px' }}
-                                className="h-5 w-5 overflow-hidden rounded-full ring-[1.5px] ring-card"
+                                className="relative h-5 w-5 overflow-hidden rounded-full ring-[1.5px] ring-card"
                               >
                                 {pet.photoUrl ? (
-                                  // eslint-disable-next-line @next/next/no-img-element
-                                  <img src={pet.photoUrl} alt="" className="h-full w-full object-cover" />
+                                  <Image src={pet.photoUrl} alt="" fill sizes="20px" className="object-cover" />
                                 ) : (
                                   <div className="flex h-full w-full items-center justify-center bg-amber-500/15">
                                     <PawPrint className="h-2.5 w-2.5 text-amber-500" />

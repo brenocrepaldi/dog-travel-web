@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import Map, { Marker } from 'react-map-gl/mapbox';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import {
   ArrowLeft,
@@ -86,8 +87,7 @@ function DogMarker({ pets, walkerAvatarUrl }: { pets: Pet[]; walkerAvatarUrl?: s
       <span className="absolute h-16 w-16 animate-ping rounded-full bg-primary/20" />
       <div className="relative h-12 w-12 overflow-hidden rounded-full border-[3px] border-white bg-amber-100 shadow-lg">
         {firstPhoto ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={firstPhoto} alt={pets[0]?.name ?? 'Cão'} className="h-full w-full object-cover" />
+          <Image src={firstPhoto} alt={pets[0]?.name ?? 'Cão'} fill sizes="48px" className="object-cover" />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-2xl">🦮</div>
         )}
@@ -95,8 +95,7 @@ function DogMarker({ pets, walkerAvatarUrl }: { pets: Pet[]; walkerAvatarUrl?: s
       {/* Walker avatar — overlaid bottom-right of the dog bubble */}
       {walkerAvatarUrl && (
         <div className="absolute -bottom-1 -right-1 h-6 w-6 overflow-hidden rounded-full border-2 border-white shadow-sm">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={walkerAvatarUrl} alt="Passeador" className="h-full w-full object-cover" />
+          <Image src={walkerAvatarUrl} alt="Passeador" fill sizes="24px" className="object-cover" />
         </div>
       )}
       {count > 1 && !walkerAvatarUrl && (
@@ -113,10 +112,9 @@ function PetsRow({ pets }: { pets: Pet[] }) {
     <div className="flex flex-wrap items-center gap-2.5 px-5 py-3">
       {pets.map((pet, i) => (
         <div key={i} className="flex items-center gap-2">
-          <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full border-2 border-amber-200/80 bg-amber-50 shadow-sm">
+          <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full border-2 border-amber-200/80 bg-amber-50 shadow-sm">
             {pet.photoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={pet.photoUrl} alt={pet.name} className="h-full w-full object-cover" />
+              <Image src={pet.photoUrl} alt={pet.name} fill sizes="36px" className="object-cover" />
             ) : (
               <div className="flex h-full w-full items-center justify-center">
                 <PawPrint className="h-3.5 w-3.5 text-amber-500" />
@@ -455,12 +453,15 @@ export default function MapTracker({ walkId }: { walkId: string }) {
               {/* 1 — Walker identity (espelho da seção de pets) */}
               <div className="flex items-center gap-3 px-5 py-3">
                 {walk?.walkerAvatarUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={walk.walkerAvatarUrl}
-                    alt={walkerName}
-                    className="h-9 w-9 shrink-0 rounded-full border-2 border-primary/20 object-cover shadow-sm"
-                  />
+                  <div className="relative h-9 w-9 shrink-0">
+                    <Image
+                      src={walk.walkerAvatarUrl}
+                      alt={walkerName}
+                      fill
+                      sizes="36px"
+                      className="rounded-full border-2 border-primary/20 object-cover shadow-sm"
+                    />
+                  </div>
                 ) : (
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-primary/10 text-sm font-bold text-primary">
                     {initials(walkerName)}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 import Map, { Marker, type MapRef } from 'react-map-gl/mapbox';
 
 interface Props {
@@ -61,10 +62,9 @@ export default function RequestStartMapInner({
       {/* Walker position — clean avatar bubble, no animation */}
       {hasWalker && (
         <Marker longitude={walkerLng!} latitude={walkerLat!} anchor="center">
-          <div className="h-12 w-12 overflow-hidden rounded-full border-[3px] border-white shadow-lg shadow-black/20">
+          <div className="relative h-12 w-12 overflow-hidden rounded-full border-[3px] border-white shadow-lg shadow-black/20">
             {walkerAvatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={walkerAvatarUrl} alt={walkerName ?? 'Você'} className="h-full w-full object-cover" />
+              <Image src={walkerAvatarUrl} alt={walkerName ?? 'Você'} fill sizes="48px" className="object-cover" />
             ) : (
               <div className="flex h-full w-full items-center justify-center bg-primary text-xs font-bold text-primary-foreground">
                 {walkerName ? getInitials(walkerName) : '?'}

@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Map, { Marker } from 'react-map-gl/mapbox';
 import { useSession } from 'next-auth/react';
 import { MapPin } from 'lucide-react';
@@ -24,7 +25,7 @@ function DogMarker({ pets = [], walkerAvatarUrl }: { pets: Pet[]; walkerAvatarUr
       <span className="absolute h-14 w-14 animate-ping rounded-full bg-primary/20" />
       <div className="relative h-11 w-11 overflow-hidden rounded-full border-[3px] border-white bg-amber-100 shadow-lg">
         {firstPhoto ? (
-          <img src={firstPhoto} alt={pets[0]?.name ?? 'Cão'} className="h-full w-full object-cover" />
+          <Image src={firstPhoto} alt={pets[0]?.name ?? 'Cão'} fill sizes="44px" className="object-cover" />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-xl">🦮</div>
         )}
@@ -32,8 +33,7 @@ function DogMarker({ pets = [], walkerAvatarUrl }: { pets: Pet[]; walkerAvatarUr
       {/* Walker avatar — overlaid bottom-right of the dog bubble */}
       {walkerAvatarUrl && (
         <div className="absolute -bottom-1 -right-1 h-5 w-5 overflow-hidden rounded-full border-2 border-white shadow-sm">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={walkerAvatarUrl} alt="Passeador" className="h-full w-full object-cover" />
+          <Image src={walkerAvatarUrl} alt="Passeador" fill sizes="20px" className="object-cover" />
         </div>
       )}
       {count > 1 && !walkerAvatarUrl && (

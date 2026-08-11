@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -132,8 +133,8 @@ function WalkerWalkCard({ walk }: { walk: WalkRecord }) {
 			<div className="px-5 pt-5 pb-4 flex items-start justify-between gap-3">
 				<div className="flex items-start gap-3 min-w-0">
 					{walk.clientAvatarUrl ? (
-						<div className="w-10 h-10 rounded-2xl shrink-0 ring-1 ring-border/30 overflow-hidden">
-							<img src={walk.clientAvatarUrl} alt={walk.clientName} className="w-full h-full object-cover" />
+						<div className="relative w-10 h-10 rounded-2xl shrink-0 ring-1 ring-border/30 overflow-hidden">
+							<Image src={walk.clientAvatarUrl} alt={walk.clientName} fill sizes="40px" className="object-cover" />
 						</div>
 					) : (
 						<div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 text-xs font-bold ring-1 bg-primary/8 text-primary ring-primary/15">
